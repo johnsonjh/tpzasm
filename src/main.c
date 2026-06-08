@@ -43,18 +43,16 @@ static dialect_t dialect_from_name(const char *argv0)
 static void usage(const char *prog)
 {
     (void)fprintf(stderr,
-        "%s: portable ANSI C89 TDL ZASM / PSA PASM assembler"
-        " (work in progress)\n"
-        "usage: %s [-p|-z] SOURCE.ASM\n"
-        "  -p       PSA PASM dialect\n"
-        "  -z       TDL ZASM dialect (default)\n"
-        "  -o FILE  write the assembled binary image to FILE\n"
-        "  -P       pad the -o image to a 128-byte CP/M record"
-        " boundary (0x1A)\n"
-        "  -l FILE  write the listing to FILE (default: stderr)\n"
-        "  -r FILE  read assembly-time console-prompt answers from FILE\n"
-        "  -e EXPR  evaluate one expression and exit (debug)\n"
-        "  -h       show this help\n",
+        "%s: TPZASM - TDL ZASM / PSA PASM compatible assembler\n"
+        "usage: %s [options] SOURCE.ASM\n"
+        "  -p       Emulate PSA PASM behavior\n"
+        "  -z       Emulate TDL ZASM behavior\n"
+        "  -o file  write the assembled binary image to file\n"
+        "  -P       pad -o output to a 128-byte CP/M record boundary\n"
+        "  -l file  write the listing to file (default: stderr)\n"
+        "  -r file  read assembly-time console-prompt answers from file\n"
+        "  -e expr  evaluate single expression and exit\n"
+        "  -h       show this help text\n",
         prog, prog);
 }
 
