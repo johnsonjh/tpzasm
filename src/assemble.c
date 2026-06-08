@@ -589,7 +589,8 @@ static void do_ascii(astate *a, const char *line, const char *p, int mode)
         if (a->image != NULL)
             a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
         if (a->nbytes > 0)
-            a->bytes[(long)a->nbytes - 1] = (u8)(a->bytes[(long)a->nbytes - 1] | 0x80u);
+            a->bytes[(long)a->nbytes - 1] =
+              (u8)(a->bytes[(long)a->nbytes - 1] | 0x80u);
     }
 }
 
@@ -738,11 +739,11 @@ static void lst_bytes(const astate *a, char *col)
             int fl = a->wreloc[i / 2];
             /* false positive CWE-120: col[40], cn<30 */
             cn += sprintf(col + cn, "%s%04X%c", /* Flawfinder: ignore */
-                          i ? "   " : "",
-                          (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8)),
-                          fl ? fl : ' ');
+                    i ? "   " : "",
+                    (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8)),
+                    fl ? fl : ' ');
         }
-        while (cn > 0 && col[(long)cn - 1] == ' ') cn--;  /* trim trailing pad */
+        while (cn > 0 && col[(long)cn - 1] == ' ') cn--; /* trim trailing pad */
     } else if (a->lst_kind == 1) {              /* data: byte stream */
         for (i = 0; i < a->nbytes && cn < 18; i++)
             /* false positive CWE-120: col[32], cn<18 */
@@ -762,8 +763,8 @@ static void lst_bytes(const astate *a, char *col)
         else if (a->lst_opw == 2 && nop + 1 < a->nbytes)
             /* false positive CWE-120 */
             cn += sprintf(col + cn, " %04X%s", /* Flawfinder: ignore */
-                          (unsigned)(a->bytes[nop] | (a->bytes[(long)nop + 1] << 8)),
-                          a->lst_oreloc ? "'" : "");
+                    (unsigned)(a->bytes[nop] | (a->bytes[(long)nop + 1] << 8)),
+                    a->lst_oreloc ? "'" : "");
     }
     col[cn] = '\0';
 }
@@ -894,7 +895,11 @@ static void lst_symtab(astate *a)
         if (i < nuser) {
             name = all[i]->name; val = all[i]->val.value; flag = "      ";
         }
-        else { name = segname[(long)i - nuser]; val = 0; flag = segflag[(long)i - nuser]; }
+        else {
+          name = segname[(long)i - nuser];
+          val = 0;
+          flag = segflag[(long)i - nuser];
+        }
         (void)fprintf(a->lst, "%-6s %04X%s", name, val & 0xFFFFu, flag);
         if ((col == perline - 1) || (i == total - 1)) {
             (void)fputc('\n', a->lst); col = 0;
@@ -1188,7 +1193,8 @@ static void expand_macro(astate *a, const macrodef *m, const char *argstr)
                     argbuf[j++] = *p++;
                 }
             }
-            while (j > s && (argbuf[(long)j - 1] == ' ' || argbuf[(long)j - 1] == '\t'))
+            while (j > s && (argbuf[(long)j - 1] == ' '
+                   || argbuf[(long)j - 1] == '\t'))
                 j--;
         }
         argbuf[j++] = '\0';
@@ -1539,10 +1545,10 @@ static void process_file(astate *a, const char *path)
 int asm_source(const char *path, dialect_t dialect, const char *outpath,
                const char *lstpath, int pad)
 {
-    astate a;
+    astate a = {0};
     const char *slash, *base;
     char srcpath[1024];
-    FILE *tf;
+    FILE *tf, *lf = NULL;
 
     /* Print the dialect herald, as the originals do. */
     if (dialect == DIALECT_PASM)
@@ -1580,14 +1586,15 @@ int asm_source(const char *path, dialect_t dialect, const char *outpath,
     else if (strcmp(lstpath, "/dev/stdout") == 0)
         a.lst = stdout;
     else {
-        a.lst = fopen(lstpath, "w");
-        if (a.lst == NULL) a.lst = stderr;
+        lf = fopen(lstpath, "w");
+        if (lf == NULL) a.lst = stderr;
+        else a.lst = lf;
     }
 
     tf = fopen(srcpath, "r");           /* check once, not once per pass */
     if (tf == NULL) {
         (void)fprintf(stderr, "cannot open '%s'\n", srcpath);
-        if (a.lst != stderr && a.lst != stdout) (void)fclose(a.lst);
+        if (lf != NULL) (void)fclose(lf);
         sym_free(a.syms);
         return 1;
     }
@@ -1624,7 +1631,7 @@ int asm_source(const char *path, dialect_t dialect, const char *outpath,
     lst_symtab(&a);
     (void)fprintf(a.lst, "\n%d error(s)\n", a.errors);
     /* with -l to a real file, also report the count on the console */
-    if (a.lst != stderr && a.lst != stdout)
+    if (lf != NULL)
         (void)fprintf(stderr, "%d error(s)\n", a.errors);
     if (a.image != NULL) {
         if (a.img_any && outpath != NULL) {
@@ -1646,7 +1653,7 @@ int asm_source(const char *path, dialect_t dialect, const char *outpath,
     }
     {
         int e = a.errors;
-        if (a.lst != stderr && a.lst != stdout) (void)fclose(a.lst);
+        if (lf != NULL) (void)fclose(lf);
         macro_free_all(&a);
         sym_free(a.syms);
         return e;
