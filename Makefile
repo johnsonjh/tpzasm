@@ -5,8 +5,12 @@
 
 ################################################################################
 
-CC      ?= cc
-CFLAGS  ?= -std=c89 -pedantic -Wall -Wextra -O2
+XCC=$$(command -v cc 2> /dev/null || command -v gcc 2> /dev/null || \
+	command -v clang 2> /dev/null || echo cc)
+XCFLAGS=-O
+
+################################################################################
+
 PROG     = asm
 SRCDIR   = src
 LINKS    = pasm zasm
@@ -23,7 +27,12 @@ all: $(PROG) $(LINKS) hexcom
 ################################################################################
 
 $(PROG): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(OBJ)
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" -o $@ $(OBJ) \
+		"$${LDFLAGS:-$(XLDFLAGS)}"
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" -o $@ $(OBJ) \
+		"$${LDFLAGS:-$(XLDFLAGS)}"
 
 ################################################################################
 
@@ -34,17 +43,47 @@ $(LINKS): $(PROG)
 ################################################################################
 
 $(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/main.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/main.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/main.c
 $(SRCDIR)/expr.o: $(SRCDIR)/expr.c $(SRCDIR)/asm.h
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/expr.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/expr.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/expr.c
 $(SRCDIR)/sym.o: $(SRCDIR)/sym.c $(SRCDIR)/asm.h
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/sym.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/sym.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/sym.c
 $(SRCDIR)/lex.o: $(SRCDIR)/lex.c $(SRCDIR)/asm.h
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lex.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/lex.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/lex.c
 $(SRCDIR)/insn.o: $(SRCDIR)/insn.c $(SRCDIR)/asm.h
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/insn.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/insn.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/insn.c
 $(SRCDIR)/assemble.o: $(SRCDIR)/assemble.c $(SRCDIR)/asm.h
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/assemble.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/assemble.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/assemble.c
 
 ################################################################################
 
@@ -55,23 +94,44 @@ test: test_expr
 ################################################################################
 
 test_expr: $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o
-	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o \
-		$(SRCDIR)/sym.o
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-o $@ $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o \
+		$(SRCDIR)/sym.o "$${LDFLAGS:-$(XLDFLAGS)}"
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-o $@ $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o \
+		$(SRCDIR)/sym.o "$${LDFLAGS:-$(XLDFLAGS)}"
 
 ################################################################################
 
 $(SRCDIR)/test_expr.o: $(SRCDIR)/test_expr.c $(SRCDIR)/asm.h
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/test_expr.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/test_expr.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/test_expr.c
 
 ################################################################################
 
 # hexcom: standalone Intel-HEX -> CP/M .COM converter (DRI HEXCOM 3.00 clone;
 # self-contained, does not use the assembler engine).
 hexcom: $(SRCDIR)/hexcom.o
-	$(CC) $(CFLAGS) -o $@ $(SRCDIR)/hexcom.o
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-o $@ $(SRCDIR)/hexcom.o "$${LDFLAGS:-$(XLDFLAGS)}"
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-o $@ $(SRCDIR)/hexcom.o "$${LDFLAGS:-$(XLDFLAGS)}"
 
 $(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/hexcom.c
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/hexcom.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/hexcom.c
 
 ################################################################################
 
