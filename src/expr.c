@@ -89,7 +89,7 @@ static u16 scan_number(ectx *e)
     ndig = n;
     if (*p == '.') { radix = 10; p++; }
     else if (n > 0) {
-        switch (buf[n - 1]) {
+        switch (buf[(long)n - 1]) {
         case 'H': case 'h': radix = 16; ndig = n - 1; break;
         case 'B': case 'b': radix = 2;  ndig = n - 1; break;
         case 'O': case 'o':
