@@ -266,7 +266,8 @@ static int parse_regop(astate *a, const char **pp, int *reg, int *pfx,
  * location counter stays consistent across passes even on operand errors. */
 static int fmt_opw(insn_fmt_t fmt)
 {
-    switch (fmt) {
+    int f = (int)fmt;
+    switch (f) {
     case FMT_MVI: case FMT_IMM8: case FMT_REL: return 1;
     case FMT_LXI: case FMT_ADDR: case FMT_ED16: case FMT_IXADDR: return 2;
     default: return 0;
@@ -279,12 +280,14 @@ static int encode_insn(astate *a, const char *line, const char *mnem,
     const insn *in = insn_find(mnem);
     const char *p = ops;
     value_t v;
+    int ifmt;
     if (in == NULL) return 0;
     /* for the value-form listing byte column */
     a->lst_opw = fmt_opw(in->fmt);
     v.reloc = 0;             /* default if no 16-bit operand is evaluated */
 
-    switch (in->fmt) {
+    ifmt = (int)in->fmt;
+    switch (ifmt) {
     case FMT_NONE:
         emit(a, in->opcode);
         break;

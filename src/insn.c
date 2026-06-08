@@ -113,7 +113,7 @@ static const insn TAB[] = {
     { "LIXD", 0x2A, FMT_IXADDR }, { "LIYD", 0x2A, FMT_IXADDR },
     { "SIXD", 0x22, FMT_IXADDR }, { "SIYD", 0x22, FMT_IXADDR },
 
-    { NULL, 0, 0 }
+    { NULL, 0, FMT_NONE }
 };
 
 /******************************************************************************/
