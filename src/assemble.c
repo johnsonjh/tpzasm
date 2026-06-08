@@ -589,7 +589,7 @@ static void do_ascii(astate *a, const char *line, const char *p, int mode)
         if (a->image != NULL)
             a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
         if (a->nbytes > 0)
-            a->bytes[a->nbytes - 1] = (u8)(a->bytes[a->nbytes - 1] | 0x80u);
+            a->bytes[(long)a->nbytes - 1] = (u8)(a->bytes[(long)a->nbytes - 1] | 0x80u);
     }
 }
 
@@ -739,10 +739,10 @@ static void lst_bytes(const astate *a, char *col)
             /* false positive CWE-120: col[40], cn<30 */
             cn += sprintf(col + cn, "%s%04X%c", /* Flawfinder: ignore */
                           i ? "   " : "",
-                          (unsigned)(a->bytes[i] | (a->bytes[i + 1] << 8)),
+                          (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8)),
                           fl ? fl : ' ');
         }
-        while (cn > 0 && col[cn - 1] == ' ') cn--;  /* trim trailing pad */
+        while (cn > 0 && col[(long)cn - 1] == ' ') cn--;  /* trim trailing pad */
     } else if (a->lst_kind == 1) {              /* data: byte stream */
         for (i = 0; i < a->nbytes && cn < 18; i++)
             /* false positive CWE-120: col[32], cn<18 */
@@ -762,7 +762,7 @@ static void lst_bytes(const astate *a, char *col)
         else if (a->lst_opw == 2 && nop + 1 < a->nbytes)
             /* false positive CWE-120 */
             cn += sprintf(col + cn, " %04X%s", /* Flawfinder: ignore */
-                          (unsigned)(a->bytes[nop] | (a->bytes[nop + 1] << 8)),
+                          (unsigned)(a->bytes[nop] | (a->bytes[(long)nop + 1] << 8)),
                           a->lst_oreloc ? "'" : "");
     }
     col[cn] = '\0';
@@ -894,7 +894,7 @@ static void lst_symtab(astate *a)
         if (i < nuser) {
             name = all[i]->name; val = all[i]->val.value; flag = "      ";
         }
-        else { name = segname[i - nuser]; val = 0; flag = segflag[i - nuser]; }
+        else { name = segname[(long)i - nuser]; val = 0; flag = segflag[(long)i - nuser]; }
         (void)fprintf(a->lst, "%-6s %04X%s", name, val & 0xFFFFu, flag);
         if ((col == perline - 1) || (i == total - 1)) {
             (void)fputc('\n', a->lst); col = 0;
@@ -1188,7 +1188,7 @@ static void expand_macro(astate *a, const macrodef *m, const char *argstr)
                     argbuf[j++] = *p++;
                 }
             }
-            while (j > s && (argbuf[j - 1] == ' ' || argbuf[j - 1] == '\t'))
+            while (j > s && (argbuf[(long)j - 1] == ' ' || argbuf[(long)j - 1] == '\t'))
                 j--;
         }
         argbuf[j++] = '\0';
@@ -1215,7 +1215,7 @@ static void console_read(const astate *a, symbol *s)
     long iv = 0;
     (void)fputc(':', stderr);
     (void)fflush(stderr);
-    if (fgets(ibuf, sizeof(ibuf), stdin) == NULL) {
+    if (fgets(ibuf, (int)sizeof(ibuf), stdin) == NULL) {
         /* End of input before every prompt was answered: abort rather than
          * default to 0 or block forever. */
         (void)fprintf(stderr,
@@ -1290,7 +1290,7 @@ static void do_line(astate *a, const char *line)
     while (*bp == ']') {
         int wt = 0;
         if (a->cdepth > 0) {
-            wt = a->cstack[a->cdepth - 1].if_true; a->cdepth--;
+            wt = a->cstack[(long)a->cdepth - 1].if_true; a->cdepth--;
         }
         bp = skipws(bp + 1);
         if (*bp == '[') {
@@ -1525,7 +1525,7 @@ static void process_file(astate *a, const char *path)
         a->errors++;
         return;
     }
-    while (fgets(buf, sizeof(buf), f) != NULL && !a->ended) {
+    while (fgets(buf, (int)sizeof(buf), f) != NULL && !a->ended) {
         size_t n = strlen(buf);
         while (n > 0 && (buf[n - 1] == '\n' || buf[n - 1] == '\r'))
             buf[--n] = '\0';
