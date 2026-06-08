@@ -539,10 +539,10 @@ command -v "${CH_CMD:-ch}" > /dev/null 2>&1 && {
   cat src/assemble.c src/expr.c src/insn.c src/lex.c src/main.c src/sym.c \
     > src/_chtmp.c
   # shellcheck disable=SC2310
-  (cd src && ch_check _chtmp.c) || rc=1
+  (cd src && ch_check ./_chtmp.c) || rc=1
   rm -f src/_chtmp.c
   # shellcheck disable=SC2310
-  (cd src && ch_check hexcom.c) || rc=1
+  (cd src && ch_check ./hexcom.c) || rc=1
 }
 
 ################################################################################
