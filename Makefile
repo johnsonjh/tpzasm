@@ -96,10 +96,10 @@ distclean: clean
 
 tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 	@command -v etags > /dev/null 2>&1 && \
-		{ { echo etags...; etags src/*c && exit 0; };\
+		{ { echo etags...; etags src/*.c && exit 0; };\
 			exit 1; } || :
 	@command -v ctags > /dev/null 2>&1 && \
-		{ { echo ctags...; ctags -R src 2> /dev/null && exit 0; }; \
+		{ { echo ctags...; ctags src/*.c 2> /dev/null && exit 0; }; \
 			exit 1; } || :
 	@command -v gtags > /dev/null 2>&1 && \
 		{ { echo gtags...; gtags . && exit 0; }; \
