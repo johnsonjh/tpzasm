@@ -1,0 +1,25 @@
+<!-- Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com> -->
+<!-- SPDX-License-Identifier: MIT-0 -->
+<!-- scspell-id: 76c2d6a6-6334-11f1-84fe-246e96298730 -->
+
+# TPZASM
+
+TDL ZASM / PSA PASM compatible assembler
+
+## License
+
+This software is distributed under the terms of the permissive
+[MIT No Attribution (MIT-0)](LICENSE) license.
+
+<!--
+Local Variables:
+mode: markdown
+indent-tabs-mode: nil
+fill-column: 80
+eval: (setq-local display-fill-column-indicator-column 80)
+eval: (display-fill-column-indicator-mode 1)
+End:
+-->
+
+<!-- vim: set ft=markdown expandtab cc=80 : -->
+<!-- EOF -->

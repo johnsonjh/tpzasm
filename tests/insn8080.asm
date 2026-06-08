@@ -1,0 +1,43 @@
+	.RADIX	16
+; 8080 opcode-coverage sweep (one of each format / several registers)
+	NOP
+	MOV	A,B
+	MOV	M,C
+	MOV	D,M
+	MVI	A,55
+	MVI	M,0AAH
+	INR	B
+	DCR	M
+	ADD	C
+	ADC	H
+	SUB	M
+	ANA	A
+	CMP	L
+	LXI	H,1234H
+	LXI	SP,0FFFEH
+	INX	D
+	DCX	B
+	DAD	H
+	PUSH	PSW
+	POP	B
+	LDAX	D
+	STAX	B
+	ADI	10
+	CPI	0FFH
+	IN	80H
+	OUT	81H
+	LDA	1234H
+	STA	5678H
+	LHLD	9ABCH
+	SHLD	0DEF0H
+	JMP	100H
+	JNZ	200H
+	CALL	300H
+	CZ	400H
+	RST	7
+	RNZ
+	XCHG
+	PCHL
+	EI
+	HLT
+	.END

@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+set timeout 180
+spawn tnylpo -b pasm.com vedplus.asm
+expect {
+  "VEDIT PLUS (1)"      { send "1\r"; exp_continue }
+  "version number"      { send "3\r"; exp_continue }
+  "PRINT FORMATTER"     { send "1\r"; exp_continue }
+  "INCLUDE WINDOWS"     { send "1\r"; exp_continue }
+  "DEMO VERSION"        { send "0\r"; exp_continue }
+  "DEVELOPMENT VERSION" { send "0\r"; exp_continue }
+  "PRODUCE LISTING"     { send "0\r"; exp_continue }
+  timeout { puts "\n\[EXPECT-TIMEOUT\]"; exit 2 }
+  eof
+}

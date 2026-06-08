@@ -1,0 +1,77 @@
+# EditorConfig: https://editorconfig.org/
+# Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
+# SPDX-License-Identifier: MIT-0
+# scspell-id: e76fa97e-6343-11f1-8c5c-246e96298730
+
+root = true
+
+################################################################################
+
+[*.{c,sh}]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+max_line_length = 80
+trim_trailing_whitespace = true
+
+################################################################################
+
+[.gitignore]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+max_line_length = 80
+trim_trailing_whitespace = true
+
+################################################################################
+
+[.gitattributes]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+max_line_length = 80
+trim_trailing_whitespace = true
+
+################################################################################
+
+[*.py]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = true
+
+################################################################################
+
+[*.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = true
+
+################################################################################
+
+[*akefile*]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
+insert_final_newline = true
+max_line_length = 80
+trim_trailing_whitespace = true
+
+################################################################################
+
+[README.md]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+################################################################################

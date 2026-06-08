@@ -1,0 +1,50 @@
+# Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
+# SPDX-License-Identifier: MIT-0
+# scspell-id: 7946bedc-6335-11f1-a03a-246e96298730
+
+version = 1
+SPDX-PackageName = "tpzasm"
+SPDX-PackageSupplier = "Jeffrey H. Johnson <johnsonjh.dev@gmail.com>"
+SPDX-PackageDownloadLocation = "https://github.com/johnsonjh/tpzasm"
+
+[[annotations]]
+path = "tests/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>"
+SPDX-License-Identifier = "MIT-0"
+
+[[annotations]]
+path = "tools/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>"
+SPDX-License-Identifier = "MIT-0"
+
+[[annotations]]
+path = "notes/TDL_ZASM.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1976, 1977 Technical Design Labs, Inc."
+SPDX-License-Identifier = "LicenseRef-TDL"
+
+[[annotations]]
+path = "orig/zasm.com"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1976, 1977 Technical Design Labs, Inc."
+SPDX-License-Identifier = "LicenseRef-TDL"
+
+[[annotations]]
+path = "notes/PSA_PASM.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1980 Phoenix Software Associates Ltd."
+SPDX-License-Identifier = "LicenseRef-PSA"
+
+[[annotations]]
+path = "orig/pasm.com"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1980 Phoenix Software Associates Ltd."
+SPDX-License-Identifier = "LicenseRef-PSA"
+
+[[annotations]]
+path = "orig/hexcom.com"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1982 Digital Research"
+SPDX-License-Identifier = "LicenseRef-DRDOS"

@@ -1,0 +1,27 @@
+	.RADIX	16
+; TDL Z80 extension sweep (oracle-confirmed mnemonics + encodings)
+L0:	JMPR	L0
+	JRZ	L0
+	JRNZ	L0
+	JRC	L0
+	JRNC	L0
+	DJNZ	L0
+	LBCD	1234H
+	LDED	1234H
+	LSPD	1234H
+	SBCD	1234H
+	SDED	1234H
+	SSPD	1234H
+	DADC	B
+	DADC	D
+	DADC	H
+	DADC	SP
+	DSBC	B
+	DSBC	SP
+	EXX
+	NEG
+	LDIR
+	LDDR
+	RETI
+	RETN
+	.END

@@ -1,0 +1,33 @@
+	.RADIX	16
+; Z80 CB rotates/bit + ED block/misc + EXAF (oracle-verified)
+	RLCR	B
+	RRCR	B
+	RALR	B
+	RARR	B
+	SLAR	B
+	SRAR	B
+	SRLR	B
+	RLCR	M
+	BIT	0,B
+	BIT	7,M
+	SET	3,C
+	RES	5,M
+	RLD
+	RRD
+	LDI
+	LDD
+	CCI
+	CCD
+	CCIR
+	CCDR
+	INI
+	OUTI
+	IM0
+	IM1
+	IM2
+	LDAI
+	STAI
+	LDAR
+	STAR
+	EXAF
+	.END
