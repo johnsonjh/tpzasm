@@ -791,7 +791,14 @@ NetBSD)
     printf '\n%s\n\n' ">>>>>>>>>>>>>>>> NetBSD lint <<<<<<<<<<<<<<<<"
     if (
       set -x
-      lint -a -aa -b -c -e -g -h -P -r -u -w -z src/*.c
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z \
+        ./src/assemble.c \
+        ./src/expr.c \
+        ./src/hexcom.c \
+        ./src/insn.c \
+        ./src/lex.c \
+        ./src/main.c \
+        ./src/sym.c
     ); then
       :
     else
