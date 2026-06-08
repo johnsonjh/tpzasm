@@ -818,7 +818,7 @@ NetBSD)
     fi
     if (
       set -x
-      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./test_expr.c
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/test_expr.c
     ); then
       :
     else
