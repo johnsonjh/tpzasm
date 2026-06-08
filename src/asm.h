@@ -131,7 +131,7 @@ int asm_source(const char *path, dialect_t dialect, const char *outpath,
 
 /******************************************************************************/
 
-enum {
+typedef enum {
     FMT_NONE,      /* no operand                           */
     FMT_MOV,       /* MOV r,r : 0x40 | dst<<3 | src        */
     FMT_DST,       /* reg in bits 3-5  (INR DCR)           */
@@ -153,11 +153,11 @@ enum {
     FMT_IXP,       /* Z80: index prefix + opcode (PCIX..)  */
     FMT_IXADD,     /* Z80: DADX/DADY (ADD IX/IY,rr)        */
     FMT_IXADDR     /* Z80: LIXD/LIYD/SIXD/SIYD LD IX/IY,(a)*/
-};
+} insn_fmt_t;
 
 /******************************************************************************/
 
-typedef struct { const char *name; u8 opcode; int fmt; } insn;
+typedef struct { const char *name; u8 opcode; insn_fmt_t fmt; } insn;
 
 /******************************************************************************/
 

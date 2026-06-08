@@ -264,7 +264,7 @@ static int parse_regop(astate *a, const char **pp, int *reg, int *pfx,
 /* Encode one machine instruction.  Returns 1 if `mnem` (uppercase) is an
  * instruction, 0 otherwise.  Always emits the instruction's full size so the
  * location counter stays consistent across passes even on operand errors. */
-static int fmt_opw(int fmt)
+static int fmt_opw(insn_fmt_t fmt)
 {
     switch (fmt) {
     case FMT_MVI: case FMT_IMM8: case FMT_REL: return 1;
