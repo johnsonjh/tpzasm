@@ -791,14 +791,70 @@ NetBSD)
     printf '\n%s\n\n' ">>>>>>>>>>>>>>>> NetBSD lint <<<<<<<<<<<<<<<<"
     if (
       set -x
-      lint -a -aa -b -c -e -g -h -P -r -u -w -z \
-        ./src/assemble.c \
-        ./src/expr.c \
-        ./src/hexcom.c \
-        ./src/insn.c \
-        ./src/lex.c \
-        ./src/main.c \
-        ./src/sym.c
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/lex.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/main.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/sym.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./test_expr.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/assemble.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/expr.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/hexcom.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/insn.c
     ); then
       :
     else
