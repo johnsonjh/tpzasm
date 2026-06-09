@@ -28,8 +28,8 @@
 
 /******************************************************************************/
 
-#define TPA 0x100      /* CP/M transient program area base address */
-#define RECSZ 128      /* CP/M record (sector) size                */
+#define TPA 0x100        /* CP/M transient program area base address */
+#define RECSZ 128        /* CP/M record (sector) size                */
 #define ADDRSP 0x10000UL /* 64K address space                        */
 
 /******************************************************************************/
@@ -333,10 +333,10 @@ main (int argc, char **argv)
       size_t pad_start = (size_t)first_addr + span;
       size_t pad_end = (size_t)first_addr + (size_t)records * RECSZ;
 
-      if (pad_start < (size_t)ADDRSP)
+      if (pad_start < (size_t)0x10000)
         {
-          if (pad_end > (size_t)ADDRSP)
-            pad_end = (size_t)ADDRSP;
+          if (pad_end > (size_t)0x10000)
+            pad_end = (size_t)0x10000;
 
           (void)memset (image + pad_start, 0x1A, pad_end - pad_start);
         }
