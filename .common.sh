@@ -1,5 +1,5 @@
 #!/bin/sh
-# .common.sh
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - .common.sh
 # Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 # SPDX-License-Identifier: MIT-0
 # scspell-id: 255557ce-6318-11f1-a8c8-246e96298730

@@ -1,4 +1,4 @@
-# PASM/ZASM - GNUmakefile
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - GNUmakefile
 # Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 # SPDX-License-Identifier: MIT-0
 # scspell-id: 63dc6500-636d-11f1-b3f9-80ee73e9b8e7

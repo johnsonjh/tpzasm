@@ -1,5 +1,5 @@
 #!/bin/sh
-# .lint.sh
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - .lint.sh
 # Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 # SPDX-License-Identifier: MIT-0
 # scspell-id: 1ad67fe4-6318-11f1-aca2-246e96298730

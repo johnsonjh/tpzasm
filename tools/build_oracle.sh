@@ -1,4 +1,5 @@
 #!/bin/sh
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - build_oracle.sh
 # build_oracle.sh - run a full multi-module CP/M assembly through the original
 # assembler(s) under tnylpo.  The master source pulls in the rest via .INSERT;
 # assembly-time console answers (the '\' operator) come from an answers file.

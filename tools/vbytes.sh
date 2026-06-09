@@ -1,4 +1,5 @@
 #!/bin/sh
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - vbytes.sh
 # vbytes.sh - assemble SRC.asm with the clone (./zasm) AND the original ZASM
 # under tnylpo, extract the emitted byte stream from each listing, and report
 # IDENTICAL / DIFFER.  Usage: tools/vbytes.sh tests/foo.asm

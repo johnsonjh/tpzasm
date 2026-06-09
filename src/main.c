@@ -1,5 +1,5 @@
 /*
- * ASM - TDL/Phoenix ZASM/PASM compatible assembler
+ * TPZASM: TDL ZASM / PSA PASM compatible assembler - main.c
  * Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
  * SPDX-License-Identifier: MIT-0
  * scspell-id: 528d6ba6-6335-11f1-a96f-246e96298730
@@ -43,7 +43,7 @@ static dialect_t dialect_from_name(const char *argv0)
 static void usage(const char *prog)
 {
     (void)fprintf(stderr,
-        "%s: TPZASM - TDL ZASM / PSA PASM compatible assembler\n"
+        "TPZASM - TDL ZASM / PSA PASM compatible assembler\n"
         "usage: %s [options] SOURCE.ASM\n"
         "  -p       Emulate PSA PASM behavior\n"
         "  -z       Emulate TDL ZASM behavior\n"
@@ -53,7 +53,7 @@ static void usage(const char *prog)
         "  -r file  read assembly-time console-prompt answers from file\n"
         "  -e expr  evaluate single expression and exit\n"
         "  -h       show this help text\n",
-        prog, prog);
+        prog);
 }
 
 /******************************************************************************/

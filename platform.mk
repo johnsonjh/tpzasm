@@ -1,15 +1,7 @@
-# LZPACK - platform.mk
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - platform.mk
 # Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 # SPDX-License-Identifier: MIT-0
-# scspell-id: 691c4d86-61c5-11f1-92c0-80ee73e9b8e7
-
-################################################################################
-
-# NOTE: It is currently safe that we don't copy all CFLAGS into LDFLAGS,
-# because no part of LZPACK currently builds with multiple compilation units,
-# but if that changes it might be a necessary change when targeting older
-# compilers.  We also will detect and enable LTO to allow possible link-time
-# inlining of system library functions that might available with LTO enabled.
+# scspell-id: 4ac5001c-63c3-11f1-b088-80ee73e9b8e7
 
 ################################################################################
 

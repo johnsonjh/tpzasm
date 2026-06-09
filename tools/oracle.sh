@@ -1,4 +1,5 @@
 #!/bin/sh
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - oracle.sh
 # oracle.sh - assemble a source with BOTH original CP/M assemblers (zasm.com and
 # pasm.com) under tnylpo, capture their object/listing output, and diff them.
 #

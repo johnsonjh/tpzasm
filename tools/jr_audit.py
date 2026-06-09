@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - jr_audit.py
 """jr_audit.py - JR-relaxation audit for PASM/ZASM listings.
 
 Scans an assembler listing (.prn) for 3-byte ABSOLUTE jumps whose target is

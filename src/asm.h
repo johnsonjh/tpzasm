@@ -1,5 +1,5 @@
 /*
- * ASM - TDL/Phoenix ZASM/PASM compatible assembler
+ * TPZASM: TDL ZASM / PSA PASM compatible assembler - asm.h
  * Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
  * SPDX-License-Identifier: MIT-0
  * scspell-id: 082e7c62-6335-11f1-a161-246e96298730

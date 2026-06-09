@@ -1,5 +1,5 @@
 /*
- * ASM - TDL/Phoenix ZASM/PASM compatible assembler
+ * TPZASM: TDL ZASM / PSA PASM compatible assembler - assemble.c
  * Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
  * SPDX-License-Identifier: MIT-0
  * scspell-id: 11597abc-6335-11f1-abca-246e96298730
@@ -82,7 +82,7 @@ typedef struct {
     FILE   *lst;
     /* macro support */
     unsigned genctr;       /* counter for %-generated local labels */
-    int      macro_depth;  /* recursion guard */
+    int      macro_depth;  /* recursion guard                      */
     unsigned scope;        /* local-symbol scope ('..' labels)     */
     /* macro call whose parenthesized argument spans several lines */
     int      pending;
@@ -90,14 +90,14 @@ typedef struct {
     int      pend_len;
     char     pend_op[NAMEBUF];
     char     pend_args[1024];
-    u16      lc_stmt;          /* statement-start LC, for '.' in operands */
-    /* listing format (dialect-faithful: TDL ZASM vs PSA PASM) */
-    dialect_t dialect;         /* selects the TDL vs PSA listing layout    */
-    int      lst_kind;         /* this line: 0 insn, 1 data bytes, 2 words */
+    u16      lc_stmt;  /* statement-start LC, for '.' in operands */
+    /* listing format (TDL ZASM vs PSA PASM) */
+    dialect_t dialect;         /* selects the TDL vs PSA listing layout     */
+    int      lst_kind;         /* this line: 0 insn, 1 data bytes, 2 words  */
     int      lst_opw;          /* insn operand width (0/1/2) for value-form */
     long     lst_loc;          /* LOC-column value: -1 blank, -2 use lc0    */
-    long     lst_line;         /* listing line counter, for pagination     */
-    int      lst_page;         /* current listing page number              */
+    long     lst_line;         /* listing line counter, for pagination      */
+    int      lst_page;         /* current listing page number               */
     int      lst_lreloc;       /* LC reloc: -1 use lc_reloc, else 0/1 flag  */
     int      lst_oreloc;       /* 16-bit insn operand reloc flag (0/1)      */
     u8       wreloc[32];       /* per-.WORD-value reloc flag (' or space)   */
@@ -216,11 +216,14 @@ static int comma(const char **pp)
 
 /******************************************************************************/
 
-/* register / memory / index operand:
+/*
+ * register / memory / index operand:
  *   B C D E H L M A  -> reg 0..7, pfx 0
  *   d(X)             -> reg 6, pfx DD, disp d
  *   d(Y)             -> reg 6, pfx FD, disp d
- * returns 0 on success, -1 on error. */
+ * returns 0 on success, -1 on error.
+ */
+
 static int parse_regop(astate *a, const char **pp, int *reg, int *pfx,
                        u16 *disp)
 {
@@ -261,9 +264,12 @@ static int parse_regop(astate *a, const char **pp, int *reg, int *pfx,
 
 /******************************************************************************/
 
-/* Encode one machine instruction.  Returns 1 if `mnem` (uppercase) is an
+/*
+ * Encode one machine instruction.  Returns 1 if `mnem` (uppercase) is an
  * instruction, 0 otherwise.  Always emits the instruction's full size so the
- * location counter stays consistent across passes even on operand errors. */
+ * location counter stays consistent across passes even on operand errors.
+ */
+
 static int fmt_opw(insn_fmt_t fmt)
 {
     int f = (int)fmt;
@@ -499,7 +505,7 @@ static int encode_insn(astate *a, const char *line, const char *mnem,
 static void do_data(astate *a, const char *line, const char *p, int width)
 {
     a->lst_kind = (width == 2) ? 2 : 1;   /* listing: words vs bytes */
-    for (;;) {                          /* items are  {[r]}n , {[r]}n , ...  */
+    for (;;) {                          /* items are  {[r]}n , {[r]}n , ... */
         value_t v;
         long rep = 1, k;
         const char *start;
@@ -546,10 +552,13 @@ static void do_blk(astate *a, const char *line, const char *p, int width)
 
 /******************************************************************************/
 
-/* .ASCII (mode 0) / .ASCIZ (1, trailing NUL) /
+/*
+ * .ASCII (mode 0) / .ASCIZ (1, trailing NUL) /
  * .ASCIS (2, high bit on last byte).
  * Items are delimited strings ('..' ".." /../), [expr] bytes, or bare byte
- * expressions, each optionally comma-separated (per the PSA manual). */
+ * expressions, each optionally comma-separated (per the PSA manual).
+ */
+
 static void do_ascii(astate *a, const char *line, const char *p, int mode)
 {
     int started = 0;
@@ -599,15 +608,17 @@ static void do_ascii(astate *a, const char *line, const char *p, int mode)
 
 /******************************************************************************/
 
-/* listing / output-format directives that emit no bytes (handled for now as
- * no-ops; .PABS/.PREL below do affect the relocation mode) */
+/*
+ * listing / output-format directives that emit no bytes (handled for now as
+ * no-ops; .PABS/.PREL below do affect the relocation mode)
+ */
+
 static int is_noop_dir(const char *op)
 {
     static const char *list[] = {
         ".PHEX", ".PBIN", ".XLINK", ".LADDR", ".SALL", ".LALL", ".LIST",
-        ".XLIST",
-        ".PAGE", ".EJECT", ".TITLE", ".SBTTL", ".SUBTTL", ".IDENT", ".REQUEST",
-        ".NAME", ".RELOC", ".COMMENT", ".I8080", ".Z80", ".LALL",
+        ".XLIST", ".PAGE", ".EJECT", ".TITLE", ".SBTTL", ".SUBTTL", ".IDENT",
+        ".REQUEST", ".NAME", ".RELOC", ".COMMENT", ".I8080", ".Z80", ".LALL",
         ".ENTRY", ".INTERN", "PUBLIC", ".PUBLIC", ".PRNTX", ".PRINTX",
         ".EXTERN", "EXTRN", ".EXTRN", "COMMON", ".COMMON", NULL
     };
@@ -661,7 +672,7 @@ static void resolve_alias(const astate *a, char *op)
 
 /******************************************************************************/
 
-/* are we currently assembling (not inside a skipped conditional block)? */
+/* are we currently assembling? (not inside a skipped conditional block) */
 static int casm(const astate *a)
 {
     int i;
@@ -731,9 +742,12 @@ static int cond_test(const char *op, const value_t *v)
 
 /******************************************************************************/
 
-/* Render the byte column the way the originals do: opcode bytes in order, an
+/*
+ * Render the byte column the way the originals do: opcode bytes in order, an
  * 8-bit operand concatenated onto them, a 16-bit operand/word as a spaced value
- * field (little-endian bytes shown big-endian), and data as a byte stream. */
+ * field (little-endian bytes shown big-endian), and data as a byte stream.
+ */
+
 static void lst_bytes(const astate *a, char *col)
 {
     int cn = 0, i;
@@ -772,10 +786,14 @@ static void lst_bytes(const astate *a, char *col)
     col[cn] = '\0';
 }
 
+/******************************************************************************/
+
 /* content lines per page before the form-feed: a 66-line
  * printer page less a 3-line bottom margin (both dialects) */
 #define LST_PAGE 63
 static void lst_header(astate *a);     /* forward */
+
+/******************************************************************************/
 
 /* Print the source field, expanding tabs to spaces on 8-column tab stops, as
  * the originals do -- they emit no tab bytes.  `col` is the column already
@@ -789,6 +807,8 @@ static void lst_source(FILE *f, const char *s, int col)
     }
     (void)fputc('\n', f);
 }
+
+/******************************************************************************/
 
 static void print_lst(astate *a, u16 lc0, const char *rawline)
 {
@@ -842,6 +862,8 @@ static int sym_name_cmp(const void *pa, const void *pb)
     return strcmp(a->name, b->name);
 }
 
+/******************************************************************************/
+
 /* End-of-listing symbol table on a fresh page: each entry is "%-6s %04X" plus a
  * 6-char flag field, 3-per-line (TDL) / 4 (PSA); user symbols sorted alphabe-
  * tically with the .BLNK./.DATA./.PROG. segment entries appended (fixed for
@@ -864,6 +886,8 @@ static void lst_symhead(astate *a)
         a->lst_line = 8;
     }
 }
+
+/******************************************************************************/
 
 static void lst_symtab(astate *a)
 {
@@ -923,6 +947,8 @@ static void lst_symtab(astate *a)
 
 static void process_file(astate *a, const char *path);   /* forward */
 
+/******************************************************************************/
+
 /* .INSERT <file>: process the named file inline (extension defaults to .ASM,
  * resolved relative to the top-level source's directory). */
 static void do_insert(astate *a, const char *field)
@@ -951,6 +977,8 @@ static void do_insert(astate *a, const char *field)
 /* ---- macros: .DEFINE NAME[params] = [body] ------------------------- */
 
 static void do_line(astate *a, const char *line);    /* forward */
+
+/******************************************************************************/
 
 static char *dupstr(const char *s)
 {
@@ -1555,18 +1583,16 @@ int asm_source(const char *path, dialect_t dialect, const char *outpath,
 
     /* Print the dialect herald, as the originals do. */
     if (dialect == DIALECT_PASM)
-        (void)fprintf(stderr,
-            "PSA Macro Assembler [C12011-0102 ] (Compatible)\n"
-            "Copyright (c) 2026 Jeffrey H. Johnson "
-            "<johnsonjh.dev@gmail.com>\n\n");
+        (void)fprintf(stderr, "%s\n",
+            "PSA Macro Assembler [C12011-0102 ] (Compatible)");
     else
-        (void)fprintf(stderr,
-            "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21 (COMPATIBLE)\n"
-            "Copyright (c) 2026 Jeffrey H. Johnson "
-            "<johnsonjh.dev@gmail.com>\n\n");
+        (void)fprintf(stderr, "%s\n",
+            "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21 (COMPATIBLE)");
 
-    /* Default the source extension to .asm when none was given (CP/M FCB
-     * rule). */
+    (void)fprintf(stderr, "%s\n\n",
+            "Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>");
+
+    /* Default source extension to .asm when none was given (CP/M FCB rule) */
     base = strrchr(path, '/');
     base = (base != NULL) ? base + 1 : path;
     if (strchr(base, '.') == NULL && strlen(path) + 4 < sizeof(srcpath))

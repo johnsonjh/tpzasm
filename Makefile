@@ -1,4 +1,4 @@
-# PASM/ZASM - Makefile
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - Makefile
 # Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 # SPDX-License-Identifier: MIT-0
 # scspell-id: 8424df2a-631f-11f1-955d-246e96298730
@@ -97,11 +97,13 @@ test_expr: $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-o $@ $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o \
-		$(SRCDIR)/sym.o "$${LDFLAGS:-$(XLDFLAGS)}"
+		$(SRCDIR)/sym.o "$${CFLAGS:-$(XCFLAGS)}" \
+		"$${LDFLAGS:-$(XLDFLAGS)}"
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-o $@ $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o \
-		$(SRCDIR)/sym.o "$${LDFLAGS:-$(XLDFLAGS)}"
+		$(SRCDIR)/sym.o "$${CFLAGS:-$(XCFLAGS)}" \
+		"$${LDFLAGS:-$(XLDFLAGS)}"
 
 ################################################################################
 
@@ -120,10 +122,12 @@ $(SRCDIR)/test_expr.o: $(SRCDIR)/test_expr.c $(SRCDIR)/asm.h
 hexcom: $(SRCDIR)/hexcom.o
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
-		-o $@ $(SRCDIR)/hexcom.o "$${LDFLAGS:-$(XLDFLAGS)}"
+		-o $@ $(SRCDIR)/hexcom.o "$${CFLAGS:-$(XCFLAGS)}" \
+		"$${LDFLAGS:-$(XLDFLAGS)}"
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
-		-o $@ $(SRCDIR)/hexcom.o "$${LDFLAGS:-$(XLDFLAGS)}"
+		-o $@ $(SRCDIR)/hexcom.o "$${CFLAGS:-$(XCFLAGS)}" \
+		"$${LDFLAGS:-$(XLDFLAGS)}"
 
 $(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c
 	@eval echo \

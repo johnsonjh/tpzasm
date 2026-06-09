@@ -1,5 +1,6 @@
 /*
- * HEXCOM - DRI HEXCONM 3.00 compatible utility
+ * TPZASM: TDL ZASM / PSA PASM compatible assembler - hexcom.c
+ * DRI HEXCOM 3.00 compatible utility
  * Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
  * SPDX-License-Identifier: MIT-0
  * scspell-id: 380e86a2-6335-11f1-92c6-246e96298730
@@ -125,12 +126,12 @@ int main(int argc, char **argv)
     unsigned char data[256] = {0};
     unsigned span, records;
 
-    (void)printf("HEXCOM  VERS: 3.00\n\n");
+    (void)printf("HEXCOM\tVERS: 3.00\n\n");
 
     if (argc < 2 || strlen(argv[1]) >= sizeof(base)) {
         (void)fprintf(stderr,
-            "Usage: hexcom BASENAME\n"
-            "       (Reads BASENAME.hex, writes BASENAME.com)\n");
+            "Usage: hexcom <basename>\n"
+            "       (Reads basename.hex, writes basename.com)\n");
         return 1;
     }
     (void)strncpy(base, argv[1], sizeof(base) - 1);

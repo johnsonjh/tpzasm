@@ -1,3 +1,4 @@
+<!-- TPZASM: TDL ZASM / PSA PASM compatible assembler - README.md -->
 <!-- Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com> -->
 <!-- SPDX-License-Identifier: MIT-0 -->
 <!-- scspell-id: 76c2d6a6-6334-11f1-84fe-246e96298730 -->
