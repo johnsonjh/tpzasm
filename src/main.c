@@ -20,7 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 
+int allow_long_symbols = 0;
+
 /******************************************************************************/
+
 
 static const char *
 basename_of (const char *p)
@@ -151,6 +154,7 @@ usage (const char *prog, dialect_t dialect)
                  "    -o file  Write the assembled binary image to file\n"
                  "    -P       Pad output to full CP/M record boundary\n"
                  "    -l file  Write the listing to file (default: stderr)\n"
+                 "    -L       Allow long (>6 character) symbol names\n"
                  "    -r file  Answer assembly-time prompts from file\n"
                  "    -e expr  Evaluate single expression and exit\n"
                  "    -h       Show this help text and exit\n"
@@ -185,6 +189,10 @@ main (int argc, char **argv)
 
             case 'z':
               dialect = DIALECT_ZASM;
+              break;
+
+            case 'L':
+              allow_long_symbols = 1;
               break;
 
             case 'P':
@@ -282,7 +290,7 @@ main (int argc, char **argv)
       return 2;
     }
 
-  return asm_source (src, dialect, outpath, lstpath, pad);
+  return asm_source (src, dialect, outpath, lstpath, pad, allow_long_symbols);
 }
 
 /******************************************************************************/

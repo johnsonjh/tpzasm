@@ -24,6 +24,11 @@
 
 /******************************************************************************/
 
+
+extern int allow_long_symbols;
+
+/******************************************************************************/
+
 int
 ci_eq (const char *a, const char *b)
 {
@@ -80,7 +85,7 @@ sym_new (void)
 
   if (t->bucket == NULL)
     {
-      free (t);
+      FREE (t);
       return NULL;
     }
 
@@ -98,16 +103,25 @@ symbol *
 sym_lookup (const symtab *t, const char *name)
 {
   symbol *s;
+  char buf[7];
+  const char *n = name;
 
   if (t == NULL)
     {
       return NULL;
     }
 
-  for (s = t->bucket[hash (name) % (unsigned)t->nbuckets]; s != NULL;
+  if (!allow_long_symbols && strchr (name, ':') == NULL)
+    {
+      (void)strncpy (buf, name, 6);
+      buf[6] = '\0';
+      n = buf;
+    }
+
+  for (s = t->bucket[hash (n) % (unsigned)t->nbuckets]; s != NULL;
        s = s->next)
     {
-      if (ci_eq (s->name, name))
+      if (ci_eq (s->name, n))
         {
           return s;
         }
@@ -123,20 +137,29 @@ sym_intern (symtab *t, const char *name)
 {
   unsigned idx;
   symbol *s;
+  char buf[7];
+  const char *n = name;
 
   if (t == NULL)
     {
       return NULL;
     }
 
-  s = sym_lookup (t, name);
+  if (!allow_long_symbols && strchr (name, ':') == NULL)
+    {
+      (void)strncpy (buf, name, 6);
+      buf[6] = '\0';
+      n = buf;
+    }
+
+  s = sym_lookup (t, n);
 
   if (s != NULL)
     {
       return s;
     }
 
-  idx = hash (name) % (unsigned)t->nbuckets;
+  idx = hash (n) % (unsigned)t->nbuckets;
   s = (symbol *)malloc (sizeof *s);
 
   if (s == NULL)
@@ -144,16 +167,16 @@ sym_intern (symtab *t, const char *name)
       return NULL;
     }
 
-  s->name = (char *)malloc (strlen (name) + 1);
+  s->name = (char *)malloc (strlen (n) + 1);
 
   if (s->name == NULL)
     {
-      free (s);
+      FREE (s);
       return NULL;
     }
 
   /* False positive CWE-120: s->name = malloc(strlen(name)+1) */
-  (void)strcpy (s->name, name); /* Flawfinder: ignore */
+  (void)strcpy (s->name, n); /* Flawfinder: ignore */
 
   s->val.value = 0;
   s->val.reloc = 0;
@@ -188,16 +211,15 @@ sym_free (symtab *t)
       while (s != NULL)
         {
           nx = s->next;
-          free (s->name);
-          free (s);
+          FREE (s->name);
+          FREE (s);
           s = nx;
         }
     }
 
-  free (t->bucket);
-  free (t);
+  FREE (t->bucket);
+  FREE (t);
 }
-
 /******************************************************************************/
 
 int

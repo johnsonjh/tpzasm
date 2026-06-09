@@ -566,7 +566,7 @@ command -v "${OLINT:-}" > /dev/null 2>&1 && {
       set -x
       # shellcheck disable=SC2086
       "${OLINT:?}" \
-        -O -fd -std=c89 -err=warn -XCC=no \
+        -O -D__ORACLE_LINT__ -fd -std=c89 -err=warn -XCC=no \
         -errchk=structarg,parentheses,locfmtchk ${olint_unit}
     ); then
       :
@@ -602,9 +602,7 @@ command -v "${SHELLCHECK_CMD:-shellcheck}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHELLCHECK_CMD:-shellcheck}" -o any,all \
-      ./.common.sh \
-      ./.lint.sh \
-      ./tools/*.sh
+      ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
   ); then
     :
   else
@@ -620,7 +618,7 @@ command -v "${SHFMT_CMD:-shfmt}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHFMT_CMD:-shfmt}" -bn -sr -fn -i 2 -s -d \
-      ./tools/*.sh ./.common.sh ./.lint.sh
+      ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
   ); then
     :
   else

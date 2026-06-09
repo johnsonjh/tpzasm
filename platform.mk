@@ -30,6 +30,23 @@ CLANG_COMP=$(shell $(CC) -v 2>&1 | \
 
 ################################################################################
 
+# Detect if CC is CompCert with `--version`
+COMPCERT_COMP=$(shell $(CC) --version 2>&1 | \
+ grep -q -i "CompCert" 2> /dev/null && \
+  printf '%s\n' "1")
+ifeq ($(COMPCERT_COMP),1)
+ COMP_NAME=(CompCert)
+endif
+
+################################################################################
+
+# CompCert C needs -fstruct-passing, use -std=c99
+ifeq ($(COMPCERT_COMP),1)
+ CFLAGS+=-std=c99 -fstruct-passing
+endif
+
+################################################################################
+
 # Set GCC_CLANG is CC is GCC or Clang
 ifeq ($(GCC_COMP),1)
  GCC_CLANG=1
@@ -47,7 +64,7 @@ ifneq ($(GCC_CLANG),1)
  SUNCC_CMP=$(shell $(CC) -V 2>&1 | \
   grep -q -e "Sun C" 2> /dev/null && printf '%s\n' "1")
  ifeq ($(SUNCC_CMP),1)
-  $(info [MAKE] Compiler = $(CC) (Sun/Oracle))
+  COMP_NAME=(Sun/Oracle)
  endif
 endif
 
@@ -74,15 +91,8 @@ endif
 
 ################################################################################
 
-# Show compiler details if we haven't already
-ifeq ($(GCC_CLANG),1)
- $(info [MAKE] Compiler = $(CC) $(COMP_NAME))
-endif
-ifneq ($(GCC_CLANG),1)
- ifneq ($(SUNCC_CMP),1)
-  $(info [MAKE] Compiler = $(CC))
- endif
-endif
+# Show compiler details
+$(info [MAKE] Compiler = $(CC) $(COMP_NAME))
 
 ################################################################################
 

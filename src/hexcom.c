@@ -49,19 +49,13 @@ static int
 hexval (int c)
 {
   if (c >= '0' && c <= '9')
-    {
-      return c - '0';
-    }
+    return c - '0';
 
   if (c >= 'A' && c <= 'F')
-    {
-      return c - 'A' + 10;
-    }
+    return c - 'A' + 10;
 
   if (c >= 'a' && c <= 'f')
-    {
-      return c - 'a' + 10;
-    }
+    return c - 'a' + 10;
 
   return -1;
 }
@@ -116,22 +110,19 @@ dump_record (unsigned recaddr, const unsigned char *data, int n)
   for (i = 0; i < n; i++)
     {
       if (i % 16 == 0)
-        {
-          (void)printf ("%04X: ", (recaddr + (unsigned)i) & 0xFFFF);
-        }
+        (void)printf ("%04X: ", (recaddr + (unsigned)i) & 0xFFFF);
 
       (void)printf ("%02X ", data[i]);
 
       if ((i + 1) % 16 == 0)
-        {
-          (void)printf ("\n");
-        }
+        (void)printf ("\n");
     }
 
   if (n % 16 != 0)
-    {
-      (void)printf ("\n");
-    }
+    (void)printf ("\n");
+
+  (void)fflush (stdout);
+  (void)fflush (stderr);
 }
 
 /******************************************************************************/
@@ -184,14 +175,24 @@ main (int argc, char **argv)
   FILE *out;
   unsigned char data[256] = { 0 };
   unsigned span, records;
+  size_t write_size;
 
-  (void)printf ("HEXCOM\tVERS: 3.00\n\n");
+  (void)printf ("HEXCOM\tVERS: 3.00\n");
+
+  (void)fflush (stdout);
+  (void)fflush (stderr);
 
   if (argc < 2 || strlen (argv[1]) >= sizeof (base))
     {
       (void)fprintf (stderr,
-                     "Usage: hexcom <basename>\n"
-                     "       (Reads basename.hex, writes basename.com)\n");
+        "Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>\n"
+        "\n"
+        "Usage:\n"
+        "  hexcom <basename>  (Reads basename.hex, writes basename.com)\n"
+        "\n"
+        "Set 'HEXCOM_NO_PAD=1' in the environment to disable record padding.\n"
+        "\n");
+
       return 1;
     }
 
@@ -200,9 +201,7 @@ main (int argc, char **argv)
   dot = strrchr (base, '.');
 
   if (dot != NULL && (strcmp (dot, ".hex") == 0 || strcmp (dot, ".HEX") == 0))
-    {
-      *dot = '\0';
-    }
+    *dot = '\0';
 
   /* False positives CWE-120: srcname/dstname[300] >= base[<256] + ext[4] */
   (void)sprintf (srcname, "%s.hex", base); /* Flawfinder: ignore */
@@ -211,9 +210,7 @@ main (int argc, char **argv)
   src = fopen (srcname, "rb");
 
   if (src == NULL)
-    {
-      fatal_load ("CANNOT OPEN SOURCE FILE", TPA);
-    }
+    fatal_load ("CANNOT OPEN SOURCE FILE", TPA);
 
   /*
    * The original creates the output file before reading, so a malformed HEX
@@ -223,9 +220,7 @@ main (int argc, char **argv)
   out = fopen (dstname, "wb");
 
   if (out == NULL)
-    {
-      fatal_load ("DIRECTORY FULL", TPA);
-    }
+    fatal_load ("DIRECTORY FULL", TPA);
 
   for (;;)
     {
@@ -233,53 +228,37 @@ main (int argc, char **argv)
       int c, ok, ll, tt, i, sum, cc;
 
       do
-        {
-          c = fgetc (src);
-        }
+        c = fgetc (src);
       while (c != ':' && c != EOF && c != 0x1A);
 
       if (c != ':')
-        {
-          break; /* end of input: no further records */
-        }
+        break; /* end of input: no further records */
 
       ll = rd_byte (src, &ok);
 
       if (!ok)
-        {
-          record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
-        }
+        record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
 
       addr = (unsigned)rd_byte (src, &ok) << 8;
 
       if (!ok)
-        {
-          record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
-        }
+        record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
 
       addr |= (unsigned)rd_byte (src, &ok);
 
       if (!ok)
-        {
-          record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
-        }
+        record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
 
       tt = rd_byte (src, &ok);
 
       if (!ok)
-        {
-          record_error ("INVALID HEX DIGIT", addr, addr, data, 0);
-        }
+        record_error ("INVALID HEX DIGIT", addr, addr, data, 0);
 
       if (tt == 0x01)
-        {
-          break; /* end-of-file record */
-        }
+        break; /* end-of-file record */
 
       if (tt != 0x00)
-        {
-          continue; /* ignore other record types */
-        }
+        continue; /* ignore other record types */
 
       /*
        * A zero-length record (e.g. the ":0000000000" terminator some HEX
@@ -288,9 +267,7 @@ main (int argc, char **argv)
        */
 
       if (ll > 0 && addr < TPA)
-        {
-          fatal_load ("LOAD ADDRESS LESS THAN 100", addr);
-        }
+        fatal_load ("LOAD ADDRESS LESS THAN 100", addr);
 
       if (ll > 0 && !have_first)
         {
@@ -305,10 +282,8 @@ main (int argc, char **argv)
           int b = rd_byte (src, &ok);
 
           if (!ok)
-            {
-              record_error ("INVALID HEX DIGIT", addr,
-                            (addr + (unsigned)i) & 0xFFFF, data, i);
-            }
+            record_error ("INVALID HEX DIGIT", addr,
+                          (addr + (unsigned)i) & 0xFFFF, data, i);
 
           data[i] = (unsigned char)b;
           sum += b;
@@ -317,28 +292,20 @@ main (int argc, char **argv)
       cc = rd_byte (src, &ok);
 
       if (!ok)
-        {
-          record_error ("INVALID HEX DIGIT", addr,
-                        (addr + (unsigned)ll) & 0xFFFF, data, ll);
-        }
+        record_error ("INVALID HEX DIGIT", addr,
+                      (addr + (unsigned)ll) & 0xFFFF, data, ll);
 
       sum += cc;
 
       if ((sum & 0xFF) != 0)
-        {
-          record_error ("CHECKSUM ERROR ", addr,
-                        (addr + (unsigned)ll) & 0xFFFF, data, ll);
-        }
+        record_error ("CHECKSUM ERROR ", addr,
+                      (addr + (unsigned)ll) & 0xFFFF, data, ll);
 
       for (i = 0; i < ll; i++)
-        {
-          image[(addr + (unsigned)i) & 0xFFFF] = data[i];
-        }
+        image[(addr + (unsigned)i) & 0xFFFF] = data[i];
 
       if (ll > 0 && (addr + (unsigned)ll - 1) > last_addr)
-        {
-          last_addr = addr + (unsigned)ll - 1;
-        }
+        last_addr = addr + (unsigned)ll - 1;
 
       total_bytes += (unsigned)ll;
     }
@@ -360,23 +327,38 @@ main (int argc, char **argv)
   span = (last_addr >= first_addr) ? (last_addr - first_addr + 1) : 0;
   records = (span + RECSZ - 1) / RECSZ;
 
+  if (getenv ("HEXCOM_NO_PAD") == NULL)
+    {
+      unsigned pad_start = first_addr + span;
+      unsigned pad_end = first_addr + (records * RECSZ);
+
+      if (pad_end <= ADDRSP && pad_start < pad_end)
+        (void)memset (image + pad_start, 0x1A, (size_t)(pad_end - pad_start));
+    }
+  else
+    records = (span + RECSZ - 1) / RECSZ;
+
   (void)printf ("FIRST ADDRESS %04X\n", first_addr);
   (void)printf ("LAST  ADDRESS %04X\n", last_addr);
   (void)printf ("BYTES READ    %04X\n", total_bytes & 0xFFFF);
   (void)printf ("RECORDS WRITTEN %02X\n", records & 0xFFu);
   (void)printf ("\n");
 
-  if (fwrite (image + first_addr, 1, (size_t)records * RECSZ, out)
-      != (size_t)records * RECSZ)
+  (void)fflush (stdout);
+  (void)fflush (stderr);
+
+  write_size = ((getenv ("HEXCOM_NO_PAD") == NULL)
+                 ? (size_t)records * RECSZ
+                 : (size_t)span);
+
+  if (fwrite (image + first_addr, 1, write_size, out) != write_size)
     {
       (void)fclose (out);
       fatal_load ("DISK WRITE", first_addr);
     }
 
   if (fclose (out) != 0)
-    {
-      fatal_load ("CANNOT CLOSE FILE", first_addr);
-    }
+    fatal_load ("CANNOT CLOSE FILE", first_addr);
 
   return 0;
 }
