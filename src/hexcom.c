@@ -30,7 +30,7 @@
 
 #define TPA 0x100      /* CP/M transient program area base address */
 #define RECSZ 128      /* CP/M record (sector) size                */
-#define ADDRSP 0x10000 /* 64K address space                        */
+#define ADDRSP 0x10000UL /* 64K address space                        */
 
 /******************************************************************************/
 
@@ -339,8 +339,7 @@ main (int argc, char **argv)
           if (pad_end > max_addr)
             pad_end = max_addr;
 
-          if (pad_start < pad_end)
-            (void)memset (image + pad_start, 0x1A, pad_end - pad_start);
+          (void)memset (image + pad_start, 0x1A, pad_end - pad_start);
         }
     }
 
