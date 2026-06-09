@@ -15,7 +15,7 @@
 #      ASM_REF/orig; default repo root)
 #      OUTDIR  (default ./oracle-out)
 set -u
-master=${1:?usage: build_oracle.sh MASTER [SRCDIR] [ANSWERS] [ASMS]}
+master=${1:?Usage: build_oracle.sh master [srcdir] [answers] [asms]}
 srcdir=${2:-/home/jhj/src/VEDIT/src}
 answers=${3:-/dev/null}
 asms=${4:-pasm zasm}

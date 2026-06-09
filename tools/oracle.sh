@@ -17,7 +17,7 @@
 
 set -u
 
-src=${1:?usage: oracle.sh SOURCE.asm  (console answers on stdin)}
+src=${1:?Usage: oracle.sh source.asm  (console answers on stdin)}
 
 export CPE1704TKS=1
 asmcommon=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)

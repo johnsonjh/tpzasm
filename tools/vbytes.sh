@@ -4,7 +4,7 @@
 # under tnylpo, extract the emitted byte stream from each listing, and report
 # IDENTICAL / DIFFER.  Usage: tools/vbytes.sh tests/foo.asm
 set -u
-src=${1:?usage: vbytes.sh SRC.asm}
+src=${1:?Usage: vbytes.sh src.asm}
 
 export CPE1704TKS=1
 asmcommon=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
