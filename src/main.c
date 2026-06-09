@@ -47,7 +47,7 @@ static void usage(const char *prog, dialect_t dialect)
         "TPZASM - TDL ZASM / PSA PASM compatible assembler%s\n\n"
         "  Usage: %s [options] <source[.asm]>\n\n"
         "    -z       Emulate TDL ZASM 2.21 behavior%s\n"
-        "    -p       Emulate PSA PASM behavior%s\n"
+        "    -p       Emulate PSA PASM 1.0 behavior%s\n"
         "    -o file  write the assembled binary image to file\n"
         "    -P       pad -o output to full CP/M record boundary\n"
         "    -l file  write the listing to file (default: stderr)\n"

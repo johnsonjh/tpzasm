@@ -43,7 +43,7 @@ $(LINKS): $(PROG)
 
 ################################################################################
 
-$(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h
+$(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h $(SRCDIR)/platform.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/main.c
@@ -85,6 +85,13 @@ $(SRCDIR)/assemble.o: $(SRCDIR)/assemble.c $(SRCDIR)/asm.h
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/assemble.c
+$(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/platform.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/platform.c
 
 ################################################################################
 

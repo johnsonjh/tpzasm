@@ -135,13 +135,24 @@ platform_name (void)
 
 /*******************************************************************/
 
+#elif defined (__COMPILER_KCC__)
+  return " (TOPS-20)";
+
+/*******************************************************************/
+
 #elif defined (__CPM86__) || defined (CPM86)
   return " (CP/M-86)";
 
 /*******************************************************************/
 
-#elif defined (__CPM__) || defined (__CPM80__)
+#elif defined (__CPM__) || defined (__CPM80__) || defined (_CPM) \
+    || defined (CPM)
   return " (CP/M)";
+
+/*******************************************************************/
+
+#elif defined (__DJGPP) || defined (__DJGPP__) || defined (DJGPP)
+  return " (DJGPP/MS-DOS)";
 
 /*******************************************************************/
 
@@ -165,14 +176,12 @@ platform_name (void)
   struct utsname name;
 
   if (uname (&name) == -1)
-    {
-      return " (SoftIntegration Ch)";
-    }
+    return " (SoftIntegration Ch)";
 
   string_t buf;
 
   /* cppcheck-suppress legacyUninitvar */
-  buf += " (SoftIntegration Ch on ";
+  buf += " (Ch on ";
   buf += name.sysname;
   buf += " ";
   buf += name.machine;
@@ -182,7 +191,8 @@ platform_name (void)
 
 /*******************************************************************/
 
-#elif defined (__unix__) || defined (__unix)
+#elif defined (__unix__) || defined (__unix) || defined (__UNIX__) \
+    || defined (unix)
   return " (Unix)";
 
 /*******************************************************************/
