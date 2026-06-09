@@ -18,7 +18,8 @@ LINKS    = pasm zasm
 ################################################################################
 
 OBJ = $(SRCDIR)/main.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o \
-	$(SRCDIR)/lex.o $(SRCDIR)/insn.o $(SRCDIR)/assemble.o
+	$(SRCDIR)/lex.o $(SRCDIR)/insn.o $(SRCDIR)/assemble.o \
+	$(SRCDIR)/platform.o
 
 ################################################################################
 

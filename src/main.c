@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "asm.h"
+#include "platform.h"
 
 /******************************************************************************/
 
@@ -40,20 +41,22 @@ static dialect_t dialect_from_name(const char *argv0)
 
 /******************************************************************************/
 
-static void usage(const char *prog)
+static void usage(const char *prog, dialect_t dialect)
 {
     (void)fprintf(stderr,
-        "TPZASM - TDL ZASM / PSA PASM compatible assembler\n"
-        "usage: %s [options] SOURCE.ASM\n"
-        "  -p       Emulate PSA PASM behavior\n"
-        "  -z       Emulate TDL ZASM behavior\n"
-        "  -o file  write the assembled binary image to file\n"
-        "  -P       pad -o output to a 128-byte CP/M record boundary\n"
-        "  -l file  write the listing to file (default: stderr)\n"
-        "  -r file  read assembly-time console-prompt answers from file\n"
-        "  -e expr  evaluate single expression and exit\n"
-        "  -h       show this help text\n",
-        prog);
+        "TPZASM - TDL ZASM / PSA PASM compatible assembler%s\n\n"
+        "  Usage: %s [options] <source[.asm]>\n\n"
+        "    -z       Emulate TDL ZASM 2.21 behavior%s\n"
+        "    -p       Emulate PSA PASM behavior%s\n"
+        "    -o file  write the assembled binary image to file\n"
+        "    -P       pad -o output to full CP/M record boundary\n"
+        "    -l file  write the listing to file (default: stderr)\n"
+        "    -r file  answer assembly-time prompts from file\n"
+        "    -e expr  evaluate single expression and exit\n"
+        "    -h       show this help text\n"
+        "\n", platform_name (), prog,
+        (dialect == DIALECT_ZASM ? " (default)" : ""),
+        (dialect == DIALECT_PASM ? " (default)" : ""));
 }
 
 /******************************************************************************/
@@ -75,7 +78,7 @@ int main(int argc, char **argv)
             case 'p': dialect = DIALECT_PASM; break;
             case 'z': dialect = DIALECT_ZASM; break;
             case 'P': pad = 1; break;
-            case 'h': usage(prog); return 0;
+            case 'h': usage(prog, dialect); return 0;
             case 'o':
                 if (i + 1 >= argc) {
                     (void)fprintf(stderr, "%s: -o needs a filename\n", prog);
@@ -129,7 +132,7 @@ int main(int argc, char **argv)
             }
             default:
                 (void)fprintf(stderr, "%s: unknown option '%s'\n", prog, a);
-                usage(prog);
+                usage(prog, dialect);
                 return 2;
             }
         } else {
@@ -138,7 +141,7 @@ int main(int argc, char **argv)
     }
 
     if (src == NULL) {
-        usage(prog);
+        usage(prog, dialect);
         return 2;
     }
     return asm_source(src, dialect, outpath, lstpath, pad);
