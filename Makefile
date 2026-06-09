@@ -43,7 +43,8 @@ $(LINKS): $(PROG)
 
 ################################################################################
 
-$(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h $(SRCDIR)/platform.h
+$(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h $(SRCDIR)/platform.h \
+	$(SRCDIR)/version.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/main.c
@@ -149,6 +150,7 @@ $(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c
 
 clean:
 	rm -f $(PROG) $(LINKS) hexcom test_expr
+	rm -f $(PROG).exe hexcom.exe test_expr.exe
 	rm -f $(SRCDIR)/*.o
 	rm -f compile_commands.json log.pvs
 

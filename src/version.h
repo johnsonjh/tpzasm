@@ -1,5 +1,5 @@
 /*
- * TPZASM: TDL ZASM / PSA PASM compatible assembler - platform.h
+ * TPZASM: TDL ZASM / PSA PASM compatible assembler - version.h
  * Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
  * SPDX-License-Identifier: MIT-0
  * scspell-id: c151d874-63fd-11f1-9cd0-80ee73e9b8e7
@@ -7,22 +7,18 @@
 
 /******************************************************************************/
 
-#ifndef PLATFORM_H
-# define PLATFORM_H
+#ifndef VERSION_H
+# define VERSION_H
 
 /******************************************************************************/
 
-# ifdef _CH_
-#  include <string.h>
-#  include <sys/utsname.h>
+# ifdef ASM_VERSION
+#  undef ASM_VERSION
 # endif
 
 /******************************************************************************/
 
-# ifndef _CH_
-const
-# endif
-char *platform_name (void);
+# define ASM_VERSION "Release 0.1-dev"
 
 /******************************************************************************/
 

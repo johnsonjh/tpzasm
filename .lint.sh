@@ -273,7 +273,7 @@ command -v flawfinder > /dev/null 2>&1 && {
 
 command -v cppi > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> cppi <<<<<<<<<<<<<<<<"
-  for f in ./src/*.c; do
+  for f in ./src/*.[ch]; do
     if (
       set -x
       cppi -a --check "${f}"
@@ -436,7 +436,7 @@ command -v "${GCC_CMD:-gcc}" > /dev/null 2>&1 && {
 
 lCFLAGS="-U_FORTIFY_SOURCE -O3 -Weverything -Wno-unsafe-buffer-usage"
 lCFLAGS="${lCFLAGS:-} -Wno-padded -Wno-missing-noreturn"
-lCFLAGS="${lCFLAGS:-} -Wno-disabled-macro-expansion"
+lCFLAGS="${lCFLAGS:-} -Wno-disabled-macro-expansion -Wno-date-time"
 lCFLAGS="${lCFLAGS:-} -Wno-used-but-marked-unused -Werror -ferror-limit=0"
 lCFLAGS="${lCFLAGS:-} -std=c89 -Wno-padded -Wno-used-but-marked-unused"
 
