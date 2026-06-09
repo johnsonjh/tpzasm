@@ -333,8 +333,14 @@ main (int argc, char **argv)
       size_t pad_start = (size_t)first_addr + span;
       size_t pad_end = (size_t)first_addr + (size_t)records * RECSZ;
 
-      if (pad_end <= ADDRSP && pad_start < pad_end)
-        (void)memset (image + pad_start, 0x1A, pad_end - pad_start);
+      if (pad_start < ADDRSP)
+        {
+          if (pad_end > ADDRSP)
+            pad_end = ADDRSP;
+
+          if (pad_start < pad_end)
+            (void)memset (image + pad_start, 0x1A, pad_end - pad_start);
+        }
     }
 
   (void)printf ("FIRST ADDRESS %04X\n", first_addr);
