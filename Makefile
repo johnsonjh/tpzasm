@@ -149,8 +149,8 @@ $(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c
 ################################################################################
 
 clean:
-	rm -f $(PROG) $(LINKS) hexcom test_expr
-	rm -f $(PROG).exe hexcom.exe test_expr.exe
+	rm -f $(PROG) $(LINKS) hexcom test_expr ./.test
+	rm -f $(PROG).exe hexcom.exe test_expr.exe ./.test.exe
 	rm -f $(SRCDIR)/*.o
 	rm -f compile_commands.json log.pvs
 
