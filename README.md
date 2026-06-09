@@ -7,6 +7,12 @@
 
 TDL ZASM / PSA PASM compatible assembler
 
+## Portability
+
+The GNU GCC, LLVM Clang, PCC, NVIDIA HPC SDK C/C++, Oracle Studio C/C++,
+DMD ImportC, CompCert C, Open64, PathScale EKOPath, IBM XL C/C++,
+IBM Open XL C/C++, and МЦСТ LCC compilers are regularly tested.
+
 ## License
 
 This software is distributed under the terms of the permissive

@@ -64,6 +64,7 @@ typedef struct
   int ended;
   u8 bytes[64];
   int nbytes;
+  int long_symbols;
 
   /* .OPSYN aliases: alias_from[i] is a synonym for alias_to[i] */
   char alias_from[MAXALIAS][NAMEBUF];
@@ -1733,7 +1734,7 @@ lst_symtab (astate *a)
         }
     }
 
-  free (all);
+  FREE (all);
 }
 
 /******************************************************************************/
@@ -1860,10 +1861,10 @@ macro_free_all (astate *a)
 
       for (i = 0; i < m->nbody; i++)
         {
-          free (m->body[i]);
+          FREE (m->body[i]);
         }
 
-      free (m);
+      FREE (m);
     }
 
   a->macros = NULL;
@@ -1893,7 +1894,7 @@ macro_capture (astate *a, const char *p)
 
       if (*p != '[')
         {
-          free (m);
+          FREE (m);
           a->defining = NULL;
           return;
         }
@@ -2897,7 +2898,7 @@ process_file (astate *a, const char *path)
 
 int
 asm_source (const char *path, dialect_t dialect, const char *outpath,
-            const char *lstpath, int pad)
+            const char *lstpath, int pad, int long_symbols)
 {
   astate a = { 0 };
   const char *slash, *base;
@@ -2937,6 +2938,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   a.syms = sym_new ();
   a.dialect = dialect;
+  a.long_symbols = long_symbols;
   a.lst_page = 0;
   a.lst_line = 0;
 
@@ -3089,7 +3091,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             }
         }
 
-      free (a.image);
+      FREE (a.image);
     }
 
   {

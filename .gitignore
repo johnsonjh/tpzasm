@@ -30,9 +30,9 @@ core-*
 /GTAGS
 /hexcom
 log.pvs
+main
 *.map
 *.MAP
-/*UME.md
 NOTE.txt
 *.o
 *.O
@@ -41,6 +41,7 @@ NOTE.txt
 /*.off/
 /oracle-out/
 *.out
+out.txt
 *.pak
 *.PAK
 /pasm
@@ -52,12 +53,14 @@ pvsreport
 __pycache__/
 /.scannerwork/
 /src/_chtmp.c
+symtab.txt
 /*.t
 /tags
 /TAGS
 /test_expr
 *.tmp
 *.TMP
+/*UME.md
 *.unittest
 /work/
 /zasm

@@ -7,6 +7,10 @@
 
 /******************************************************************************/
 
+int allow_long_symbols = 0;
+
+/******************************************************************************/
+
 /*
  * test_expr.c - self-tests for the expression evaluator + relocation algebra.
  * Expected values are from the PSA/TDL manual semantics.  `make test`.

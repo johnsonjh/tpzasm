@@ -97,8 +97,10 @@ $(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
 ################################################################################
 
 # Unit tests for the engine.
-test: test_expr
-	./test_expr
+test: test_expr asm tests/test_trunc.sh tests/longname.asm
+	@printf '%s\n' "" 2> /dev/null || :
+	@./test_expr
+	@./tests/test_trunc.sh
 
 ################################################################################
 
@@ -126,8 +128,22 @@ $(SRCDIR)/test_expr.o: $(SRCDIR)/test_expr.c $(SRCDIR)/asm.h
 
 ################################################################################
 
-# hexcom: standalone Intel-HEX -> CP/M .COM converter (DRI HEXCOM 3.00 clone;
-# self-contained, does not use the assembler engine).
+# Build with DMD ImportC
+# Works on Linux, some platforms might need "-inline -betterC" removed
+dmd:
+	dmd -inline -betterC -nothrow -fPIC -fPIE -O -release -check=off \
+		-boundscheck=off \
+		$$(ls -1 src/*.c | grep -Ev '(test_expr\.c|hexcom\.c)')
+	mv -f assemble asm
+	rm -f assemble.o
+	ln -f -s asm pasm
+	ln -f -s asm zasm
+	dmd -inline -betterC -nothrow -fPIC -fPIE -O -release -check=off \
+		-boundscheck=off src/hexcom.c
+	rm -f hexcom.o
+
+################################################################################
+
 hexcom: $(SRCDIR)/hexcom.o
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \

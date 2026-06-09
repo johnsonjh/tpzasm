@@ -12,6 +12,23 @@
 
 /******************************************************************************/
 
+# ifdef FREE
+#  undef FREE
+# endif
+
+# ifndef __ORACLE_LINT__
+static const int never = 0;
+#  define FREE(p) \
+  do {            \
+    free((p));    \
+    (p) = NULL;   \
+  } while (never)
+# else
+#  define FREE(p) free(p)
+# endif
+
+/******************************************************************************/
+
 # include <stddef.h> /* size_t, NULL */
 
 /******************************************************************************/
@@ -68,6 +85,10 @@ typedef struct symbol
 /******************************************************************************/
 
 typedef struct symtab symtab; /* opaque (src/sym.c) */
+
+/******************************************************************************/
+
+extern int allow_long_symbols;
 
 /******************************************************************************/
 
@@ -133,7 +154,8 @@ void lex_line (const char *line, line_t *out);
 
 int asm_source (const char *path, dialect_t dialect, const char *outpath,
                 const char *lstpath,
-                int pad); /* pad: 1=pad .com to 128B with 0x1A */
+                int pad, /* pad: 1=pad .com to next 128B boundary with 0x1A */
+                int long_symbols);
 
 /******************************************************************************/
 
