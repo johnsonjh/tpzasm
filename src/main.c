@@ -63,6 +63,7 @@ dialect_from_name (const char *argv0)
 static const char *
 trimstr (const char *s)
 {
+  /* cppcheck-suppress constVariable */
   static char buf[TRIMSTR_SLOTS][1024];
   static int slot = 0;
 
