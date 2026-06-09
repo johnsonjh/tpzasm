@@ -77,6 +77,7 @@ symbol *sym_lookup (const symtab *t, const char *name);
 symbol *sym_intern (symtab *t, const char *name);
 int sym_count (const symtab *t);                  /* number of symbols   */
 void sym_collect (const symtab *t, symbol **buf); /* fill buf[0..count-1] */
+int ci_eq (const char *a, const char *b); /* actually in src/sym.c */
 
 /******************************************************************************/
 

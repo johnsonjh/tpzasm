@@ -1814,22 +1814,6 @@ dupstr (const char *s)
 
 /******************************************************************************/
 
-/* case-insensitive string equality (TDL folds case for symbols/macro params)
- */
-static int
-ci_eq (const char *a, const char *b)
-{
-  while (*a != '\0'
-         && toupper ((unsigned char)*a) == toupper ((unsigned char)*b))
-    {
-      a++;
-      b++;
-    }
-  return *a == '\0' && *b == '\0';
-}
-
-/******************************************************************************/
-
 static macrodef *
 macro_lookup (astate *a, const char *name)
 {
