@@ -17,12 +17,11 @@
 # endif
 
 # ifndef __ORACLE_LINT__
-static const int never = 0;
 #  define FREE(p) \
   do {            \
     free((p));    \
     (p) = NULL;   \
-  } while (never)
+  } while (0)
 # else
 #  define FREE(p) free(p)
 # endif
