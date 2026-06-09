@@ -557,15 +557,13 @@ command -v "${OLINT:-}" > /dev/null 2>&1 && {
     esac
   done
   olint_rc=0
-  # test_expr links only expr/sym, so -x silences the engine prototypes in
-  # asm.h (lex_line/asm_source/insn_find) that this subset declares but cannot
-  # use or define.
   for olint_unit in "${olint_engine} ./src/main.c" \
-    "-x ./src/expr.c ./src/sym.c ./src/test_expr.c" "./src/hexcom.c"; do
+    "-erroff=E_GLOBAL_COULD_BE_STATIC2,E_NAME_USED_NOT_DEF2 -x ./src/expr.c \
+    ./src/sym.c ./src/test_expr.c" "./src/hexcom.c"; do
     if (
       set -x
       # shellcheck disable=SC2086
-      "${OLINT:?}" \
+      "${OLINT:?}" -errtags -erroff=E_NAME_DEF_NOT_USED2 \
         -O -D__ORACLE_LINT__ -fd -std=c89 -err=warn -XCC=no \
         -errchk=structarg,parentheses,locfmtchk ${olint_unit}
     ); then

@@ -327,6 +327,7 @@ main (int argc, char **argv)
   span = (last_addr >= first_addr) ? (last_addr - first_addr + 1) : 0;
   records = (span + RECSZ - 1) / RECSZ;
 
+  /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
   if (getenv ("HEXCOM_NO_PAD") == NULL)
     {
       unsigned pad_start = first_addr + span;
@@ -335,8 +336,6 @@ main (int argc, char **argv)
       if (pad_end <= ADDRSP && pad_start < pad_end)
         (void)memset (image + pad_start, 0x1A, (size_t)(pad_end - pad_start));
     }
-  else
-    records = (span + RECSZ - 1) / RECSZ;
 
   (void)printf ("FIRST ADDRESS %04X\n", first_addr);
   (void)printf ("LAST  ADDRESS %04X\n", last_addr);
@@ -347,6 +346,7 @@ main (int argc, char **argv)
   (void)fflush (stdout);
   (void)fflush (stderr);
 
+  /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
   write_size = ((getenv ("HEXCOM_NO_PAD") == NULL)
                  ? (size_t)records * RECSZ
                  : (size_t)span);

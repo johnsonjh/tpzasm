@@ -17,184 +17,198 @@
 
 /******************************************************************************/
 
-#ifndef _CH_
-const
+const char *sysarch(void)
+{
+#ifndef HAVE_UTSNAME_H
+  return "";
+#else
+  static char buf[1024];
+  struct utsname u;
+
+  if (0 != uname (&u))
+    {
+      buf[1] = '\0';
+      return buf;
+    }
+
+  strncpy (buf, u.machine, sizeof(buf) - 1);
+  buf[sizeof(buf) - 1] = '\0';
+
+  return buf;
 #endif
-char *
-platform_name (void)
+}
+
+/******************************************************************************/
+
+const char *platform_name (void)
 {
 #if defined(__linux__) || defined(__linux)
-  return " (Linux)";
+  return "Linux";
 
   /*******************************************************************/
 
 #elif defined(__illumos__)
-  return " (illumos)";
+  return "illumos";
 
   /*******************************************************************/
 
 #elif defined(__sun) || defined(sun)
 # if defined(__SVR4)
-  return " (Solaris)";
+  return "Solaris";
 
   /*******************************************************************/
 
 # else
-  return " (SunOS)";
+  return "SunOS";
 # endif
 
   /*******************************************************************/
 
 #elif defined(__hpux)
-  return " (HP-UX)";
+  return "HP-UX";
 
   /*******************************************************************/
 
 #elif defined(_AIX) && !defined(__PASE__)
-  return " (AIX)";
+  return "AIX";
 
   /*******************************************************************/
 
 #elif defined(__PASE__)
-  return " (OS/400)"
+  return "OS/400"
 
   /*******************************************************************/
 
 #elif defined(__sgi)
-  return " (IRIX)";
+  return "IRIX";
 
   /*******************************************************************/
 
 #elif defined(__FreeBSD__)
-  return " (FreeBSD)";
+  return "FreeBSD";
 
   /*******************************************************************/
 
 #elif defined(__NetBSD__)
-  return " (NetBSD)";
+  return "NetBSD";
 
   /*******************************************************************/
 
 #elif defined(__OpenBSD__)
-  return " (OpenBSD)";
+  return "OpenBSD";
 
   /*******************************************************************/
 
 #elif defined(__DragonFly__)
-  return " (DragonFly BSD)";
+  return "DragonFly BSD";
 
   /*******************************************************************/
 
 #elif defined(BSD) || defined(__BSD__)
-  return " (BSD)";
+  return "BSD";
 
   /*******************************************************************/
 
 #elif defined(__QNX__) || defined(__QNXNTO__)
-  return " (QNX)";
+  return "QNX";
 
   /*******************************************************************/
 
 #elif defined(__VXWORKS__)
-  return " (VxWorks)";
+  return "VxWorks";
 
   /*******************************************************************/
 
 #elif defined(__HAIKU__)
-  return " (Haiku)";
+  return "Haiku";
 
   /*******************************************************************/
 
 #elif defined(__serenity__)
-  return " (SerenityOS)";
+  return "SerenityOS";
 
   /*******************************************************************/
 
 #elif defined(__GNU__) && !defined(__linux__)
-  return " (GNU/Hurd)";
+  return "GNU/Hurd";
 
   /*******************************************************************/
 
 #elif defined(__MACH__) && defined(__NeXT__)
-  return " (NeXTSTEP)";
+  return "NeXTSTEP";
 
   /*******************************************************************/
 
 #elif defined(__MACH__) && defined(__APPLE__)
-  return " (macOS)";
+  return "macOS";
 
   /*******************************************************************/
 
 #elif defined(__ELKS__) || defined(__IA16_SYS_ELKS)
-  return " (ELKS)";
+  return "ELKS";
 
   /*******************************************************************/
 
 #elif defined(multics)
-  return " (Multics)";
+  return "Multics";
 
   /*******************************************************************/
 
 #elif defined(__COMPILER_KCC__)
-  return " (TOPS-20)";
+  return "TOPS-20";
 
   /*******************************************************************/
 
 #elif defined(__CPM86__) || defined(CPM86)
-  return " (CP/M-86)";
+  return "CP/M-86";
 
   /*******************************************************************/
 
-#elif defined(__CPM__) || defined(__CPM80__) || defined(_CPM) || defined(CPM)
-  return " (CP/M)";
+#elif defined(__CPM__) || defined(__CPM80__) || defined(_CPM) \
+    || defined(CPM)
+  return "CP/M";
 
   /*******************************************************************/
 
 #elif defined(__DJGPP) || defined(__DJGPP__) || defined(DJGPP)
-  return " (DJGPP/MS-DOS)";
+  return "MS-DOS/DJGPP";
 
   /*******************************************************************/
 
 #elif defined(__MSDOS__) || defined(__MS_DOS__) || defined(MSDOS) \
     || defined(_DOS) || defined(__DOS__) || defined(__IA16_SYS_MSDOS)
-  return " (MS-DOS)";
+  return "MS-DOS";
 
   /*******************************************************************/
 
 #elif defined(__CYGWIN__)
-  return " (Windows/Cygwin)";
+  return "Windows/Cygwin";
 
   /*******************************************************************/
 
 #elif defined(_WIN32)
-  return " (Windows)";
+  return "Windows";
 
   /*******************************************************************/
 
 #elif defined(_CH_)
-  struct utsname name;
+  struct utsname chname;
 
-  if (uname (&name) == -1)
-    {
-      return " (SoftIntegration Ch)";
-    }
+  if (uname (&chname) == -1)
+    return "SoftIntegration Ch";
 
-  string_t buf;
-
+  string_t buf; /* Ch dynamic string */
   /* cppcheck-suppress legacyUninitvar */
-  buf += " (Ch on ";
-  buf += name.sysname;
-  buf += " ";
-  buf += name.machine;
-  buf += ")";
+  buf += "Ch/";
+  buf += chname.sysname;
 
-  return buf;
+  return buf; /* legal for Ch */
 
   /*******************************************************************/
 
 #elif defined(__unix__) || defined(__unix) || defined(__UNIX__) \
     || defined(unix)
-  return " (Unix)";
+  return "Unix";
 
   /*******************************************************************/
 

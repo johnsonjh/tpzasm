@@ -14,13 +14,20 @@
 
 /******************************************************************************/
 
-#include "asm.h"
-#include "platform.h"
-#include "version.h"
 #include <stdio.h>
 #include <string.h>
 
+/******************************************************************************/
+
+#include "asm.h"
+#include "platform.h"
+#include "version.h"
+
+/******************************************************************************/
+
+#ifndef _CH_
 int allow_long_symbols = 0;
+#endif
 
 /******************************************************************************/
 
@@ -118,34 +125,79 @@ trimstr (const char *s)
 
 /******************************************************************************/
 
+static const char *osinfo(void)
+{
+  static char buf[1024];
+  const char *name;
+#ifdef HAVE_UTSNAME_H
+  const char *arch;
+#endif
+
+  name = platform_name ();
+#ifdef HAVE_UTSNAME_H
+  arch = sysarch ();
+#endif
+
+  if (
+#ifdef HAVE_UTSNAME_H
+      arch == NULL &&
+#endif
+      name == NULL)
+    return NULL;
+
+  buf[0] = '(';
+  buf[1] = '\0';
+
+  /* cppcheck-suppress knownConditionTrueFalse */
+  if (name != NULL)
+    (void)strncat (buf, name, sizeof (buf) - strlen (buf) - 1);
+
+#ifdef HAVE_UTSNAME_H
+  if (arch != NULL)
+    {
+      if (name != NULL)
+        (void)strncat (buf, "/", sizeof (buf) - strlen (buf) - 1);
+
+      (void)strncat (buf, arch, sizeof (buf) - strlen (buf) - 1);
+    }
+#endif
+
+  (void)strncat (buf, ")", sizeof (buf) - strlen (buf) - 1);
+
+  return buf;
+}
+
+
+/******************************************************************************/
+
 static void
 usage (const char *prog, dialect_t dialect)
 {
   (void)fprintf (stderr,
-                 "TPZASM - TDL ZASM / PSA PASM compatible assembler%s\n"
+                 "TPZASM - TDL ZASM / PSA PASM compatible assembler %s\n"
+                 "%s%s%s%s%s%s"
                  "Copyright (c) 2026 Jeffrey H. Johnson"
-                 " <johnsonjh.dev@gmail.com>\n"
-                 "%s%s%s%s%s%s",
-                 platform_name (), ASM_VERSION,
+                 " <johnsonjh.dev@gmail.com>\n",
+                 (osinfo () ? osinfo () : ""), ASM_VERSION,
 #ifdef __TIMESTAMP__
                  " (",
 # ifndef __clang__
                  ((*(__TIMESTAMP__)) ? trimstr (__TIMESTAMP__) : ""), "", "",
-                 ")\n"
+                 ")"
 # else  /* ifndef __clang__ */
-                 trimstr (__TIMESTAMP__), "", "", ")\n"
+                 trimstr (__TIMESTAMP__), "", "", ")"
 # endif /* ifndef __clang__ */
 #else  /* ifdef __TIMESTAMP__ */
 # if defined(__DATE__) && defined(__TIME__)
                  " (", ((*(__DATE__)) ? trimstr (__DATE__) : ""), " ",
-                 ((*__TIME__) ? trimstr (__TIME__) : ""), ")\n"
+                 ((*__TIME__) ? trimstr (__TIME__) : ""), ")"
 # elif defined(__DATE__)
-                 " (", ((*(__DATE__)) ? trimstr (__DATE__) : ""), "", "", ")\n"
+                 " (", ((*(__DATE__)) ? trimstr (__DATE__) : ""), "", "", ")"
 # else  /* if defined( __DATE__ ) && defined( __TIME__ ) */
-                 "", "", "", "", "\n"
+                 "", "", "", "", " -"
 # endif /* if defined( __DATE__ ) && defined( __TIME__ ) */
 #endif /* ifdef __TIMESTAMP__ */
-  );
+  ASM_URL);
   (void)fprintf (stderr,
                  "\n"
                  "  Usage: %s [options] <source[.asm]>\n\n"

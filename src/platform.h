@@ -12,17 +12,40 @@
 
 /******************************************************************************/
 
-# ifdef _CH_
-#  include <string.h>
-#  include <sys/utsname.h>
+# ifdef __has_include
+#  define HAS_INCLUDE(inc) __has_include(inc)
+# else
+#  define HAS_INCLUDE(inc) 0
 # endif
 
 /******************************************************************************/
 
-# ifndef _CH_
-const
+# ifdef _CH_
+#  include <string.h>
+#  include <sys/utsname.h>
+#  ifndef HAVE_UTSNAME_H
+#   define HAVE_UTSNAME_H
+#  endif
 # endif
-char *platform_name (void);
+
+/******************************************************************************/
+
+# ifndef __CPPCHECK__
+#  ifndef _CH_
+#   if HAS_INCLUDE(<sys/utsname.h>)
+#    include <string.h>
+#    include <sys/utsname.h>
+#    ifndef HAVE_UTSNAME_H
+#     define HAVE_UTSNAME_H
+#    endif
+#   endif
+#  endif
+# endif
+
+/******************************************************************************/
+
+const char *platform_name (void);
+const char *sysarch (void);
 
 /******************************************************************************/
 

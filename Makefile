@@ -178,7 +178,7 @@ lint:
 ################################################################################
 
 distclean: clean
-	rm -f tags cscope.out GPATH GRTAGS GTAGS TAGS
+	rm -f src/_chtmp.c tags cscope.out GPATH GRTAGS GTAGS TAGS
 	rm -f -r ./pvsreport 2> /dev/null
 	command -v git > /dev/null 2>&1 && git clean -ndx 2> /dev/null || :
 

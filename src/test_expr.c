@@ -7,14 +7,14 @@
 
 /******************************************************************************/
 
-int allow_long_symbols = 0;
+/*
+ * self-tests for the expression evaluator and relocation algebra.
+ * Expected values are from the PSA/TDL manual semantics.
+ */
 
 /******************************************************************************/
 
-/*
- * test_expr.c - self-tests for the expression evaluator + relocation algebra.
- * Expected values are from the PSA/TDL manual semantics.  `make test`.
- */
+int allow_long_symbols = 0;
 
 /******************************************************************************/
 
@@ -24,6 +24,7 @@ int allow_long_symbols = 0;
 /******************************************************************************/
 
 #include "asm.h"
+#include "platform.h"
 
 /******************************************************************************/
 
@@ -115,6 +116,11 @@ check_err (const char *expr)
 int
 main (void)
 {
+#ifdef __ORACLE_LINT__
+  /*LINTED: E_FUNC_SET_NOT_USED*/
+  const char *arch = sysarch (); /* cppcheck-suppress unreadVariable */
+#endif
+
   symtab *t = sym_new ();
   symbol *s;
 
