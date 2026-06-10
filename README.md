@@ -10,9 +10,14 @@
 **PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
 Zilog&nbsp;**Z80**, and other equivalent processors.
 
+An enhanced clone of `HEXCOM`, the
+[Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion tool,
+is also included.
+
 ## Portability
 
 **TPZASM** should compile cleanly on any system with an ANSI&nbsp;C89 compiler.
+
 Linux, AIX, OS/400, Solaris, illumos, FreeBSD, NetBSD, OpenBSD,
 DragonFly&nbsp;BSD, Haiku, MS‑DOS, OS/2, and Windows are known to work
 without modification.
@@ -72,17 +77,17 @@ compilers are regularly tested.
   [MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0)](LICENSE) license.
 
 * The `ZASM` assembler and its accompanying documentation are © 1976‑1977
-  [Technical Design Labs, Inc.](https://en.wikipedia.org/wiki/Technical_Design_Labs),
-  with all rights acquired by Phoenix Software Associates, Ltd.
+  [Technical&nbsp;Design&nbsp;Labs,&nbsp;Inc.](https://en.wikipedia.org/wiki/Technical_Design_Labs),
+  with all rights acquired by Phoenix&nbsp;Software&nbsp;Associates,&nbsp;Ltd.
 
 * The `PASM` assembler and its accompanying documentation are © 1980‑1981
-  [Phoenix Software Associates, Ltd.](https://en.wikipedia.org/wiki/Phoenix_Technologies),
-  now [Phoenix Technologies, Ltd](https://phoenixtech.com/).
+  [Phoenix Software Associates,&nbsp;Ltd.](https://en.wikipedia.org/wiki/Phoenix_Technologies),
+  now [Phoenix&nbsp;Technologies,&nbsp;Ltd.](https://phoenixtech.com/)
 
 * The `HEXCOM` utility is © 1982
-  [Digital Research, Inc.](https://en.wikipedia.org/wiki/Digital_Research),
+  [Digital&nbsp;Research,&nbsp;Inc.](https://en.wikipedia.org/wiki/Digital_Research),
   with all rights acquired by
-  [DRDOS, Inc. dba DeviceLogics LLC.](https://en.wikipedia.org/wiki/DeviceLogics).
+  [DRDOS,&nbsp;Inc.&nbsp;dba&nbsp;DeviceLogics&nbsp;LLC.](https://en.wikipedia.org/wiki/DeviceLogics).
 
 <!--
 Local Variables:
