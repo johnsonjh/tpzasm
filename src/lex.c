@@ -56,9 +56,7 @@ static const char *
 skipws (const char *p)
 {
   while (*p == ' ' || *p == '\t')
-    {
-      p++;
-    }
+    p++;
 
   return p;
 }
@@ -73,9 +71,7 @@ parse_id (const char *p, char *out)
   while (idchar ((unsigned char)*p))
     {
       if (n < NAMEBUF - 1)
-        {
-          out[n++] = *p;
-        }
+        out[n++] = *p;
 
       p++;
     }
@@ -98,9 +94,7 @@ lex_line (const char *line, line_t *out)
   out->assign = 0;
 
   if (*p == '\0' || *p == ';')
-    {
-      return;
-    }
+    return;
 
   if (idstart ((unsigned char)*p))
     {
@@ -116,9 +110,7 @@ lex_line (const char *line, line_t *out)
           r = skipws (r + 1);
 
           if (idstart ((unsigned char)*r))
-            {
-              r = parse_id (r, out->op);
-            }
+            r = parse_id (r, out->op);
 
           out->operands = skipws (r);
 
@@ -137,9 +129,7 @@ lex_line (const char *line, line_t *out)
           r++;
 
           if (*r == '=')
-            {
-              r++; /* '==' entry/global assignment */
-            }
+            r++; /* '==' entry/global assignment */
 
           out->operands = skipws (r);
 

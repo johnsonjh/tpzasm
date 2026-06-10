@@ -57,10 +57,8 @@ check (const char *expr, int radix, u16 ev, long er)
       fails++;
     }
   else
-    {
-      (void)printf ("ok    %-12s = %u (0x%04X) r%ld\n", expr, v.value, v.value,
-                    v.reloc);
-    }
+    (void)printf ("ok    %-12s = %u (0x%04X) r%ld\n", expr, v.value, v.value,
+                  v.reloc);
 }
 
 /******************************************************************************/
@@ -86,9 +84,7 @@ check_ext (const char *expr, u16 ev, const char *extname)
       fails++;
     }
   else
-    {
-      (void)printf ("ok    %-12s = %u ext %s\n", expr, v.value, extname);
-    }
+    (void)printf ("ok    %-12s = %u ext %s\n", expr, v.value, extname);
 }
 
 /******************************************************************************/
@@ -103,9 +99,7 @@ check_err (const char *expr)
   e.radix = 10;
 
   if (expr_eval (expr, &e, &v, &err))
-    {
-      (void)printf ("ok    %-12s -> rejected (%s)\n", expr, err);
-    }
+    (void)printf ("ok    %-12s -> rejected (%s)\n", expr, err);
   else
     {
       (void)printf ("FAIL  %-12s should be illegal, got %u r%ld\n", expr,
@@ -209,9 +203,7 @@ main (void)
         fails++;
       }
     else
-      {
-        (void)printf ("ok    sym/eval2 API  = 6 syms, eval2 ok\n");
-      }
+      (void)printf ("ok    sym/eval2 API  = 6 syms, eval2 ok\n");
   }
 
   sym_free (t);

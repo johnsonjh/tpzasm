@@ -58,9 +58,7 @@ hash (const char *s)
   unsigned h = 5381u;
 
   while (*s)
-    {
-      h = h * 33u + (unsigned char)toupper ((unsigned char)*s++);
-    }
+    h = h * 33u + (unsigned char)toupper ((unsigned char)*s++);
 
   return h;
 }
@@ -74,9 +72,7 @@ sym_new (void)
   int i;
 
   if (t == NULL)
-    {
-      return NULL;
-    }
+    return NULL;
 
   t->nbuckets = 1024;
   t->count = 0;
@@ -85,13 +81,12 @@ sym_new (void)
   if (t->bucket == NULL)
     {
       FREE (t);
+
       return NULL;
     }
 
   for (i = 0; i < t->nbuckets; i++)
-    {
-      t->bucket[i] = NULL;
-    }
+    t->bucket[i] = NULL;
 
   return t;
 }
@@ -106,9 +101,7 @@ sym_lookup (const symtab *t, const char *name)
   const char *n = name;
 
   if (t == NULL)
-    {
-      return NULL;
-    }
+    return NULL;
 
   if (!allow_long_symbols && strchr (name, ':') == NULL)
     {
@@ -119,12 +112,8 @@ sym_lookup (const symtab *t, const char *name)
 
   for (s = t->bucket[hash (n) % (unsigned)t->nbuckets]; s != NULL;
        s = s->next)
-    {
-      if (ci_eq (s->name, n))
-        {
-          return s;
-        }
-    }
+    if (ci_eq (s->name, n))
+      return s;
 
   return NULL;
 }
@@ -140,9 +129,7 @@ sym_intern (symtab *t, const char *name)
   const char *n = name;
 
   if (t == NULL)
-    {
-      return NULL;
-    }
+    return NULL;
 
   if (!allow_long_symbols && strchr (name, ':') == NULL)
     {
@@ -154,17 +141,13 @@ sym_intern (symtab *t, const char *name)
   s = sym_lookup (t, n);
 
   if (s != NULL)
-    {
-      return s;
-    }
+    return s;
 
   idx = hash (n) % (unsigned)t->nbuckets;
   s = (symbol *)malloc (sizeof *s);
 
   if (s == NULL)
-    {
-      return NULL;
-    }
+    return NULL;
 
   s->name = (char *)malloc (strlen (n) + 1);
 
@@ -199,9 +182,7 @@ sym_free (symtab *t)
   symbol *s, *nx;
 
   if (t == NULL)
-    {
-      return;
-    }
+    return;
 
   for (i = 0; i < t->nbuckets; i++)
     {
@@ -236,17 +217,11 @@ sym_collect (const symtab *t, symbol **buf)
   symbol *s;
 
   if (t == NULL)
-    {
-      return;
-    }
+    return;
 
   for (i = 0; i < t->nbuckets; i++)
-    {
-      for (s = t->bucket[i]; s != NULL; s = s->next)
-        {
-          buf[n++] = s;
-        }
-    }
+    for (s = t->bucket[i]; s != NULL; s = s->next)
+      buf[n++] = s;
 }
 
 /******************************************************************************/

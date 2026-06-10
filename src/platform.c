@@ -31,6 +31,7 @@ const char *sysarch(void)
   if (0 != uname (&u))
     {
       buf[1] = '\0';
+
       return buf;
     }
 

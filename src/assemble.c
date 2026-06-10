@@ -2306,6 +2306,7 @@ console_read (const astate *a, symbol *s)
   long iv = 0;
 
   (void)fputc (':', stderr);
+  (void)fflush (stdout);
   (void)fflush (stderr);
 
   if (fgets (ibuf, (int)sizeof (ibuf), stdin) == NULL)
@@ -2315,11 +2316,9 @@ console_read (const astate *a, symbol *s)
        * Abort rather than default to 0 or block forever.
        */
 
-      (void)fprintf (
-          stderr,
+      (void)fprintf (stderr,
           "\nerror: ran out of console responses (no value for '%s'); "
-          "supply every answer via a pipe or -r FILE\n",
-          s->name);
+          "supply every answer via a pipe or -r FILE\n", s->name);
 
       exit (1);
     }
@@ -2598,6 +2597,10 @@ do_line (astate *a, const char *line)
             { /* echo the prompt, then read */
               const char *p = q + 1;
 
+              (void)fputc ('\n', stderr);
+              (void)fflush (stdout);
+              (void)fflush (stderr);
+
               while (*p != '\0' && *p != '\'')
                 {
                   if (reading)
@@ -2609,6 +2612,9 @@ do_line (astate *a, const char *line)
                 }
               if (*p == '\'')
                 { /* prompt complete on this line */
+                  (void)fflush (stdout);
+                  (void)fflush (stderr);
+
                   if (reading)
                     {
                       console_read (a, s);
@@ -2627,6 +2633,8 @@ do_line (astate *a, const char *line)
             }
           else if (reading)
             { /* no prompt text: just read */
+              (void)fflush (stdout);
+              (void)fflush (stderr);
               console_read (a, s);
             }
 
@@ -2892,17 +2900,17 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   /* Print the dialect herald, as the originals do. */
   if (dialect == DIALECT_PASM)
     {
-      (void)fprintf (stderr, "%s\n",
+      (void)fprintf (stderr, "\n%s\n",
                      "PSA Macro Assembler [C12011-0102 ] (Compatible)");
     }
   else
     {
-      (void)fprintf (stderr, "%s\n",
+      (void)fprintf (stderr, "\n%s\n",
                      "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21 (COMPATIBLE)");
     }
 
   (void)fprintf (
-      stderr, "%s\n\n",
+      stderr, "%s\n",
       "Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>");
 
   /* Default source extension to .asm when none was given (CP/M FCB rule) */

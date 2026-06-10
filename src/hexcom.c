@@ -171,10 +171,11 @@ static size_t xstrcpy (char *dst, const char *src, size_t dstsz)
   if (dstsz == 0)
     return 0;
 
-  while (n + 1 < dstsz && src[n] != '\0') {
-    dst[n] = src[n];
-    n++;
-  }
+  while (n + 1 < dstsz && src[n] != '\0')
+    {
+      dst[n] = src[n];
+      n++;
+    }
 
   dst[n] = '\0';
 
@@ -388,8 +389,7 @@ main (int argc, char **argv)
   (void)printf ("FIRST ADDRESS %04X\n", first_addr);
   (void)printf ("LAST  ADDRESS %04X\n", last_addr);
   (void)printf ("BYTES READ    %04X\n", total_bytes & 0xFFFF);
-  (void)printf ("RECORDS WRITTEN %02X\n", records & 0xFFu);
-  (void)printf ("\n");
+  (void)printf ("RECORDS WRITTEN %02X\n\n", records & 0xFFu);
 
   (void)fflush (stdout);
   (void)fflush (stderr);

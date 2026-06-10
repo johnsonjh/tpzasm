@@ -37,12 +37,8 @@ basename_of (const char *p)
   const char *s;
 
   for (s = p; *s != '\0'; ++s)
-    {
-      if (*s == '/' || *s == '\\')
-        {
-          b = s + 1;
-        }
-    }
+    if (*s == '/' || *s == '\\')
+      b = s + 1;
 
   return b;
 }
@@ -55,9 +51,7 @@ dialect_from_name (const char *argv0)
   const char *b = basename_of (argv0);
 
   if (strncmp (b, "pasm", 4) == 0)
-    {
-      return DIALECT_PASM;
-    }
+    return DIALECT_PASM;
 
   return DIALECT_ZASM;
 }
@@ -79,17 +73,13 @@ trimstr (const char *s)
   int in_ws = 0;
 
   if (s == 0)
-    {
-      return "";
-    }
+    return "";
 
   slot = (slot + 1) % TRIMSTR_SLOTS;
   d = buf[slot];
 
   while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
-    {
-      s++;
-    }
+    s++;
 
   for (; *s != '\0'; s++)
     {
@@ -110,9 +100,7 @@ trimstr (const char *s)
     }
 
   if (d > buf[slot] && d[-1] == ' ')
-    {
-      d--;
-    }
+    d--;
 
   *d = '\0';
 
@@ -182,19 +170,19 @@ usage (const char *prog, dialect_t dialect)
 # ifndef __clang__
                  ((*(__TIMESTAMP__)) ? trimstr (__TIMESTAMP__) : ""), "", "",
                  ")"
-# else  /* ifndef __clang__ */
+# else
                  trimstr (__TIMESTAMP__), "", "", ")"
-# endif /* ifndef __clang__ */
-#else  /* ifdef __TIMESTAMP__ */
+# endif
+#else
 # if defined(__DATE__) && defined(__TIME__)
                  " (", ((*(__DATE__)) ? trimstr (__DATE__) : ""), " ",
                  ((*__TIME__) ? trimstr (__TIME__) : ""), ")"
 # elif defined(__DATE__)
                  " (", ((*(__DATE__)) ? trimstr (__DATE__) : ""), "", "", ")"
-# else  /* if defined( __DATE__ ) && defined( __TIME__ ) */
+# else
                  "", "", "", "", " -"
-# endif /* if defined( __DATE__ ) && defined( __TIME__ ) */
-#endif /* ifdef __TIMESTAMP__ */
+# endif
+#endif
   ASM_URL);
   (void)fprintf (stderr,
                  "\n"
@@ -231,6 +219,7 @@ main (int argc, char **argv)
   for (i = 1; i < argc; ++i)
     {
       const char *a = argv[i];
+
       if (a[0] == '-' && a[1] != '\0' && a[2] == '\0')
         {
           switch (a[1])
@@ -253,12 +242,14 @@ main (int argc, char **argv)
 
             case 'h':
               usage (prog, dialect);
+
               return 0;
 
             case 'o':
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -o needs a filename\n", prog);
+
                   return 2;
                 }
 
@@ -269,6 +260,7 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -l needs a filename\n", prog);
+
                   return 2;
                 }
 
@@ -276,11 +268,15 @@ main (int argc, char **argv)
               break;
 
             case 'r':
-              /* Take answers to the '\' console prompts from a file instead
-               * of the terminal (a "response file"); equivalent to piping. */
+              /*
+               * Take answers to the '\' console prompts from a file instead
+               * of the terminal (a "response file"); equivalent to piping.
+               */
+
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -r needs a filename\n", prog);
+
                   return 2;
                 }
 
@@ -289,6 +285,7 @@ main (int argc, char **argv)
                   (void)fprintf (stderr,
                                  "%s: cannot open response file '%s'\n", prog,
                                  argv[i]);
+
                   return 2;
                 }
 
@@ -299,10 +296,12 @@ main (int argc, char **argv)
                 value_t v;
                 const char *eerr;
                 eval_env env;
+
                 if (i + 1 >= argc)
                   {
                     (void)fprintf (stderr, "%s: -e needs an expression\n",
                                    prog);
+
                     return 2;
                   }
 
@@ -312,6 +311,7 @@ main (int argc, char **argv)
                 env.lc_reloc = 0;
                 env.undef0 = 0;
                 env.scope = 0;
+
                 if (expr_eval (argv[++i], &env, &v, &eerr))
                   {
                     (void)fprintf (stderr, "%s: -e: %s\n", prog, eerr);
@@ -321,24 +321,25 @@ main (int argc, char **argv)
                 (void)printf ("%u (0x%04X)%s\n", (unsigned)v.value,
                               (unsigned)v.value,
                               v.reloc ? " [relocatable]" : "");
+
                 return 0;
               }
 
             default:
               (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
               usage (prog, dialect);
+
               return 2;
             }
         }
       else
-        {
-          src = a;
-        }
+        src = a;
     }
 
   if (src == NULL)
     {
       usage (prog, dialect);
+
       return 2;
     }
 

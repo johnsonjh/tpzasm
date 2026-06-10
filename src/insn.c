@@ -61,14 +61,14 @@ static const insn TAB[] = {
   { "CMP", 0xB8, FMT_SRC },
 
   /* register pair */
-  { "LXI",  0x01, FMT_LXI },
-  { "INX",  0x03, FMT_RP },
-  { "DCX",  0x0B, FMT_RP },
-  { "DAD",  0x09, FMT_RP },
+  { "LXI",  0x01, FMT_LXI     },
+  { "INX",  0x03, FMT_RP      },
+  { "DCX",  0x0B, FMT_RP      },
+  { "DAD",  0x09, FMT_RP      },
   { "PUSH", 0xC5, FMT_PUSHPOP },
   { "POP",  0xC1, FMT_PUSHPOP },
-  { "LDAX", 0x0A, FMT_RP2 },
-  { "STAX", 0x02, FMT_RP2 },
+  { "LDAX", 0x0A, FMT_RP2     },
+  { "STAX", 0x02, FMT_RP2     },
 
   /* immediate 8 */
   { "ADI", 0xC6, FMT_IMM8 },
@@ -174,12 +174,12 @@ static const insn TAB[] = {
   { "SET", 0xC0, FMT_CBB },
 
   /* index register ops (DD/FD prefix from the X/Y suffix) */
-  { "PCIX", 0xE9, FMT_IXP },
-  { "PCIY", 0xE9, FMT_IXP },
-  { "SPIX", 0xF9, FMT_IXP },
-  { "SPIY", 0xF9, FMT_IXP },
-  { "XTIX", 0xE3, FMT_IXP },
-  { "XTIY", 0xE3, FMT_IXP },
+  { "PCIX", 0xE9, FMT_IXP   },
+  { "PCIY", 0xE9, FMT_IXP   },
+  { "SPIX", 0xF9, FMT_IXP   },
+  { "SPIY", 0xF9, FMT_IXP   },
+  { "XTIX", 0xE3, FMT_IXP   },
+  { "XTIY", 0xE3, FMT_IXP   },
   { "DADX", 0x09, FMT_IXADD },
   { "DADY", 0x09, FMT_IXADD },
 
@@ -200,12 +200,8 @@ insn_find (const char *upname)
   const insn *p;
 
   for (p = TAB; p->name != NULL; p++)
-    {
-      if (strcmp (p->name, upname) == 0)
-        {
-          return p;
-        }
-    }
+    if (strcmp (p->name, upname) == 0)
+      return p;
 
   return NULL;
 }
