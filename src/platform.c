@@ -41,11 +41,7 @@ const char *sysarch(void)
   struct utsname u;
 
   if (0 != uname (&u))
-    {
-      buf[1] = '\0';
-
-      return buf;
-    }
+    return NULL;
 
   strncpy (buf, u.machine, sizeof(buf) - 1);
   buf[sizeof(buf) - 1] = '\0';
