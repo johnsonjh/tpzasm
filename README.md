@@ -9,13 +9,13 @@ TDL ZASM / PSA PASM compatible assembler
 
 ## Portability
 
-TPZASM should compile cleanly on any system with an ANSI C89 compiler.
-Linux, AIX, FreeBSD, NetBSD, OpenBSD, Haiku, MS‑DOS (DJGPP), and Windows
-(MinGW-w64) are known to work without modification.
+TPZASM should compile cleanly on any system with an ANSI C89 compiler.  Linux,
+AIX, FreeBSD, NetBSD, OpenBSD, Haiku, MS‑DOS, OS/2, and Windows are known to
+work without modification.
 
-The GNU GCC, LLVM Clang, PCC, NVIDIA HPC SDK C/C++, Oracle Studio C/C++,
-DMD ImportC, CompCert C, Open64, PathScale EKOPath, IBM XL C/C++, DJGPP,
-IBM Open XL C/C++, and МЦСТ LCC compilers are regularly tested.
+The GNU GCC, LLVM Clang, PCC, NVIDIA HPC SDK C/C++, Oracle Studio C/C++, DMD
+ImportC, CompCert C, Open64, PathScale EKOPath, IBM XL C/C++, DJGPP, IBM Open
+XL C/C++, Open Watcom V2, and МЦСТ LCC compilers are regularly tested.
 
 ## License
 

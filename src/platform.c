@@ -22,6 +22,9 @@ const char *sysarch(void)
 #ifndef HAVE_UTSNAME_H
   return "";
 #else
+# ifdef __DJGPP__
+  return "x86";
+# else
   static char buf[1024];
   struct utsname u;
 
@@ -35,6 +38,7 @@ const char *sysarch(void)
   buf[sizeof(buf) - 1] = '\0';
 
   return buf;
+# endif
 #endif
 }
 

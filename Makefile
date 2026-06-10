@@ -201,7 +201,7 @@ tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 ################################################################################
 
 .PHONY: all clean distclean test tags etags ctags gtags TAGS GPATH GRTAGS \
-		GTAGS cscope cscope.out tag lint
+		GTAGS cscope cscope.out tag lint dmd
 
 ################################################################################
 

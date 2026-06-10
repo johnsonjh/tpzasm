@@ -2989,7 +2989,8 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         }
     }
 
-  a.image = (outpath != NULL) ? (u8 *)calloc (65536, 1) : NULL;
+  a.image = (outpath != NULL) ? (u8 *)calloc(65536UL, 1) : NULL;
+
   a.img_any = 0;
   a.img_min = 0;
   a.img_max = 0;

@@ -16,7 +16,7 @@
 
 #include "asm.h"
 
-int allow_long_symbols = 0;
+int allow_long_symbols;
 
 /******************************************************************************/
 
@@ -42,6 +42,7 @@ check (const char *expr, int radix, u16 ev, long er)
   const char *err;
   eval_env e = ENV;
 
+  allow_long_symbols = 0;
   e.radix = radix;
 
   if (expr_eval (expr, &e, &v, &err))

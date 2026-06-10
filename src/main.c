@@ -25,9 +25,7 @@
 
 /******************************************************************************/
 
-#ifndef _CH_
-int allow_long_symbols = 0;
-#endif
+int allow_long_symbols;
 
 /******************************************************************************/
 
@@ -227,6 +225,8 @@ main (int argc, char **argv)
   const char *lstpath = NULL;
   int pad = 0;
   int i;
+
+  allow_long_symbols = 0;
 
   for (i = 1; i < argc; ++i)
     {
