@@ -164,6 +164,49 @@ record_error (const char *msg, unsigned recaddr, unsigned erraddr,
 
 /******************************************************************************/
 
+static size_t xstrcpy (char *dst, const char *src, size_t dstsz)
+{
+  size_t n = 0;
+
+  if (dstsz == 0)
+    return 0;
+
+  while (n + 1 < dstsz && src[n] != '\0') {
+    dst[n] = src[n];
+    n++;
+  }
+
+  dst[n] = '\0';
+
+  return n;
+}
+
+/******************************************************************************/
+
+static size_t xstrcat (char *dst, const char *src, size_t dstsz)
+{
+  size_t n = 0;
+
+  while (n < dstsz && dst[n] != '\0')
+    n++;
+
+  if (n == dstsz)
+    return n;
+
+  {
+    size_t m = 0;
+
+    while (n + 1 < dstsz && src[m] != '\0')
+      dst[n++] = src[m++];
+
+    dst[n] = '\0';
+  }
+
+  return n;
+}
+
+/******************************************************************************/
+
 int
 main (int argc, char **argv)
 {
@@ -203,9 +246,11 @@ main (int argc, char **argv)
   if (dot != NULL && (strcmp (dot, ".hex") == 0 || strcmp (dot, ".HEX") == 0))
     *dot = '\0';
 
-  /* False positives CWE-120: srcname/dstname[300] >= base[<256] + ext[4] */
-  (void)sprintf (srcname, "%s.hex", base); /* Flawfinder: ignore */
-  (void)sprintf (dstname, "%s.com", base); /* Flawfinder: ignore */
+  (void)xstrcpy(srcname, base, sizeof srcname);
+  (void)xstrcat(srcname, ".hex", sizeof srcname);
+
+  (void)xstrcpy(dstname, base, sizeof dstname);
+  (void)xstrcat(dstname, ".com", sizeof dstname);
 
   src = fopen (srcname, "rb");
 
