@@ -26,9 +26,9 @@ const char *sysarch(void)
 #ifndef HAVE_UTSNAME_H
   return NULL;
 #else
-# ifdef __DJGPP__
+# if defined(__DJGPP__)
   return "x86";
-# elif _AIX
+# elif defined(_AIX)
 #  if defined(_ARCH_PPC64) || defined(__PPC64__)
   return "powerpc64";
 #  elif defined(_ARCH_PPC) || defined(__PPC__)
