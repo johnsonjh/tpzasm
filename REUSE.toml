@@ -21,7 +21,7 @@ SPDX-FileCopyrightText = "2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>"
 SPDX-License-Identifier = "MIT-0"
 
 [[annotations]]
-path = "notes/TDL_ZASM.txt"
+path = "docs/TDL_ZASM.pdf"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1976, 1977 Technical Design Labs, Inc."
 SPDX-License-Identifier = "LicenseRef-TDL"
@@ -33,7 +33,7 @@ SPDX-FileCopyrightText = "1976, 1977 Technical Design Labs, Inc."
 SPDX-License-Identifier = "LicenseRef-TDL"
 
 [[annotations]]
-path = "notes/PSA_PASM.txt"
+path = "docs/PSA_PASM.pdf"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1980 Phoenix Software Associates Ltd."
 SPDX-License-Identifier = "LicenseRef-PSA"
@@ -42,6 +42,12 @@ SPDX-License-Identifier = "LicenseRef-PSA"
 path = "orig/pasm.com"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1980 Phoenix Software Associates Ltd."
+SPDX-License-Identifier = "LicenseRef-PSA"
+
+[[annotations]]
+path = "orig/pasm2.com"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1981 Phoenix Software Associates Ltd."
 SPDX-License-Identifier = "LicenseRef-PSA"
 
 [[annotations]]

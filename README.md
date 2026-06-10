@@ -23,10 +23,29 @@ PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP,
 IBM&nbsp;Open&nbsp;XL&nbsp;C/C++, Open&nbsp;Watcom&nbsp;V2, and МЦСТ&nbsp;LCC
 compilers are regularly tested.
 
+## Reference
+
+* The [`orig/`](orig) directory contains the original CP/M‑80 executables.
+* The [`docs/`](docs) directory contains PDF documentation for the assemblers
+  (directly applicable to **TPZASM**).
+
 ## License
 
-This software is distributed under the terms of the permissive
-[MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0)](LICENSE) license.
+* The **TPZASM** software is distributed under the terms of the permissive
+  [MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0)](LICENSE) license.
+
+* The `ZASM` assembler and its accompanying documentation are © 1976–1977
+  [Technical Design Labs, Inc.](https://en.wikipedia.org/wiki/Technical_Design_Labs),
+  with all rights acquired by Phoenix Software Associates, Ltd.
+
+* The `PASM` assembler and its accompanying documentation are © 1980-1981
+  [Phoenix Software Associated, Ltd.](https://en.wikipedia.org/wiki/Phoenix_Technologies),
+  now [Phoenix Technologies, Ltd](https://phoenixtech.com/).
+
+* The `HEXCOM` utility is © 1982
+  [Digital Research, Inc.](https://en.wikipedia.org/wiki/Digital_Research),
+  with all rights acquired by
+  [DRDOS, Inc. dba DeviceLogics LLC.](https://en.wikipedia.org/wiki/DeviceLogics).
 
 <!--
 Local Variables:
