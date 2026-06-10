@@ -12,7 +12,7 @@ TDL ZASM / PSA PASM compatible assembler
 TPZASM should compile cleanly on any system with an ANSI C89 compiler.
 
 The GNU GCC, LLVM Clang, PCC, NVIDIA HPC SDK C/C++, Oracle Studio C/C++,
-DMD ImportC, CompCert C, Open64, PathScale EKOPath, IBM XL C/C++,
+DMD ImportC, CompCert C, Open64, PathScale EKOPath, IBM XL C/C++, DJGPP,
 IBM Open XL C/C++, and МЦСТ LCC compilers are regularly tested.
 
 ## License
