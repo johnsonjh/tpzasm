@@ -129,9 +129,7 @@ static const char *
 skipws (const char *p)
 {
   while (*p == ' ' || *p == '\t')
-    {
-      p++;
-    }
+    p++;
 
   return p;
 }
@@ -153,23 +151,17 @@ emit (astate *a, u16 v)
   if (a->pass == 2)
     {
       if (a->nbytes < (int)sizeof (a->bytes))
-        {
-          a->bytes[a->nbytes++] = (u8)(v & 0xFFu);
-        }
+        a->bytes[a->nbytes++] = (u8)(v & 0xFFu);
 
       if (a->image != NULL)
         {
           a->image[a->lc] = (u8)(v & 0xFFu);
 
           if (!a->img_any || a->lc < a->img_min)
-            {
-              a->img_min = a->lc;
-            }
+            a->img_min = a->lc;
 
           if (!a->img_any || a->lc > a->img_max)
-            {
-              a->img_max = a->lc;
-            }
+            a->img_max = a->lc;
 
           a->img_any = 1;
         }
@@ -184,9 +176,7 @@ static void
 aerr (astate *a, const char *line, const char *msg)
 {
   if (a->pass == 2)
-    {
-      (void)fprintf (stderr, "  *** %s: %s\n", msg, line);
-    }
+    (void)fprintf (stderr, "  *** %s: %s\n", msg, line);
 
   a->errors++;
 }
@@ -269,10 +259,9 @@ parse_reg8 (const char **pp)
     default:
       return -1;
     }
+
   if (idchar ((unsigned char)p[1]))
-    {
-      return -1;
-    }
+    return -1;
 
   *pp = p + 1;
 
@@ -300,30 +289,18 @@ parse_rp (const char **pp, int psw, int *pfx)
   t[n] = '\0';
 
   if (idchar ((unsigned char)p[n]))
-    {
-      return -1;
-    }
+    return -1;
 
   if (strcmp (t, "B") == 0)
-    {
-      code = 0;
-    }
+    code = 0;
   else if (strcmp (t, "D") == 0)
-    {
-      code = 1;
-    }
+    code = 1;
   else if (strcmp (t, "H") == 0)
-    {
-      code = 2;
-    }
+    code = 2;
   else if (!psw && strcmp (t, "SP") == 0)
-    {
-      code = 3;
-    }
+    code = 3;
   else if (psw && strcmp (t, "PSW") == 0)
-    {
-      code = 3;
-    }
+    code = 3;
   else if (strcmp (t, "X") == 0)
     {
       code = 2;
@@ -336,9 +313,7 @@ parse_rp (const char **pp, int psw, int *pfx)
     } /* IY */
 
   if (code >= 0)
-    {
-      *pp = p + n;
-    }
+    *pp = p + n;
 
   return code;
 }
@@ -353,6 +328,7 @@ comma (const char **pp)
   if (*p == ',')
     {
       *pp = p + 1;
+
       return 1;
     }
 
@@ -423,10 +399,9 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp)
   if (*p != '(')
     {
       value_t v;
+
       if (eval1 (a, &p, &v))
-        {
-          return -1;
-        }
+        return -1;
 
       *disp = v.value;
     }
@@ -434,32 +409,22 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp)
   p = skipws (p);
 
   if (*p != '(')
-    {
-      return -1;
-    }
+    return -1;
 
   p = skipws (p + 1);
   c = toupper ((unsigned char)*p);
 
   if (c == 'X')
-    {
-      *pfx = 0xDD;
-    }
+    *pfx = 0xDD;
   else if (c == 'Y')
-    {
-      *pfx = 0xFD;
-    }
+    *pfx = 0xFD;
   else
-    {
-      return -1;
-    }
+    return -1;
 
   p = skipws (p + 1);
 
   if (*p != ')')
-    {
-      return -1;
-    }
+    return -1;
 
   *pp = p + 1;
   *reg = 6;
@@ -509,12 +474,9 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
   int ifmt;
 
   if (in == NULL)
-    {
-      return 0;
-    }
+    return 0;
 
-  /* for the value-form listing byte column */
-  a->lst_opw = fmt_opw (in->fmt);
+  a->lst_opw = fmt_opw (in->fmt); /* for the value-form listing byte column */
   v.reloc = 0; /* default if no 16-bit operand is evaluated */
 
   ifmt = (int)in->fmt;
@@ -538,29 +500,19 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           }
 
         if (d == 6 && s == 6 && !dp && !sp)
-          {
-            aerr (a, line, "MOV M,M invalid");
-          }
+          aerr (a, line, "MOV M,M invalid");
 
         if (dp)
-          {
-            emit (a, (u16)dp);
-          }
+          emit (a, (u16)dp);
         else if (sp)
-          {
-            emit (a, (u16)sp);
-          }
+          emit (a, (u16)sp);
 
         emit (a, (u16)(0x40 | (d << 3) | s));
 
         if (dp)
-          {
-            emit (a, dd);
-          }
+          emit (a, dd);
         else if (sp)
-          {
-            emit (a, sd);
-          }
+          emit (a, sd);
 
         break;
       }
@@ -578,16 +530,12 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           }
 
         if (pf)
-          {
-            emit (a, (u16)pf);
-          }
+          emit (a, (u16)pf);
 
         emit (a, (u16)(in->opcode | (r << 3)));
 
         if (pf)
-          {
-            emit (a, ds);
-          }
+          emit (a, ds);
 
         break;
       }
@@ -606,21 +554,15 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           }
 
         if (pf)
-          {
-            emit (a, (u16)pf);
-          }
+          emit (a, (u16)pf);
 
         emit (a, (u16)(in->opcode | (r << 3)));
 
         if (pf)
-          {
-            emit (a, ds);
-          }
+          emit (a, ds);
 
         if (eval1 (a, &p, &v))
-          {
-            aerr (a, line, "bad immediate");
-          }
+          aerr (a, line, "bad immediate");
 
         emit (a, v.value);
         break;
@@ -638,16 +580,12 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           }
 
         if (pf)
-          {
-            emit (a, (u16)pf);
-          }
+          emit (a, (u16)pf);
 
         emit (a, (u16)(in->opcode | r));
 
         if (pf)
-          {
-            emit (a, ds);
-          }
+          emit (a, ds);
 
         break;
       }
@@ -664,9 +602,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           }
 
         if (pfx)
-          {
-            emit (a, (u16)pfx); /* INX/DCX X/Y -> DD/FD prefix */
-          }
+          emit (a, (u16)pfx); /* INX/DCX X/Y -> DD/FD prefix */
 
         emit (a, (u16)(in->opcode | (rp << 4)));
         break;
@@ -683,9 +619,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           }
 
         if (pfx)
-          {
-            emit (a, (u16)pfx); /* PUSH/POP X/Y -> DD/FD prefix */
-          }
+          emit (a, (u16)pfx); /* PUSH/POP X/Y -> DD/FD prefix */
 
         emit (a, (u16)(in->opcode | (rp << 4)));
         break;
@@ -697,6 +631,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (rp < 0 || rp > 1 || pfx)
           {
             aerr (a, line, "LDAX/STAX need B or D");
+
             emit (a, in->opcode);
             break;
           }
@@ -718,15 +653,11 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           }
 
         if (pfx)
-          {
-            emit (a, (u16)pfx); /* LXI X/Y,nn -> DD/FD prefix */
-          }
+          emit (a, (u16)pfx); /* LXI X/Y,nn -> DD/FD prefix */
 
         emit (a, (u16)(in->opcode | (rp << 4)));
         if (eval1 (a, &p, &v))
-          {
-            aerr (a, line, "bad immediate");
-          }
+          aerr (a, line, "bad immediate");
 
         emit (a, (u16)(v.value & 0xFF));
         emit (a, (u16)(v.value >> 8));
@@ -737,19 +668,16 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       emit (a, in->opcode);
 
       if (eval1 (a, &p, &v))
-        {
-          aerr (a, line, "bad immediate");
-        }
+        aerr (a, line, "bad immediate");
 
       emit (a, v.value);
       break;
 
     case FMT_ADDR:
       emit (a, in->opcode);
+
       if (eval1 (a, &p, &v))
-        {
-          aerr (a, line, "bad address");
-        }
+        aerr (a, line, "bad address");
 
       emit (a, (u16)(v.value & 0xFF));
       emit (a, (u16)(v.value >> 8));
@@ -757,14 +685,10 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_RST:
       if (eval1 (a, &p, &v))
-        {
-          aerr (a, line, "bad RST vector");
-        }
+        aerr (a, line, "bad RST vector");
 
       if (v.value > 7)
-        {
-          aerr (a, line, "RST 0-7");
-        }
+        aerr (a, line, "RST 0-7");
 
       emit (a, (u16)(in->opcode | ((v.value & 7) << 3)));
       break;
@@ -774,18 +698,15 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         u16 d16;
         int d;
         emit (a, in->opcode);
+
         if (eval1 (a, &p, &v))
-          {
-            aerr (a, line, "bad jump target");
-          }
+          aerr (a, line, "bad jump target");
 
         d16 = (u16)(v.value - (u16)(a->lc_stmt + 2));
         d = (d16 < 0x8000) ? (int)d16 : (int)d16 - 0x10000;
 
         if (a->pass == 2 && (d < -128 || d > 127))
-          {
-            aerr (a, line, "relative jump out of range");
-          }
+          aerr (a, line, "relative jump out of range");
 
         emit (a, (u16)(d16 & 0xFF));
         break;
@@ -796,9 +717,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       emit (a, in->opcode);
 
       if (eval1 (a, &p, &v))
-        {
-          aerr (a, line, "bad address");
-        }
+        aerr (a, line, "bad address");
 
       emit (a, (u16)(v.value & 0xFF));
       emit (a, (u16)(v.value >> 8));
@@ -898,22 +817,14 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         t[n] = '\0';
 
         if (strcmp (t, "B") == 0)
-          {
-            rp = 0;
-          }
+          rp = 0;
         else if (strcmp (t, "D") == 0)
-          {
-            rp = 1;
-          }
+          rp = 1;
         else if (strcmp (t, "SP") == 0)
-          {
-            rp = 3;
-          }
+          rp = 3;
         else if ((pf == 0xDD && strcmp (t, "X") == 0)
                  || (pf == 0xFD && strcmp (t, "Y") == 0))
-          {
-            rp = 2;
-          }
+          rp = 2;
 
         if (rp < 0)
           {
@@ -936,9 +847,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         emit (a, in->opcode); /* 2A = load, 22 = store */
 
         if (eval1 (a, &p, &v))
-          {
-            aerr (a, line, "bad address");
-          }
+          aerr (a, line, "bad address");
 
         emit (a, (u16)(v.value & 0xFF));
         emit (a, (u16)(v.value >> 8));
@@ -970,9 +879,7 @@ do_data (astate *a, const char *line, const char *p, int width)
       p = skipws (p);
 
       if (*p == '\0' || *p == ';')
-        {
-          break;
-        }
+        break;
 
       start = p;
 
@@ -982,54 +889,40 @@ do_data (astate *a, const char *line, const char *p, int width)
           const char *q = p + 1;
 
           if (eval1 (a, &q, &rv))
-            {
-              aerr (a, line, "bad repeat count");
-            }
+            aerr (a, line, "bad repeat count");
 
           rep = (long)rv.value;
           q = skipws (q);
 
           if (*q == ']')
-            {
-              q++;
-            }
+            q++;
 
           p = skipws (q);
         }
 
       /* emit 0, keep size */
       if (eval1 (a, &p, &v))
-        {
-          aerr (a, line, "bad expression");
-        }
+        aerr (a, line, "bad expression");
 
       for (k = 0; k < rep; k++)
         {
           if (a->pass == 2 && width == 2
               && a->nbytes / 2 < (int)sizeof (a->wreloc))
-            {
-              a->wreloc[a->nbytes / 2] = (u8)(v.reloc != 0 ? '\'' : ' ');
-            }
+            a->wreloc[a->nbytes / 2] = (u8)(v.reloc != 0 ? '\'' : ' ');
 
           emit (a, v.value);
 
           if (width == 2)
-            {
-              emit (a, (u16)(v.value >> 8));
-            }
+            emit (a, (u16)(v.value >> 8));
         }
 
       p = skipws (p);
 
       if (*p == ',')
-        {
-          p++;
-        }
+        p++;
 
       if (p == start)
-        {
-          break; /* safety: no progress */
-        }
+        break; /* safety: no progress */
     }
 }
 
@@ -1057,9 +950,7 @@ do_blk (astate *a, const char *line, const char *p, int width)
   n = (long)v.value * width;
 
   for (i = 0; i < n; i++)
-    {
-      a->lc = (u16)(a->lc + 1);
-    }
+    a->lc = (u16)(a->lc + 1);
 }
 
 /******************************************************************************/
@@ -1083,10 +974,9 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
     {
       const char *start;
       p = skipws (p);
+
       if (*p == '\0' || *p == ';')
-        {
-          break;
-        }
+        break;
 
       start = p;
 
@@ -1102,10 +992,9 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
               started = 1;
               p++;
             }
+
           if (*p == d)
-            {
-              p++;
-            }
+            p++;
           else
             {
               aerr (a, line, "unterminated string");
@@ -1118,16 +1007,12 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
           const char *q = p + 1;
 
           if (eval1 (a, &q, &v))
-            {
-              aerr (a, line, "bad expression");
-            }
+            aerr (a, line, "bad expression");
 
           q = skipws (q);
 
           if (*q == ']')
-            {
-              q++;
-            }
+            q++;
 
           last_lc = a->lc;
           emit (a, v.value);
@@ -1139,9 +1024,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
           value_t v;
 
           if (eval1 (a, &p, &v))
-            {
-              aerr (a, line, "bad expression");
-            }
+            aerr (a, line, "bad expression");
 
           last_lc = a->lc;
           emit (a, v.value);
@@ -1151,14 +1034,10 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
       p = skipws (p);
 
       if (*p == ',')
-        {
-          p++;
-        }
+        p++;
 
       if (p == start)
-        {
-          break; /* safety: no progress */
-        }
+        break; /* safety: no progress */
     }
 
   if (mode == 1)
@@ -1168,15 +1047,11 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
   else if (mode == 2 && started && a->pass == 2)
     {
       if (a->image != NULL)
-        {
-          a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
-        }
+        a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
 
       if (a->nbytes > 0)
-        {
-          a->bytes[(long)a->nbytes - 1]
-              = (u8)(a->bytes[(long)a->nbytes - 1] | 0x80u);
-        }
+        a->bytes[(long)a->nbytes - 1]
+            = (u8)(a->bytes[(long)a->nbytes - 1] | 0x80u);
     }
 }
 
@@ -1200,12 +1075,8 @@ is_noop_dir (const char *op)
   int i;
 
   for (i = 0; list[i] != NULL; i++)
-    {
-      if (strcmp (op, list[i]) == 0)
-        {
-          return 1;
-        }
-    }
+    if (strcmp (op, list[i]) == 0)
+      return 1;
 
   return 0;
 }
@@ -1231,9 +1102,7 @@ parse_opname (const char *p, char *out)
          || *p == '@' || *p == '$' || *p == '%')
     {
       if (n < NAMEBUF - 1)
-        {
-          out[n++] = (char)toupper ((unsigned char)*p);
-        }
+        out[n++] = (char)toupper ((unsigned char)*p);
 
       p++;
     }
@@ -1256,21 +1125,17 @@ resolve_alias (const astate *a, char *op)
       int found = 0;
 
       for (i = 0; i < a->nalias; i++)
-        {
-          if (strcmp (op, a->alias_from[i]) == 0)
-            {
-              /* False positive CWE-120: op[] and alias_to[] both NAMEBUF,
-               * src bounded */
-              (void)strcpy (op, a->alias_to[i]); /* Flawfinder: ignore */
-              found = 1;
-              break;
-            }
-        }
+        if (strcmp (op, a->alias_from[i]) == 0)
+          {
+            /* False positive CWE-120: op[] and alias_to[] both NAMEBUF,
+             * src bounded */
+            (void)strcpy (op, a->alias_to[i]); /* Flawfinder: ignore */
+            found = 1;
+            break;
+          }
 
       if (!found)
-        {
-          return;
-        }
+        return;
     }
 }
 
@@ -1287,12 +1152,8 @@ casm (const astate *a)
   int i;
 
   for (i = 0; i < a->cdepth; i++)
-    {
-      if (!a->cstack[i].assemble)
-        {
-          return 0;
-        }
-    }
+    if (!a->cstack[i].assemble)
+      return 0;
 
   return 1;
 }
@@ -1329,22 +1190,15 @@ parse_str_arg (const char *p, char *out)
       p++;
 
       while (*p != '\0' && *p != '"' && n < 127)
-        {
-          out[n++] = *p++;
-        }
+        out[n++] = *p++;
+
       if (*p == '"')
-        {
-          p++;
-        }
+        p++;
     }
   else
-    {
-      while (*p != '\0' && *p != ' ' && *p != '\t' && *p != ',' && *p != ';'
-             && n < 127)
-        {
-          out[n++] = *p++;
-        }
-    }
+    while (*p != '\0' && *p != ' ' && *p != '\t' && *p != ',' && *p != ';'
+           && n < 127)
+      out[n++] = *p++;
 
   out[n] = '\0';
   return p;
@@ -1364,20 +1218,15 @@ str_cond_test (const char *op, const char *operands)
   const char *p = parse_str_arg (operands, s1);
 
   if (strcmp (op, ".IFB") == 0)
-    {
-      return s1[0] == '\0';
-    }
+    return s1[0] == '\0';
 
   if (strcmp (op, ".IFNB") == 0)
-    {
-      return s1[0] != '\0';
-    }
+    return s1[0] != '\0';
 
   (void)parse_str_arg (p, s2);
+
   if (strcmp (op, ".IFIDN") == 0)
-    {
-      return strcmp (s1, s2) == 0;
-    }
+    return strcmp (s1, s2) == 0;
 
   return strcmp (s1, s2) != 0; /* .IFDIF */
 }
@@ -1390,34 +1239,22 @@ cond_test (const char *op, const value_t *v)
   int sv = (v->value < 0x8000) ? (int)v->value : (int)v->value - 0x10000;
 
   if (strcmp (op, ".IFN") == 0)
-    {
-      return v->value != 0;
-    }
+    return v->value != 0;
 
   if (strcmp (op, ".IFE") == 0)
-    {
-      return v->value == 0;
-    }
+    return v->value == 0;
 
   if (strcmp (op, ".IFG") == 0)
-    {
-      return sv > 0;
-    }
+    return sv > 0;
 
   if (strcmp (op, ".IFGE") == 0)
-    {
-      return sv >= 0;
-    }
+    return sv >= 0;
 
   if (strcmp (op, ".IFL") == 0)
-    {
-      return sv < 0;
-    }
+    return sv < 0;
 
   if (strcmp (op, ".IFLE") == 0)
-    {
-      return sv <= 0;
-    }
+    return sv <= 0;
 
   return 0;
 }
@@ -1450,9 +1287,7 @@ lst_bytes (const astate *a, char *col)
         }
 
       while (cn > 0 && col[(long)cn - 1] == ' ')
-        {
-          cn--; /* trim trailing pad */
-        }
+        cn--; /* trim trailing pad */
     }
   else if (a->lst_kind == 1)
     { /* data: byte stream */
@@ -1466,10 +1301,9 @@ lst_bytes (const astate *a, char *col)
   else
     { /* instruction: opcode + operand */
       int nop = a->nbytes - a->lst_opw; /* opcode byte count */
+
       if (nop < 0)
-        {
-          nop = a->nbytes;
-        }
+        nop = a->nbytes;
 
       for (i = 0; i < nop && cn < 16; i++)
         {
@@ -1563,21 +1397,15 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   col[0] = '\0';
 
   if (a->nbytes > 0)
-    {
-      lst_bytes (a, col);
-    }
+    lst_bytes (a, col);
 
   clen = (int)strlen (col);
 
   if (loc < 0) /* .END and other blank-LOC lines */
-    {
-      (void)fprintf (a->lst, "           %-*s", bw, col);
-    }
+    (void)fprintf (a->lst, "           %-*s", bw, col);
   else
-    {
-      (void)fprintf (a->lst, "   %04X%c   %-*s", (unsigned)loc,
-                     rel ? '\'' : ' ', bw, col);
-    }
+    (void)fprintf (a->lst, "   %04X%c   %-*s", (unsigned)loc,
+                   rel ? '\'' : ' ', bw, col);
 
   scol = 11 + (clen > bw ? clen : bw);
   lst_source (a->lst, rawline, scol);
@@ -1597,15 +1425,11 @@ lst_header (astate *a)
   (void)fprintf (a->lst, "\n\n\n");
 
   if (a->dialect == DIALECT_PASM)
-    {
-      (void)fprintf (a->lst, "%-71sPage %d\n\n.MAIN. - \n\n\n\n",
-                     "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
-    }
+    (void)fprintf (a->lst, "%-71sPage %d\n\n.MAIN. - \n\n\n\n",
+                   "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
   else
-    {
-      (void)fprintf (a->lst, "%-64sPAGE %d\n.MAIN. - \n\n\n\n",
-                     "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page);
-    }
+    (void)fprintf (a->lst, "%-64sPAGE %d\n.MAIN. - \n\n\n\n",
+                   "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page);
 
   /* heading line count */
   a->lst_line = (a->dialect == DIALECT_PASM) ? 9 : 8;
@@ -1676,19 +1500,13 @@ lst_symtab (astate *a)
   all = (symbol **)malloc (sizeof (symbol *)
                            * (size_t)(navail > 0 ? navail : 1));
   if (all == NULL)
-    {
-      return;
-    }
+    return;
 
   sym_collect (a->syms, all);
 
   for (i = 0; i < navail; i++) /* keep defined, non-local symbols */
-    {
-      if (all[i]->defined && strchr (all[i]->name, ':') == NULL)
-        {
-          all[nuser++] = all[i];
-        }
-    }
+    if (all[i]->defined && strchr (all[i]->name, ':') == NULL)
+      all[nuser++] = all[i];
 
   qsort (all, (size_t)nuser, sizeof (symbol *), sym_name_cmp);
   (void)fputc ('\f', a->lst); /* eject to a fresh page */
@@ -1700,6 +1518,7 @@ lst_symtab (astate *a)
     {
       const char *name, *flag;
       unsigned val;
+
       if (i < nuser)
         {
           name = all[i]->name;
@@ -1758,14 +1577,10 @@ do_insert (astate *a, const char *field)
   while (*p != '\0' && *p != ' ' && *p != '\t' && *p != ';' && *p != ',')
     {
       if (*p == '.')
-        {
-          dot = 1;
-        }
+        dot = 1;
 
       if (n < 290)
-        {
-          name[n++] = (char)tolower ((unsigned char)*p);
-        }
+        name[n++] = (char)tolower ((unsigned char)*p);
 
       p++;
     }
@@ -1773,20 +1588,13 @@ do_insert (astate *a, const char *field)
 
   /* False positive CWE-120: name[300], loop caps n<290, +".asm" */
   if (!dot)
-    {
-      (void)strcat (name, ".asm"); /* Flawfinder: ignore */
-    }
+    (void)strcat (name, ".asm"); /* Flawfinder: ignore */
 
   /* False positive CWE-120: path[1024] >= basedir[512]+name[300] */
   if (a->basedir[0] != '\0')
-    {
-      (void)sprintf (path, "%s/%s", a->basedir, name); /* Flawfinder: ignore */
-    }
-  /* False positive CWE-120: path[1024] >= name[300] */
-  else
-    {
-      (void)strcpy (path, name); /* Flawfinder: ignore */
-    }
+    (void)sprintf (path, "%s/%s", a->basedir, name); /* Flawfinder: ignore */
+  else /* False positive CWE-120: path[1024] >= name[300] */
+    (void)strcpy (path, name); /* Flawfinder: ignore */
 
   process_file (a, path);
 }
@@ -1819,12 +1627,8 @@ macro_lookup (astate *a, const char *name)
   macrodef *m;
 
   for (m = a->macros; m != NULL; m = m->next)
-    {
-      if (strcmp (m->name, name) == 0)
-        {
-          return m;
-        }
-    }
+    if (strcmp (m->name, name) == 0)
+      return m;
 
   return NULL;
 }
@@ -1842,9 +1646,7 @@ macro_free_all (astate *a)
       nx = m->next;
 
       for (i = 0; i < m->nbody; i++)
-        {
-          FREE (m->body[i]);
-        }
+        FREE (m->body[i]);
 
       FREE (m);
     }
@@ -1869,10 +1671,9 @@ macro_capture (astate *a, const char *p)
   if (!a->def_started)
     {
       p = skipws (p);
+
       if (*p == '\0' || *p == ';')
-        {
-          return;
-        }
+        return;
 
       if (*p != '[')
         {
@@ -1916,9 +1717,7 @@ macro_capture (astate *a, const char *p)
         }
 
       if (n < 511)
-        {
-          buf[n++] = *p;
-        }
+        buf[n++] = *p;
 
       p++;
     }
@@ -1942,9 +1741,7 @@ do_define (astate *a, const char *operands)
   int n = 0;
 
   if (m == NULL)
-    {
-      return;
-    }
+    return;
 
   m->nparams = 0;
   m->nbody = 0;
@@ -1954,9 +1751,7 @@ do_define (astate *a, const char *operands)
          || *p == '.' || *p == '$' || *p == '%')
     {
       if (n < NAMEBUF - 1)
-        {
-          m->name[n++] = (char)toupper ((unsigned char)*p);
-        }
+        m->name[n++] = (char)toupper ((unsigned char)*p);
 
       p++;
     }
@@ -1987,36 +1782,26 @@ do_define (astate *a, const char *operands)
           pn[pi] = '\0';
 
           if (pi > 0 && m->nparams < 7)
-            {
-              m->nparams++;
-            }
+            m->nparams++;
 
           p = skipws (p);
 
           if (*p == ',')
-            {
-              p++;
-            }
+            p++;
 
           /* malformed list (e.g. "[a,b)"): bail out */
           if (p == st)
-            {
-              break;
-            }
+            break;
         }
 
       if (*p == ']' || *p == ')')
-        {
-          p++;
-        }
+        p++;
     }
 
   p = skipws (p);
 
   if (*p == '=')
-    {
-      p++;
-    }
+    p++;
 
   p = skipws (p);
   a->defining = m;
@@ -2024,9 +1809,7 @@ do_define (astate *a, const char *operands)
   a->def_depth = 0;
 
   if (*p != '\0' && *p != ';')
-    {
-      macro_capture (a, p); /* body on same line */
-    }
+    macro_capture (a, p); /* body on same line */
 }
 
 /******************************************************************************/
@@ -2052,9 +1835,7 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
           while ((isalnum ((unsigned char)*q) || *q == '_' || *q == '?'
                   || *q == '@' || *q == '.' || *q == '$' || *q == '%')
                  && pn < NAMEBUF - 1)
-            {
-              pk[pn++] = *q++;
-            }
+            pk[pn++] = *q++;
 
           pk[pn] = '\0';
 
@@ -2077,14 +1858,10 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
           out[oi++] = *in++;
 
           while (*in != '\0' && *in != '\'' && oi < 500)
-            {
-              out[oi++] = *in++;
-            }
+            out[oi++] = *in++;
 
           if (*in == '\'' && oi < 500)
-            {
-              out[oi++] = *in++;
-            }
+            out[oi++] = *in++;
         }
       else if (isalpha ((unsigned char)*in) || *in == '_' || *in == '?'
                || *in == '@' || *in == '.' || *in == '%')
@@ -2095,9 +1872,7 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
           while ((isalnum ((unsigned char)*in) || *in == '_' || *in == '?'
                   || *in == '@' || *in == '.' || *in == '$' || *in == '%')
                  && tn < NAMEBUF - 1)
-            {
-              tok[tn++] = *in++;
-            }
+            tok[tn++] = *in++;
 
           tok[tn] = '\0';
 
@@ -2114,15 +1889,11 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
             const char *s = (pi >= 0 && pi < nargs) ? args[pi] : tok;
 
             while (*s != '\0' && oi < 500)
-              {
-                out[oi++] = *s++;
-              }
+              out[oi++] = *s++;
           }
         }
       else
-        {
-          out[oi++] = *in++;
-        }
+        out[oi++] = *in++;
     }
 
   out[oi] = '\0';
@@ -2142,13 +1913,9 @@ paren_depth_of (const char *s)
   while (*s != '\0' && *s != ';')
     {
       if (*s == '(')
-        {
-          d++;
-        }
+        d++;
       else if (*s == ')')
-        {
-          d--;
-        }
+        d--;
 
       s++;
     }
@@ -2175,13 +1942,12 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
   a->macro_depth++;
 
   if (*p == '[')
-    {
-      p = skipws (p + 1); /* optional [arg,arg] bracketed list */
-    }
+    p = skipws (p + 1); /* optional [arg,arg] bracketed list */
 
   while (*p != '\0' && *p != ';' && *p != ']' && nargs < 8 && j < 1000)
     {
       args[nargs] = argbuf + j;
+
       if (*p == '\\')
         { /* \expr -> decimal value */
           value_t vv;
@@ -2192,9 +1958,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
           (void)sprintf (num, "%u", (unsigned)vv.value);
 
           for (np = num; *np != '\0' && j < 1000; np++)
-            {
-              argbuf[j++] = *np;
-            }
+            argbuf[j++] = *np;
 
           p = ep;
         }
@@ -2206,12 +1970,11 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
           while (*p != '\0' && depth > 0)
             {
               if (*p == '(')
-                {
-                  depth++;
-                }
+                depth++;
               else if (*p == ')')
                 {
                   depth--;
+
                   if (depth == 0)
                     {
                       p++;
@@ -2220,9 +1983,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
                 }
 
               if (j < 1000)
-                {
-                  argbuf[j++] = *p;
-                }
+                argbuf[j++] = *p;
 
               p++;
             }
@@ -2233,34 +1994,29 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
 
           while (*p != '\0' && *p != ',' && *p != ';' && *p != ']' && j < 1000)
             {
-              /* copy a quoted literal whole so a ',' ']' or ';' inside it
-               * (e.g. the ']' in CPIB$ X,']') is not a delim */
+              /*
+               * Copy a quoted literal whole so a ',' ']' or ';' inside
+               * it (e.g., the ']' in CPIB$ X,']') is not a delimiter
+               */
+
               if (*p == '\'' || *p == '"')
                 {
                   char qc = *p;
                   argbuf[j++] = *p++;
 
                   while (*p != '\0' && *p != qc && j < 1000)
-                    {
-                      argbuf[j++] = *p++;
-                    }
+                    argbuf[j++] = *p++;
 
                   if (*p == qc && j < 1000)
-                    {
-                      argbuf[j++] = *p++;
-                    }
+                    argbuf[j++] = *p++;
                 }
               else
-                {
-                  argbuf[j++] = *p++;
-                }
+                argbuf[j++] = *p++;
             }
           while (
               j > s
               && (argbuf[(long)j - 1] == ' ' || argbuf[(long)j - 1] == '\t'))
-            {
-              j--;
-            }
+            j--;
         }
 
       argbuf[j++] = '\0';
@@ -2273,9 +2029,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
           p = skipws (p);
         }
       else
-        {
-          break;
-        }
+        break;
     }
 
   for (i = 0; i < m->nbody; i++)
@@ -2345,9 +2099,7 @@ do_line (astate *a, const char *line)
   a->lst_oreloc = 0;
 
   if (a->ended)
-    {
-      return;
-    }
+    return;
 
   if (a->defining)
     {
@@ -2362,9 +2114,7 @@ do_line (astate *a, const char *line)
       while (*q != '\0' && *q != '\'')
         {
           if (a->pend_console != NULL)
-            {
-              (void)fputc (*q, stderr);
-            }
+            (void)fputc (*q, stderr);
 
           q++;
         }
@@ -2372,6 +2122,7 @@ do_line (astate *a, const char *line)
       if (*q == '\'')
         {
           a->in_prompt = 0;
+
           if (a->pend_console != NULL)
             {
               console_read (a, a->pend_console);
@@ -2379,9 +2130,7 @@ do_line (astate *a, const char *line)
             }
         }
       else if (a->pend_console != NULL)
-        {
-          (void)fputc ('\n', stderr);
-        }
+        (void)fputc ('\n', stderr);
 
       return;
     }
@@ -2389,30 +2138,23 @@ do_line (astate *a, const char *line)
   if (a->pending)
     { /* continuing a multi-line macro argument */
       const char *s = line;
+
       if (a->pend_len < 1022)
-        {
-          a->pend_args[a->pend_len++] = ' ';
-        }
+        a->pend_args[a->pend_len++] = ' ';
 
       while (*s != '\0' && *s != ';' && a->pend_len < 1022)
         {
           char c = *s++;
 
           if (c == '(')
-            {
-              a->pend_depth++;
-            }
+            a->pend_depth++;
           else if (c == ')')
-            {
-              a->pend_depth--;
-            }
+            a->pend_depth--;
 
           a->pend_args[a->pend_len++] = c;
 
           if (a->pend_depth <= 0)
-            {
-              break;
-            }
+            break;
         }
 
       if (a->pend_depth <= 0)
@@ -2422,9 +2164,7 @@ do_line (astate *a, const char *line)
           a->pending = 0;
 
           if (pm != NULL)
-            {
-              expand_macro (a, pm, a->pend_args);
-            }
+            expand_macro (a, pm, a->pend_args);
         }
 
       return;
@@ -2477,10 +2217,9 @@ do_line (astate *a, const char *line)
   if (L.op[0] != '\0')
     {
       int k;
+
       for (k = 0; k < NAMEBUF - 1 && L.op[k] != '\0'; k++)
-        {
-          op[k] = (char)toupper ((unsigned char)L.op[k]);
-        }
+        op[k] = (char)toupper ((unsigned char)L.op[k]);
 
       op[k] = '\0';
       resolve_alias (a, op);
@@ -2504,13 +2243,11 @@ do_line (astate *a, const char *line)
                          a->scope, L.label);
           dn = qn;
         }
-      else
-        {
-          /* a global label starts a new local scope */
-          a->scope++;
-        }
+      else /* a global label starts a new local scope */
+        a->scope++;
 
       s = sym_intern (a->syms, dn);
+
       /*
        * TDL/PSA silently keep the FIRST definition of a redefined symbol;
        * only the first time it is seen in a pass do we (re)define it.
@@ -2519,9 +2256,7 @@ do_line (astate *a, const char *line)
       if (s->seen != (unsigned char)a->pass)
         {
           if (a->pass == 2 && s->defined && s->val.value != a->lc)
-            {
-              aerr (a, line, "phase error");
-            }
+            aerr (a, line, "phase error");
 
           s->val.value = a->lc;
           s->val.reloc = a->lc_reloc;
@@ -2543,9 +2278,7 @@ do_line (astate *a, const char *line)
 
           if (strcmp (op, ".IFIDN") == 0 || strcmp (op, ".IFDIF") == 0
               || strcmp (op, ".IFB") == 0 || strcmp (op, ".IFNB") == 0)
-            {
-              t = str_cond_test (op, q);
-            }
+            t = str_cond_test (op, q);
           else if (strcmp (op, ".IFDEF") == 0 || strcmp (op, ".IFNDEF") == 0)
             {
               char nm[NAMEBUF];
@@ -2553,15 +2286,12 @@ do_line (astate *a, const char *line)
               (void)parse_opname (q, nm);
               s = sym_lookup (a->syms, nm);
               t = (s != NULL && s->defined);
+
               if (strcmp (op, ".IFNDEF") == 0)
-                {
-                  t = !t;
-                }
+                t = !t;
             }
           else if (!eval1 (a, &q, &v))
-            {
-              t = cond_test (op, &v);
-            }
+            t = cond_test (op, &v);
         }
 
       if (a->cdepth < MAXCOND)
@@ -2575,9 +2305,7 @@ do_line (astate *a, const char *line)
     }
 
   if (!casm (a))
-    {
-      return; /* inside a skipped conditional block */
-    }
+    return; /* inside a skipped conditional block */
 
   if (L.assign)
     {
@@ -2600,9 +2328,7 @@ do_line (astate *a, const char *line)
               while (*p != '\0' && *p != '\'')
                 {
                   if (reading)
-                    {
-                      (void)fputc (*p, stderr);
-                    }
+                    (void)fputc (*p, stderr);
 
                   p++;
                 }
@@ -2612,9 +2338,7 @@ do_line (astate *a, const char *line)
                   (void)fflush (stderr);
 
                   if (reading)
-                    {
-                      console_read (a, s);
-                    }
+                    console_read (a, s);
                 }
               else
                 { /* prompt spans following lines */
@@ -2635,9 +2359,7 @@ do_line (astate *a, const char *line)
             }
 
           if (a->pass == 2)
-            {
-              print_lst (a, lc0, line);
-            }
+            print_lst (a, lc0, line);
 
           return;
         }
@@ -2665,25 +2387,19 @@ do_line (astate *a, const char *line)
       }
 
       if (a->pass == 2)
-        {
-          print_lst (a, lc0, line);
-        }
+        print_lst (a, lc0, line);
 
       return;
     }
 
   /* label (if any) already defined above */
   if (op[0] == '\0')
-    {
-      return;
-    }
+    return;
 
   if (opeq (op, ".INSERT", NULL))
     {
       if (a->pass == 2)
-        {
-          print_lst (a, lc0, line);
-        }
+        print_lst (a, lc0, line);
 
       do_insert (a, L.operands);
       return;
@@ -2695,19 +2411,17 @@ do_line (astate *a, const char *line)
       q = skipws (q);
 
       if (*q == ',')
-        {
-          q++;
-        }
+        q++;
 
       (void)parse_opname (q, e2);
 
       if (e1[0] != '\0' && e2[0] != '\0' && a->nalias < MAXALIAS)
         {
-          /* new synonym; False positive CWE-120: e2[] NAMEBUF, bounded by
+          /* New synonym; False positive CWE-120: e2[] NAMEBUF, bounded by
            * parse_opname */
           (void)strcpy (a->alias_from[a->nalias], /* Flawfinder: ignore */
                         e2);
-          /* existing op; False positive CWE-120: e1[] NAMEBUF, bounded by
+          /* Existing op; False positive CWE-120: e1[] NAMEBUF, bounded by
            * parse_opname */
           (void)strcpy (a->alias_to[a->nalias], e1); /* Flawfinder: ignore */
 
@@ -2715,46 +2429,28 @@ do_line (astate *a, const char *line)
         }
     }
   else if (opeq (op, ".DEFINE", NULL))
-    {
-      do_define (a, L.operands);
-    }
+    do_define (a, L.operands);
   else if (opeq (op, ".BYTE", ".DB") || opeq (op, "DB", "DEFB"))
-    {
-      do_data (a, line, L.operands, 1);
-    }
+    do_data (a, line, L.operands, 1);
   else if (opeq (op, ".WORD", ".DW") || opeq (op, "DW", "DEFW"))
-    {
-      do_data (a, line, L.operands, 2);
-    }
+    do_data (a, line, L.operands, 2);
   else if (opeq (op, ".BLKB", ".DS") || opeq (op, "DS", NULL))
-    {
-      do_blk (a, line, L.operands, 1);
-    }
+    do_blk (a, line, L.operands, 1);
   else if (opeq (op, ".BLKW", "DSW"))
-    {
-      do_blk (a, line, L.operands, 2);
-    }
+    do_blk (a, line, L.operands, 2);
   else if (opeq (op, ".ASCII", ".DC") || opeq (op, "DC", NULL))
-    {
-      do_ascii (a, line, L.operands, 0);
-    }
+    do_ascii (a, line, L.operands, 0);
   else if (opeq (op, ".ASCIZ", NULL))
-    {
-      do_ascii (a, line, L.operands, 1);
-    }
+    do_ascii (a, line, L.operands, 1);
   else if (opeq (op, ".ASCIS", "DCS"))
-    {
-      do_ascii (a, line, L.operands, 2);
-    }
+    do_ascii (a, line, L.operands, 2);
   else if (opeq (op, ".LOC", "ORG") || opeq (op, ".ORG", NULL))
     {
       value_t v;
       const char *p = L.operands;
 
       if (eval1 (a, &p, &v))
-        {
-          aerr (a, line, "bad ORG");
-        }
+        aerr (a, line, "bad ORG");
       else
         {
           a->lc = v.value;
@@ -2769,26 +2465,16 @@ do_line (astate *a, const char *line)
       const char *p = L.operands;
 
       if (eval1 (a, &p, &v))
-        {
-          aerr (a, line, "bad .RADIX");
-        }
+        aerr (a, line, "bad .RADIX");
       else if (v.value == 2 || v.value == 8 || v.value == 10 || v.value == 16)
-        {
-          a->radix = (int)v.value;
-        }
+        a->radix = (int)v.value;
       else
-        {
-          aerr (a, line, "bad radix");
-        }
+        aerr (a, line, "bad radix");
     }
   else if (opeq (op, ".PABS", NULL))
-    {
-      a->lc_reloc = 0;
-    }
+    a->lc_reloc = 0;
   else if (opeq (op, ".PREL", NULL))
-    {
-      a->lc_reloc = 1;
-    }
+    a->lc_reloc = 1;
   else if (opeq (op, ".END", "END"))
     {
       a->ended = 1;
@@ -2802,9 +2488,7 @@ do_line (astate *a, const char *line)
        */
 
       if (a->pass == 2)
-        {
-          print_lst (a, lc0, line);
-        }
+        print_lst (a, lc0, line);
 
       /* parenthesized arg spans lines */
       if (paren_depth_of (L.operands) > 0)
@@ -2840,15 +2524,11 @@ do_line (astate *a, const char *line)
 
       if (!encode_insn (a, line, op, L.operands) && !is_noop_dir (op)
           && a->pass == 2)
-        {
-          aerr (a, line, "unknown operator");
-        }
+        aerr (a, line, "unknown operator");
     }
 
   if (a->pass == 2)
-    {
-      print_lst (a, lc0, line);
-    }
+    print_lst (a, lc0, line);
 }
 
 /******************************************************************************/
@@ -2895,15 +2575,11 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   /* Print the dialect herald, as the originals do. */
   if (dialect == DIALECT_PASM)
-    {
-      (void)fprintf (stderr, "\n%s\n",
-                     "PSA Macro Assembler [C12011-0102 ] (Compatible)");
-    }
+    (void)fprintf (stderr, "\n%s\n",
+                   "PSA Macro Assembler [C12011-0102 ] (Compatible)");
   else
-    {
-      (void)fprintf (stderr, "\n%s\n",
-                     "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21 (COMPATIBLE)");
-    }
+    (void)fprintf (stderr, "\n%s\n",
+                   "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21 (COMPATIBLE)");
 
   (void)fprintf (
       stderr, "%s\n",
@@ -2937,24 +2613,17 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
    */
 
   if (lstpath == NULL || strcmp (lstpath, "/dev/stderr") == 0)
-    {
-      a.lst = stderr;
-    }
+    a.lst = stderr;
   else if (strcmp (lstpath, "/dev/stdout") == 0)
-    {
-      a.lst = stdout;
-    }
+    a.lst = stdout;
   else
     {
       lf = fopen (lstpath, "w");
+
       if (lf == NULL)
-        {
-          a.lst = stderr;
-        }
+        a.lst = stderr;
       else
-        {
-          a.lst = lf;
-        }
+        a.lst = lf;
     }
 
   tf = fopen (srcpath, "r"); /* check once, not once per pass */
@@ -2962,10 +2631,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   if (tf == NULL)
     {
       (void)fprintf (stderr, "cannot open '%s'\n", srcpath);
+
       if (lf != NULL)
-        {
-          (void)fclose (lf);
-        }
+        (void)fclose (lf);
 
       sym_free (a.syms);
       return 1;
@@ -2982,9 +2650,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
       const char *t;
 
       for (t = srcpath; t != slash; t++)
-        {
-          dl++;
-        }
+        dl++;
 
       if (dl < sizeof (a.basedir))
         {
@@ -3045,9 +2711,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   /* with -l to a real file, also report the count on the console */
   if (lf != NULL)
-    {
-      (void)fprintf (stderr, "%d error(s)\n", a.errors);
-    }
+    (void)fprintf (stderr, "%d error(s)\n", a.errors);
 
   if (a.image != NULL)
     {
@@ -3060,20 +2724,15 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
               long i;
 
               for (i = (long)a.img_min; i <= (long)a.img_max; i++)
-                {
-                  (void)fputc (a.image[i], of);
-                }
+                (void)fputc (a.image[i], of);
 
-              /* pad up to a 128-byte CP/M record boundary */
-              if (pad)
+              if (pad) /* pad up to a 128-byte CP/M record boundary */
                 {
                   long size = (long)a.img_max - (long)a.img_min + 1;
                   long full = ((size + 127) / 128) * 128;
 
                   for (i = size; i < full; i++)
-                    {
-                      (void)fputc (0x1A, of);
-                    }
+                    (void)fputc (0x1A, of);
                 }
 
               (void)fclose (of);
@@ -3087,9 +2746,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
     int e = a.errors;
 
     if (lf != NULL)
-      {
-        (void)fclose (lf);
-      }
+      (void)fclose (lf);
 
     macro_free_all (&a);
     sym_free (a.syms);
