@@ -10,7 +10,7 @@
 ## Portability
 
 * **TPZASM** should compile cleanly on any system with an **ANSI C89**
-  compiler.  Linux, IBM AIX, IBM OS/400 (PASE), FreeBSD, NetBSD, OpenBSD,
+  compiler.  Linux, AIX, OS/400, Solaris, illumos, FreeBSD, NetBSD, OpenBSD,
   DragonFly BSD, Haiku, MS‑DOS, OS/2, and Windows are known to work
   without modification.
 
