@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: MIT-0 -->
 <!-- scspell-id: 23fe5cac-64f0-11f1-9d0c-80ee73e9b8e7 -->
 
-* This directory contains the original documentation for the
+This directory contains the original documentation for the
 **TDL&nbsp;ZASM&nbsp;2.2** and **PSA&nbsp;PASM&nbsp;1.0** assemblers.
 
 |                           File | Description                             |

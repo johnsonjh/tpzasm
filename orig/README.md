@@ -3,9 +3,9 @@
 <!-- SPDX-License-Identifier: MIT-0 -->
 <!-- scspell-id: c3fa1f22-64ee-11f1-84c3-80ee73e9b8e7 -->
 
-* This directory contains the original CP/M‑80 executables for
-**TDL&nbsp;ZASM&nbsp;2.21**, **PSA&nbsp;PASM&nbsp;1.02**, and
-**PSA&nbsp;PASM&nbsp;2.00G**.
+This directory contains the original CP/M‑80 executables for
+**DRI&nbsp;HEXCOM&nbsp;3.00**, **TDL&nbsp;ZASM&nbsp;2.21**,
+**PSA&nbsp;PASM&nbsp;1.02**, and **PSA&nbsp;PASM&nbsp;2.00G**.
 
 |                       File | Description |
 |---------------------------:|:------------|
