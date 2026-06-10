@@ -10,7 +10,11 @@ UNAME_S:=$(shell uname -s 2> /dev/null)
 ifneq "$(findstring AIX,$(UNAME_S))" ""
  UNAME_M:=$(shell uname -p 2> /dev/null)
 else
- UNAME_M:=$(shell uname -m 2> /dev/null)
+ ifneq "$(findstring OS400,$(UNAME_S))" ""
+  UNAME_M:=$(shell uname -p 2> /dev/null)
+ else
+  UNAME_M:=$(shell uname -m 2> /dev/null)
+ endif
 endif
 $(info [MAKE] Platform = $(UNAME_S) $(UNAME_M))
 
@@ -120,6 +124,13 @@ endif
 EXTRA_CFLAGS?=-Wall -Wextra -Wpedantic
 ifeq ($(GCC_CLANG),1)
  CFLAGS+=$(EXTRA_CFLAGS)
+endif
+
+################################################################################
+
+# Remove -Wpedantic on OS/400
+ifneq "$(findstring OS400,$(UNAME_S))" ""
+ CFLAGS := $(patsubst -Wpedantic,,$(CFLAGS))
 endif
 
 ################################################################################
