@@ -5,22 +5,22 @@
 
 # TPZASM
 
-TDL ZASM / PSA PASM compatible assembler
+* **TPZASM** is a TDL ZASM 2.21 / PSA PASM 1.02 compatible assembler.
 
 ## Portability
 
-TPZASM should compile cleanly on any system with an ANSI C89 compiler.  Linux,
-AIX, FreeBSD, NetBSD, OpenBSD, Haiku, MS‑DOS, OS/2, and Windows are known to
-work without modification.
+* TPZASM should compile cleanly on any system with an ANSI C89 compiler.
+  Linux, AIX, FreeBSD, NetBSD, OpenBSD, Haiku, MS‑DOS, OS/2, and Windows
+  are known to work without modification.
 
-The GNU GCC, LLVM Clang, PCC, NVIDIA HPC SDK C/C++, Oracle Studio C/C++, DMD
-ImportC, CompCert C, Open64, PathScale EKOPath, IBM XL C/C++, DJGPP, IBM Open
-XL C/C++, Open Watcom V2, and МЦСТ LCC compilers are regularly tested.
+* The GNU GCC, LLVM Clang, PCC, NVIDIA HPC SDK C/C++, Oracle Studio C/C++, DMD
+  ImportC, CompCert C, Open64, PathScale EKOPath, IBM XL C/C++, DJGPP, IBM Open
+  XL C/C++, Open Watcom V2, and МЦСТ LCC compilers are regularly tested.
 
 ## License
 
-This software is distributed under the terms of the permissive
-[MIT No Attribution (MIT-0)](LICENSE) license.
+* This software is distributed under the terms of the permissive
+  [MIT No Attribution (MIT-0)](LICENSE) license.
 
 <!--
 Local Variables:
