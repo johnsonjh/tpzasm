@@ -188,7 +188,7 @@ usage (const char *prog, dialect_t dialect)
                  "\n"
                  "  Usage: %s [options] <source[.asm]>\n\n"
                  "    -z       Emulate TDL ZASM 2.21 behavior%s\n"
-                 "    -p       Emulate PSA PASM 1.0 behavior%s\n"
+                 "    -p       Emulate PSA PASM 1.02 behavior%s\n"
                  "    -o file  Write the assembled binary image to file\n"
                  "    -P       Pad output to full CP/M record boundary\n"
                  "    -l file  Write the listing to file (default: stderr)\n"

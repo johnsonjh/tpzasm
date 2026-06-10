@@ -120,9 +120,7 @@ scan_number (ectx *e)
   while (isalnum ((unsigned char)*p))
     {
       if (n < (int)sizeof (buf) - 1)
-        {
-          buf[n++] = *p;
-        }
+        buf[n++] = *p;
 
       p++;
     }

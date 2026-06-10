@@ -1806,9 +1806,7 @@ dupstr (const char *s)
 
   /* False positive CWE-120: p = malloc(strlen(s)+1) */
   if (p != NULL)
-    {
-      (void)strcpy (p, s); /* Flawfinder: ignore */
-    }
+    (void)strcpy (p, s); /* Flawfinder: ignore */
 
   return p;
 }
@@ -1981,9 +1979,7 @@ do_define (astate *a, const char *operands)
                  || *p == '@' || *p == '.' || *p == '$' || *p == '%')
             {
               if (pi < NAMEBUF - 1)
-                {
-                  pn[pi++] = *p;
-                }
+                pn[pi++] = *p;
 
               p++;
             }
