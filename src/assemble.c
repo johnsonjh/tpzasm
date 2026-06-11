@@ -60,6 +60,7 @@ typedef struct
   int radix;
   u16 lc;
   int lc_reloc;
+  u16 prog_max; /* high-water LC: the .PROG. segment size */
   int errors;
   int ended;
   u8 bytes[64];
@@ -98,6 +99,9 @@ typedef struct
   /* listing output stream (stderr, or the -l file) */
   FILE *lst;
 
+  /* .TITLE text for the page subtitle (captured in pass 1) */
+  char title[64];
+
   /* macro support */
   unsigned genctr; /* counter for %-generated local labels */
   int macro_depth; /* recursion guard                      */
@@ -121,6 +125,14 @@ typedef struct
   int lst_lreloc;    /* LC reloc: -1 use lc_reloc, else 0/1 flag  */
   int lst_oreloc;    /* 16-bit insn operand reloc flag (0/1)      */
   u8 wreloc[32];     /* per-.WORD-value reloc flag (' or space)   */
+
+  /* macro-expansion listing: the originals fold the body into the call line
+   * and flag continued statements with '+' */
+  const char *mac_src; /* override source text for this listing line, or NULL */
+  int mac_plus;        /* place the '+' macro-continuation marker            */
+  int mac_active;      /* inside the outermost macro expansion's listing     */
+  int lst_suppress;    /* assemble a line but emit no listing output         */
+  int ins_depth;       /* .INSERT nesting: inserted lines carry the '@' mark */
 } astate;
 
 /******************************************************************************/
@@ -168,6 +180,9 @@ emit (astate *a, u16 v)
     }
 
   a->lc = (u16)(a->lc + 1);
+
+  if (a->lc > a->prog_max)
+    a->prog_max = a->lc;
 }
 
 /******************************************************************************/
@@ -951,6 +966,9 @@ do_blk (astate *a, const char *line, const char *p, int width)
 
   for (i = 0; i < n; i++)
     a->lc = (u16)(a->lc + 1);
+
+  if (a->lc > a->prog_max)
+    a->prog_max = a->lc;
 }
 
 /******************************************************************************/
@@ -1211,11 +1229,25 @@ parse_str_arg (const char *p, char *out)
  * (blank argument)
  */
 
+/* drop trailing blanks: a macro argument keeps the source whitespace before
+ * its comment (so ST16 X,H passes "H\t"), but the string conditionals match
+ * the originals by ignoring it */
+static void
+rstrip (char *s)
+{
+  size_t n = strlen (s);
+
+  while (n > 0 && (s[n - 1] == ' ' || s[n - 1] == '\t'))
+    s[--n] = '\0';
+}
+
 static int
 str_cond_test (const char *op, const char *operands)
 {
   char s1[128], s2[128];
   const char *p = parse_str_arg (operands, s1);
+
+  rstrip (s1);
 
   if (strcmp (op, ".IFB") == 0)
     return s1[0] == '\0';
@@ -1224,6 +1256,7 @@ str_cond_test (const char *op, const char *operands)
     return s1[0] != '\0';
 
   (void)parse_str_arg (p, s2);
+  rstrip (s2);
 
   if (strcmp (op, ".IFIDN") == 0)
     return strcmp (s1, s2) == 0;
@@ -1274,8 +1307,10 @@ lst_bytes (const astate *a, char *col)
   int cn = 0, i;
 
   if (a->lst_kind == 2)
-    { /* .WORD: value words + reloc */
-      for (i = 0; i + 1 < a->nbytes && cn < 30; i += 2)
+    { /* .WORD: value words + reloc.  TDL shows at most two words; PSA one. */
+      int maxw = (a->dialect == DIALECT_PASM) ? 2 : 4;
+
+      for (i = 0; i + 1 < a->nbytes && i < maxw; i += 2)
         {
           int fl = a->wreloc[i / 2];
           /* False positive CWE-120: col[40], cn<30 */
@@ -1290,8 +1325,8 @@ lst_bytes (const astate *a, char *col)
         cn--; /* trim trailing pad */
     }
   else if (a->lst_kind == 1)
-    { /* data: byte stream */
-      for (i = 0; i < a->nbytes && cn < 18; i++)
+    { /* data: byte stream (the originals show at most six bytes) */
+      for (i = 0; i < a->nbytes && i < 6; i++)
         {
           /* False positive CWE-120: col[32], cn<18 */
           cn += sprintf (col + cn, "%02X", /* Flawfinder: ignore */
@@ -1347,13 +1382,49 @@ static void lst_header (astate *a); /* forward */
 /******************************************************************************/
 
 /*
+ * At the wrap column, break to an indented continuation line, as the
+ * originals do: they fold a listing line at a fixed width (TDL 72, PSA 79)
+ * and re-indent the remainder to the source column.  Returns the new column.
+ */
+
+static int
+lst_wrap (astate *a, int col, int wrapw, int indent)
+{
+  if (col >= wrapw)
+    { /* end this physical line and start an indented continuation; the
+       * originals paginate physical lines, so a continuation that lands on a
+       * full page is preceded by a form-feed and heading (a mid-line break) */
+      int k;
+
+      (void)fputc ('\n', a->lst);
+      a->lst_line++;
+
+      if (a->lst_line >= LST_PAGE)
+        {
+          (void)fputc ('\f', a->lst);
+          lst_header (a);
+        }
+
+      for (k = 0; k < indent; k++)
+        (void)fputc (' ', a->lst);
+
+      return indent;
+    }
+
+  return col;
+}
+
+/******************************************************************************/
+
+/*
  * Print the source field, expanding tabs to spaces on 8-column tab stops,
- * as the originals do - they emit no tab bytes.
+ * as the originals do - they emit no tab bytes.  Long lines fold at `wrapw`
+ * with the continuation re-indented to `indent` (the source column).
  * `col` is the column already printed.
  */
 
 static void
-lst_source (FILE *f, const char *s, int col)
+lst_source (astate *a, const char *s, int col, int wrapw, int indent)
 {
   for (; *s != '\0'; s++)
     {
@@ -1361,19 +1432,22 @@ lst_source (FILE *f, const char *s, int col)
         {
           do
             {
-              (void)fputc (' ', f);
+              col = lst_wrap (a, col, wrapw, indent);
+              (void)fputc (' ', a->lst);
               col++;
             }
           while ((col % 8) != 0);
         }
       else
         {
-          (void)fputc (*s, f);
+          col = lst_wrap (a, col, wrapw, indent);
+          (void)fputc (*s, a->lst);
           col++;
         }
     }
 
-  (void)fputc ('\n', f);
+  (void)fputc ('\n', a->lst);
+  a->lst_line++; /* count this final physical line */
 }
 
 /******************************************************************************/
@@ -1386,14 +1460,23 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   long loc = (a->lst_loc == -2) ? (long)lc0 : a->lst_loc;
   int rel = (a->lst_lreloc < 0) ? (a->lc_reloc != 0) : a->lst_lreloc;
   int clen, scol;
+  char mark = 0; /* macro '+' / .INSERT '@' continuation marker, or none */
 
-  if (a->lst_line >= LST_PAGE)
-    { /* page full: form-feed + repeat heading */
-      (void)fputc ('\f', a->lst);
-      lst_header (a);
-    }
+  if (a->lst_suppress) /* assembling only (e.g. a macro's first body line) */
+    return;
 
-  a->lst_line++;
+  if (a->mac_src != NULL) /* macro listing supplies the rendered source */
+    rawline = a->mac_src;
+  else if (a->mac_active && a->nbytes == 0)
+    return; /* inside a macro: control-flow statements are not listed */
+
+  /* inserted-file lines carry '@'; continued macro statements carry '+'
+   * (but not the macro call line, which sets mac_src with mac_plus clear) */
+  if (a->ins_depth > 0)
+    mark = '@';
+  else if (a->mac_plus || (a->mac_active && a->mac_src == NULL))
+    mark = '+';
+
   col[0] = '\0';
 
   if (a->nbytes > 0)
@@ -1401,14 +1484,75 @@ print_lst (astate *a, u16 lc0, const char *rawline)
 
   clen = (int)strlen (col);
 
-  if (loc < 0) /* .END and other blank-LOC lines */
-    (void)fprintf (a->lst, "           %-*s", bw, col);
-  else
-    (void)fprintf (a->lst, "   %04X%c   %-*s", (unsigned)loc,
-                   rel ? '\'' : ' ', bw, col);
+  /*
+   * Determine the rendered source field for this line.  The originals build
+   * the listing line in a fixed buffer and lay the value field over the
+   * source field: a multi-word .WORD line (>=2 value words) runs the value
+   * field long enough to overstrike the FIRST TWO source columns -- so a
+   * label loses its first two chars and a label-less ".WORD" lists as "WORD"
+   * shifted left.  Macro/inserted lines instead carry a +/@ marker.
+   */
+  {
+    int wrapw = (a->dialect == DIALECT_PASM) ? 79 : 72;
+    int indent = 11 + bw;
+    int over = (mark == 0 && a->lst_kind == 2 && a->nbytes >= 4 && loc >= 0
+                && a->dialect != DIALECT_PASM /* PSA shows one word, no overstrike */
+                && (int)strlen (rawline) >= 2);
+    const char *src;
 
-  scol = 11 + (clen > bw ? clen : bw);
-  lst_source (a->lst, rawline, scol);
+    if (over)
+      {
+        src = rawline + 2;
+        scol = 11 + bw + 2;
+      }
+    else if (mark)
+      {
+        src = rawline;
+        scol = 11 + bw;
+      }
+    else
+      {
+        src = rawline;
+        scol = 11 + (clen > bw ? clen : bw);
+      }
+
+    /* page full: form-feed + heading before this line's first physical row
+     * (continuation rows paginate inside lst_source) */
+    if (a->lst_line >= LST_PAGE)
+      {
+        (void)fputc ('\f', a->lst);
+        lst_header (a);
+      }
+
+    if (over)
+      {
+        int p;
+
+        (void)fprintf (a->lst, "   %04X%c   %s", (unsigned)loc,
+                       rel ? '\'' : ' ', col);
+
+        for (p = 11 + clen; p < scol; p++)
+          (void)fputc (' ', a->lst);
+      }
+    else if (mark)
+      { /* the marker occupies the final byte-field column */
+        if (loc < 0)
+          (void)fprintf (a->lst, "           %-*s%c", bw - 1, col, mark);
+        else
+          (void)fprintf (a->lst, "   %04X%c   %-*s%c", (unsigned)loc,
+                         rel ? '\'' : ' ', bw - 1, col, mark);
+      }
+    else
+      {
+        if (loc < 0) /* .END and other blank-LOC lines */
+          (void)fprintf (a->lst, "           %-*s", bw, col);
+        else
+          (void)fprintf (a->lst, "   %04X%c   %-*s", (unsigned)loc,
+                         rel ? '\'' : ' ', bw, col);
+      }
+
+    lst_source (a, src, scol, wrapw, indent);
+  }
 }
 
 /******************************************************************************/
@@ -1425,11 +1569,12 @@ lst_header (astate *a)
   (void)fprintf (a->lst, "\n\n\n");
 
   if (a->dialect == DIALECT_PASM)
-    (void)fprintf (a->lst, "%-71sPage %d\n\n.MAIN. - \n\n\n\n",
-                   "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
+    (void)fprintf (a->lst, "%-71sPage %d\n\n.MAIN. - %s\n\n\n\n",
+                   "PSA Macro Assembler [C12011-0102 ]", a->lst_page, a->title);
   else
-    (void)fprintf (a->lst, "%-64sPAGE %d\n.MAIN. - \n\n\n\n",
-                   "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page);
+    (void)fprintf (a->lst, "%-64sPAGE %d\n.MAIN. - %s\n\n\n\n",
+                   "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
+                   a->title);
 
   /* heading line count */
   a->lst_line = (a->dialect == DIALECT_PASM) ? 9 : 8;
@@ -1437,13 +1582,43 @@ lst_header (astate *a)
 
 /******************************************************************************/
 
+/*
+ * Collation rank for the symbol-table sort: the originals order digits, then
+ * letters, then the remaining name characters ('.', '?', '@', '$', ...) -- so
+ * e.g. P.PEP sorts AFTER PVALUE, not before P1 as plain ASCII would have it.
+ */
+
+static int
+sym_rank (int c)
+{
+  c = toupper ((unsigned char)c);
+
+  if (c >= '0' && c <= '9')
+    return c - '0'; /* 0..9 */
+
+  if (c >= 'A' && c <= 'Z')
+    return 10 + c - 'A'; /* 10..35 */
+
+  return 36 + (unsigned char)c; /* other name chars sort last */
+}
+
 static int
 sym_name_cmp (const void *pa, const void *pb)
 {
-  const symbol *a = *(symbol *const *)pa;
-  const symbol *b = *(symbol *const *)pb;
+  const char *a = (*(symbol *const *)pa)->name;
+  const char *b = (*(symbol *const *)pb)->name;
 
-  return strcmp (a->name, b->name);
+  for (;; a++, b++)
+    {
+      int ra = (*a != '\0') ? sym_rank (*a) : -1;
+      int rb = (*b != '\0') ? sym_rank (*b) : -1;
+
+      if (ra != rb)
+        return ra - rb;
+
+      if (ra < 0)
+        return 0;
+    }
 }
 
 /******************************************************************************/
@@ -1466,15 +1641,16 @@ lst_symhead (astate *a)
   if (a->dialect == DIALECT_PASM)
     {
       (void)fprintf (
-          a->lst, "%-71sPage %d\n\n.MAIN. - \n+++++ Symbol Table +++++\n\n\n",
-          "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
+          a->lst, "%-71sPage %d\n\n.MAIN. - %s\n+++++ Symbol Table +++++\n\n\n",
+          "PSA Macro Assembler [C12011-0102 ]", a->lst_page, a->title);
       a->lst_line = 9;
     }
   else
     {
       (void)fprintf (a->lst,
-                     "%-64sPAGE %d\n.MAIN. - \n+++++ SYMBOL TABLE +++++\n\n\n",
-                     "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page);
+                     "%-64sPAGE %d\n.MAIN. - %s\n+++++ SYMBOL TABLE +++++\n\n\n",
+                     "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
+                     a->title);
       a->lst_line = 8;
     }
 }
@@ -1523,12 +1699,15 @@ lst_symtab (astate *a)
         {
           name = all[i]->name;
           val = all[i]->val.value;
-          flag = "      ";
+          /* relocatable symbols carry a quote after the value */
+          flag = (all[i]->val.reloc != 0) ? "'     " : "      ";
         }
       else
         {
+          /* .PROG. (index 2) carries the program-segment size; the
+           * .BLNK./.DATA. rows stay 0000 for this absolute-segment output */
           name = segname[(long)i - nuser];
-          val = 0;
+          val = ((long)i - nuser == 2) ? a->prog_max : 0;
           flag = segflag[(long)i - nuser];
         }
 
@@ -1926,11 +2105,14 @@ paren_depth_of (const char *s)
 /******************************************************************************/
 
 static void
-expand_macro (astate *a, const macrodef *m, const char *argstr)
+expand_macro (astate *a, const macrodef *m, const char *argstr,
+              const char *callline)
 {
   char argbuf[1024];
   char *args[8];
   int nargs = 0, i, j = 0;
+  int outer = 0, start = 0;
+  u16 lc0 = a->lc;
   const char *p = skipws (argstr);
 
   if (a->macro_depth > 200)
@@ -2013,10 +2195,18 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
               else
                 argbuf[j++] = *p++;
             }
-          while (
-              j > s
-              && (argbuf[(long)j - 1] == ' ' || argbuf[(long)j - 1] == '\t'))
-            j--;
+
+          /*
+           * Trailing whitespace handling is dialect-specific: TDL carries it
+           * into the expansion (it expands in the listing -- a call's trailing
+           * tabs push a macro body's ']' to the right), while PSA trims it.
+           * Either way it is harmless to the byte stream (the expression
+           * scanner skips it).
+           */
+          if (a->dialect == DIALECT_PASM)
+            while (j > s
+                   && (argbuf[(long)j - 1] == ' ' || argbuf[(long)j - 1] == '\t'))
+              j--;
         }
 
       argbuf[j++] = '\0';
@@ -2032,14 +2222,69 @@ expand_macro (astate *a, const macrodef *m, const char *argstr)
         break;
     }
 
-  for (i = 0; i < m->nbody; i++)
+  /*
+   * Macro-expansion listing (pass 2).  The originals fold the body into the
+   * call line and flatten nested expansions: only the OUTERMOST macro emits
+   * the call line (invocation + body-open '[', carrying the first body line
+   * when it emits bytes) and the body-close ']'; statements that emit bytes
+   * list with a '+' continuation marker; control-flow inside a macro
+   * (conditionals, nested call lines, brackets, skipped lines) is suppressed
+   * (driven by mac_active/lst_suppress in print_lst).
+   */
+  outer = (a->pass == 2 && callline != NULL && !a->mac_active && m->nbody > 0);
+
+  if (outer)
+    {
+      char ln0[512];
+      char src[2048];
+
+      a->mac_active = 1;
+
+      /* assemble body line 0 silently: it may emit bytes (folded onto the
+       * call line) or merely open a conditional that spans the body */
+      macro_subst (m, args, nargs, m->body[0], ln0);
+      lc0 = a->lc;
+      a->lst_suppress = 1;
+      do_line (a, ln0);
+      a->lst_suppress = 0;
+
+      if (a->nbytes > 0) /* False positive CWE-120: src[2048] >= line+body */
+        (void)sprintf (src, "%s[%s%s", /* Flawfinder: ignore */
+                       callline, ln0, (m->nbody == 1) ? "]" : "");
+      else /* False positive CWE-120: src[2048] >= callline */
+        (void)sprintf (src, "%s[", callline); /* Flawfinder: ignore */
+
+      a->mac_src = src;
+      a->mac_plus = 0;
+      print_lst (a, lc0, callline);
+      a->mac_src = NULL;
+      start = 1;
+    }
+
+  for (i = start; i < m->nbody; i++)
     {
       char ln[512];
       macro_subst (m, args, nargs, m->body[i], ln);
-      do_line (a, ln);
+
+      if (outer && i == m->nbody - 1)
+        { /* the body-close: force-list this last line with ']' appended */
+          char src[600];
+          /* False positive CWE-120: src[600] >= ln[512] + "]" */
+          (void)sprintf (src, "%s]", ln); /* Flawfinder: ignore */
+          a->mac_src = src;
+          a->mac_plus = 1;
+          do_line (a, ln);
+          a->mac_src = NULL;
+          a->mac_plus = 0;
+        }
+      else
+        do_line (a, ln);
     }
 
   a->macro_depth--;
+
+  if (outer)
+    a->mac_active = 0;
 }
 
 /******************************************************************************/
@@ -2102,7 +2347,13 @@ do_line (astate *a, const char *line)
     return;
 
   if (a->defining)
-    {
+    { /* a .DEFINE body line: the originals list it verbatim, blank LC */
+      if (a->pass == 2)
+        {
+          a->lst_loc = -1;
+          print_lst (a, a->lc, line);
+        }
+
       macro_capture (a, line);
       return;
     }
@@ -2163,8 +2414,8 @@ do_line (astate *a, const char *line)
           a->pend_args[a->pend_len] = '\0';
           a->pending = 0;
 
-          if (pm != NULL)
-            expand_macro (a, pm, a->pend_args);
+          if (pm != NULL) /* multi-line arg: no single call line to fold */
+            expand_macro (a, pm, a->pend_args, NULL);
         }
 
       return;
@@ -2206,7 +2457,14 @@ do_line (astate *a, const char *line)
     }
 
   if (*bp == '\0' || *bp == ';')
-    {
+    { /* blank or comment-only line: the originals still list it, with a
+       * blank LC column (tabs in the source expand as usual) */
+      if (a->pass == 2 && casm (a))
+        {
+          a->lst_loc = -1;
+          print_lst (a, lc0, line);
+        }
+
       return;
     }
 
@@ -2301,11 +2559,27 @@ do_line (astate *a, const char *line)
           a->cdepth++;
         }
 
+      if (a->pass == 2)
+        { /* the originals list the conditional directive line itself, with
+           * a blank LC column */
+          a->lst_loc = -1;
+          print_lst (a, lc0, line);
+        }
+
       return;
     }
 
   if (!casm (a))
-    return; /* inside a skipped conditional block */
+    { /* inside a skipped conditional block: the originals still list the
+       * source line, with a blank LC column and no emitted bytes */
+      if (a->pass == 2)
+        {
+          a->lst_loc = -1;
+          print_lst (a, lc0, line);
+        }
+
+      return;
+    }
 
   if (L.assign)
     {
@@ -2321,9 +2595,13 @@ do_line (astate *a, const char *line)
             { /* echo the prompt, then read */
               const char *p = q + 1;
 
-              (void)fputc ('\n', stderr);
-              (void)fflush (stdout);
-              (void)fflush (stderr);
+              if (reading)
+                { /* pass 1 (or undefined): blank line before the prompt;
+                   * pass 2 must stay silent (value already cached) */
+                  (void)fputc ('\n', stderr);
+                  (void)fflush (stdout);
+                  (void)fflush (stderr);
+                }
 
               while (*p != '\0' && *p != '\'')
                 {
@@ -2392,16 +2670,34 @@ do_line (astate *a, const char *line)
       return;
     }
 
-  /* label (if any) already defined above */
+  /* label (if any) already defined above.  The originals still list a
+   * line with no operator: a label-only line shows its LC, while a blank
+   * or comment-only line has no location and blanks the LC column. */
   if (op[0] == '\0')
-    return;
+    {
+      if (a->pass == 2)
+        {
+          if (L.label[0] == '\0')
+            a->lst_loc = -1;
+
+          print_lst (a, lc0, line);
+        }
+
+      return;
+    }
 
   if (opeq (op, ".INSERT", NULL))
     {
       if (a->pass == 2)
-        print_lst (a, lc0, line);
+        { /* the .INSERT directive lists with a blank LC, and the inserted
+           * file's lines carry the '@' marker */
+          a->lst_loc = -1;
+          print_lst (a, lc0, line);
+        }
 
+      a->ins_depth++;
       do_insert (a, L.operands);
+      a->ins_depth--;
       return;
     }
   else if (opeq (op, ".OPSYN", NULL))
@@ -2427,9 +2723,14 @@ do_line (astate *a, const char *line)
 
           a->nalias++;
         }
+
+      a->lst_loc = -1; /* .OPSYN has no location: blank the LOC column */
     }
   else if (opeq (op, ".DEFINE", NULL))
-    do_define (a, L.operands);
+    {
+      do_define (a, L.operands);
+      a->lst_loc = -1; /* .DEFINE has no location: blank the LOC column */
+    }
   else if (opeq (op, ".BYTE", ".DB") || opeq (op, "DB", "DEFB"))
     do_data (a, line, L.operands, 1);
   else if (opeq (op, ".WORD", ".DW") || opeq (op, "DW", "DEFW"))
@@ -2463,18 +2764,53 @@ do_line (astate *a, const char *line)
     {
       value_t v;
       const char *p = L.operands;
+      int saved = a->radix;
+
+      a->radix = 10; /* the .RADIX argument is always read in decimal */
 
       if (eval1 (a, &p, &v))
-        aerr (a, line, "bad .RADIX");
+        {
+          aerr (a, line, "bad .RADIX");
+          a->radix = saved;
+        }
       else if (v.value == 2 || v.value == 8 || v.value == 10 || v.value == 16)
         a->radix = (int)v.value;
       else
-        aerr (a, line, "bad radix");
+        {
+          aerr (a, line, "bad radix");
+          a->radix = saved;
+        }
+
+      a->lst_loc = -1; /* .RADIX has no location: blank the LOC column */
     }
   else if (opeq (op, ".PABS", NULL))
     a->lc_reloc = 0;
   else if (opeq (op, ".PREL", NULL))
     a->lc_reloc = 1;
+  else if (opeq (op, ".TITLE", NULL))
+    { /* capture the page subtitle (in both passes, so pass 2's page-1
+       * heading already has it); the directive is not listed in the body */
+      const char *p = skipws (L.operands);
+      char quote = (*p == '\'' || *p == '"') ? *p : '\0';
+      int n = 0;
+
+      if (quote != '\0')
+        p++;
+
+      while (*p != '\0' && n < (int)sizeof (a->title) - 1)
+        {
+          if (quote != '\0' ? (*p == quote) : (*p == ';'))
+            break;
+
+          a->title[n++] = *p++;
+        }
+
+      while (n > 0 && (a->title[n - 1] == ' ' || a->title[n - 1] == '\t'))
+        n--; /* trim trailing blanks (unquoted form) */
+
+      a->title[n] = '\0';
+      return; /* suppressed from the body listing */
+    }
   else if (opeq (op, ".END", "END"))
     {
       a->ended = 1;
@@ -2487,14 +2823,15 @@ do_line (astate *a, const char *line)
        * redefines JRZ/JMPR/... as the absolute 8080 jumps)
        */
 
-      if (a->pass == 2)
-        print_lst (a, lc0, line);
-
       /* parenthesized arg spans lines */
       if (paren_depth_of (L.operands) > 0)
         {
           int i = 0;
           const char *o = L.operands;
+
+          if (a->pass == 2) /* deferred expansion can't fold the call line */
+            print_lst (a, lc0, line);
+
           (void)strncpy (a->pend_op, op, NAMEBUF - 1);
           a->pend_op[NAMEBUF - 1] = '\0';
 
@@ -2511,7 +2848,7 @@ do_line (astate *a, const char *line)
           return;
         }
 
-      expand_macro (a, mac, L.operands);
+      expand_macro (a, mac, L.operands, line); /* folds the call line itself */
 
       return;
     }
@@ -2689,6 +3026,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.radix = RADIX_DEFAULT;
   a.lc = 0;
   a.lc_reloc = 1;
+  a.prog_max = 0;
   a.ended = 0;
   a.nalias = 0;
   a.cdepth = 0;

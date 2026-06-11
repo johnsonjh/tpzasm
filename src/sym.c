@@ -157,8 +157,20 @@ sym_intern (symtab *t, const char *name)
       return NULL;
     }
 
-  /* False positive CWE-120: s->name = malloc(strlen(name)+1) */
-  (void)strcpy (s->name, n); /* Flawfinder: ignore */
+  /*
+   * Store the symbol name folded to upper case: both originals are
+   * case-insensitive and print the symbol table in upper case (the body
+   * listing still shows the label as typed, from the source line).
+   * False positive CWE-120: s->name = malloc(strlen(n)+1).
+   */
+  {
+    size_t k;
+
+    for (k = 0; n[k] != '\0'; k++)
+      s->name[k] = (char)toupper ((unsigned char)n[k]);
+
+    s->name[k] = '\0';
+  }
 
   s->val.value = 0;
   s->val.reloc = 0;

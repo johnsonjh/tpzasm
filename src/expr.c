@@ -137,8 +137,11 @@ scan_number (ectx *e)
 
         case 'B':
         case 'b':
-          radix = 2;
-          ndig = n - 1;
+          if (e->env->radix <= 11) /* 'B' is a digit at radix 12+ (hex) */
+            {
+              radix = 2;
+              ndig = n - 1;
+            }
           break;
 
         case 'O':
@@ -151,8 +154,11 @@ scan_number (ectx *e)
 
         case 'D':
         case 'd':
-          radix = 10;
-          ndig = n - 1;
+          if (e->env->radix <= 13) /* 'D' is a digit at radix 14+ (hex) */
+            {
+              radix = 10;
+              ndig = n - 1;
+            }
           break;
 
         default:
