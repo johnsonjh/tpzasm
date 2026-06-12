@@ -1179,10 +1179,8 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
     }
 
   if (mode == 1)
-    {
-      emit (a, 0); /* .ASCIZ */
-    } /* .ASCIS: flag last byte */
-  else if (mode == 2 && started && a->pass == 2)
+    emit (a, 0); /* .ASCIZ */
+  else if (mode == 2 && started && a->pass == 2) /* .ASCIS: flag last byte */
     {
       if (a->image != NULL)
         a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
@@ -1997,9 +1995,7 @@ macro_capture (astate *a, const char *p)
   while (*p != '\0')
     {
       if (*p == '[')
-        {
-          a->def_depth++;
-        }
+        a->def_depth++;
       else if (*p == ']')
         {
           a->def_depth--;

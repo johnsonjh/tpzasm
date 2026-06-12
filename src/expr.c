@@ -707,9 +707,7 @@ expr_eval2 (const char *s, const eval_env *env, value_t *out,
   eval_env def;
 
   if (env)
-    {
-      e.env = env;
-    }
+    e.env = env;
   else
     {
       def.radix = RADIX_DEFAULT;
