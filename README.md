@@ -126,7 +126,7 @@
 * The [`orig/`](orig) directory contains the original CP/M‑80 executables.
 
 * The [`docs/`](docs) directory contains PDF‑format documentation for the
-  assemblers (which is directly applicable to **TPZASM**).
+  assemblers (directly applicable to **TPZASM**).
 
 ## License
 
