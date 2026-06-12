@@ -52,17 +52,20 @@ compilers are regularly tested.
 
 ## Future
 
-* Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
-  *release*), is also known, though no documentation for it seems to have
-  survived.  Its behavior **has now been analyzed**: the assembly output seems
-  byte‑for‑byte identical to **PSA&nbsp;PASM&nbsp;1.02** (same instruction
-  encoding and the same relocatable object output); only the *listing* format
-  was reworked (source line numbers, line truncation instead of wrapping, and
-  an `=` value flag), and it exhibits several bugs/beta defects (*i.e.*, an
-  unfilled date/time stamp, the symbol table is sometimes omitted when macros
-  are defined).  Optional emulation of its listing style may be offered in a
-  future release, but the well‑behaved **1.02** output will remain
-  the reference.
+Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
+*release*), is also known, though no documentation for it seems to have
+survived.
+
+Its behavior has now been analyzed: the assembly output seems byte‑for‑byte
+identical to **PSA&nbsp;PASM&nbsp;1.02** (same instruction encoding and the
+same relocatable object output); only the *listing* format was reworked
+(source line numbers, line truncation instead of wrapping, *likely a bug*,
+and a `=` value flag), and it exhibits several behaviors that are clearly
+bugs/beta defects (*i.e.*, an unfilled date/time stamp, the symbol table is
+sometimes omitted from listings when certain macros are defined).
+
+Optional emulation of its improved listing style may be offered in a future
+release, but the well‑behaved **1.02** output currently remains the reference.
 
 ## Notes
 
