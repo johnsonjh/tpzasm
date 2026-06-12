@@ -5,28 +5,29 @@
 
 # TPZASM
 
-**TPZASM** is a portable cross‑assembler intended to be fully interchangeable
-(and bug‑compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
-**PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
-Zilog&nbsp;**Z80**, and other equivalent processors.
+* **TPZASM** is a portable cross‑assembler intended to be fully interchangeable
+  (and bug‑compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
+  **PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
+  Zilog&nbsp;**Z80**, and other equivalent processors.
 
-An enhanced clone of `HEXCOM`, the
-[Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion tool,
-is also included.
+* An enhanced clone of `HEXCOM`, the DRI
+  [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
+  tool, is also included.
 
 ## Portability
 
-**TPZASM** should compile cleanly on any system with an ANSI&nbsp;C89 compiler.
+* **TPZASM** should compile cleanly on any system with an
+  ANSI&nbsp;C89 compiler.
 
-Linux, AIX, OS/400, Solaris, illumos, FreeBSD, NetBSD, OpenBSD,
-DragonFly&nbsp;BSD, Haiku, MS‑DOS, OS/2, and Windows are known to work
-without modification.
+  Linux, AIX, OS/400, Solaris, illumos, FreeBSD, NetBSD, OpenBSD,
+  DragonFly&nbsp;BSD, Haiku, MS‑DOS, OS/2, and Windows are known to work
+  without modification.
 
-The GNU&nbsp;GCC, LLVM&nbsp;Clang, PCC, NVIDIA&nbsp;HPC&nbsp;SDK&nbsp;C/C++,
-Oracle&nbsp;Studio&nbsp;C/C++, DMD&nbsp;ImportC, CompCert&nbsp;C, Open64,
-PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP,
-IBM&nbsp;Open&nbsp;XL&nbsp;C/C++, Open&nbsp;Watcom&nbsp;V2, and МЦСТ&nbsp;LCC
-compilers are regularly tested.
+  The GNU&nbsp;GCC, LLVM&nbsp;Clang, PCC, NVIDIA&nbsp;HPC&nbsp;SDK&nbsp;C/C++,
+  Oracle&nbsp;Studio&nbsp;C/C++, DMD&nbsp;ImportC, CompCert&nbsp;C, Open64,
+  PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP,
+  IBM&nbsp;Open&nbsp;XL&nbsp;C/C++, Open&nbsp;Watcom&nbsp;V2, and МЦСТ&nbsp;LCC
+  compilers are regularly tested.
 
 ## Status
 
@@ -52,28 +53,31 @@ compilers are regularly tested.
 
 ## Future
 
-Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
-*release*), is also known, though no documentation for it seems to have
-survived.
+* Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
+  *release*), is also known, though no documentation for it seems to have
+  survived.
 
-Its behavior has now been analyzed: the assembly output seems byte‑for‑byte
-identical to **PSA&nbsp;PASM&nbsp;1.02** (same instruction encoding and the
-same relocatable object output); only the *listing* format was reworked
-(source line numbers, line truncation instead of wrapping, *likely a bug*,
-and a `=` value flag), and it exhibits several behaviors that are clearly
-bugs/beta defects (*i.e.*, an unfilled date/time stamp, the symbol table is
-sometimes omitted from listings when certain macros are defined).
+  Its behavior has now been analyzed: the assembly output seems byte‑for‑byte
+  identical to **PSA&nbsp;PASM&nbsp;1.02** (same instruction encoding and the
+  same relocatable object output); only the *listing* format was reworked
+  (source line numbers, line truncation instead of wrapping, *likely a bug*,
+  and a `=` value flag), and it exhibits several behaviors that are clearly
+  bugs (*i.e.*, an unfilled date/time stamp, the symbol table is sometimes
+  omitted from listings when certain macros are defined).
 
-Optional emulation of its improved listing style may be offered in a future
-release, but the well‑behaved **1.02** output currently remains the reference.
+  Optional emulation of its improved listing style (without the disappearing
+  symbol bugs) may be offered in a future release, but the well‑behaved
+  **1.02** output currently remains the reference.
+
+* Enhanced error reporting and diagnostics may be added to future versions.
 
 ## Notes
 
-**TPZASM** is ***not*** related to the similarly named
-[Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM,
-[Megatokio](https://github.com/Megatokio)
-[zasm](https://github.com/Megatokio/zasm), Z80ASM from SLR Systems, or
-[Pasmo](https://pasmo.speccy.org) Z80 assemblers.
+* **TPZASM** is ***not*** related to the similarly named
+  [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM,
+  [Megatokio](https://github.com/Megatokio)
+  [zasm](https://github.com/Megatokio/zasm), Z80ASM from SLR Systems, or
+  [Pasmo](https://pasmo.speccy.org) Z80 assemblers.
 
 ## Reference
 
