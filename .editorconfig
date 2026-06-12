@@ -58,6 +58,18 @@ trim_trailing_whitespace = true
 
 ################################################################################
 
+# SARGON is a ported real-world program kept verbatim as a regression test; it
+# is space-indented (not the TDL tab convention), so override the [*.asm] rule.
+[tests/sargon.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = true
+
+################################################################################
+
 [*akefile*]
 charset = utf-8
 end_of_line = lf

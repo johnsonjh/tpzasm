@@ -39,23 +39,33 @@ compilers are regularly tested.
   * Remaining known differences are mostly cosmetic issues in the generated
     listing output, and error‑handling behavior has only been lightly verified.
 
+  * **TPZASM** can write the assembled output as a raw binary image, or as a
+    **TDL&nbsp;Object&nbsp;Module** — relocatable (`.PREL`) or an absolute
+    Intel‑HEX module (`.PABS`) — serialized either as raw binary (the `-R`
+    flag, *i.e.* `.PBIN`) or as ASCII‑hex text (the `-X` flag, *i.e.*
+    `.PHEX`), byte‑for‑byte identical to the object output of
+    **PSA&nbsp;PASM&nbsp;1.02**.
+
 * **`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
   output to the original reference tool, with matching messages and identical
   error‑handling semantics, plus user‑configurable control of output padding.
 
 ## Future
 
-* Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*possibly* *a*
-  *beta* *release*), is also known, though no documentation for it seems to
-  have survived.  Its behavior has not yet been analyzed for emulation by
-  **TPZASM**, but this is planned for a future release.
+* Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
+  *release*), is also known, though no documentation for it seems to have
+  survived.  Its behavior **has now been analyzed**: the assembly *engine* is
+  byte‑for‑byte identical to **PSA&nbsp;PASM&nbsp;1.02** (same instruction
+  encoding and the same relocatable object output); only the *listing* format
+  was reworked (source line numbers, line truncation instead of wrapping, and
+  an `=` value flag), and it exhibits several beta defects (an unfilled
+  date/time stamp, and the symbol table is sometimes omitted when macros are
+  defined).  Optional emulation of its listing style may be offered in a future
+  release, but the well‑behaved **1.02** output remains the reference.
 
   * The **PSA&nbsp;PASM&nbsp;2.00G** binary has been verified to assemble
     VEDIT‑PLUS identically to **PSA&nbsp;PASM&nbsp;1.02** and
     **TDL&nbsp;ZASM&nbsp;2.21**.
-
-* Support for additional output formats (*i.e.*, HEX and relocatable object
-  module formats) is also planned for a future release.
 
 ## Notes
 

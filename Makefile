@@ -19,7 +19,7 @@ LINKS    = pasm zasm
 
 OBJ = $(SRCDIR)/main.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o \
 	$(SRCDIR)/lex.o $(SRCDIR)/insn.o $(SRCDIR)/assemble.o \
-	$(SRCDIR)/platform.o
+	$(SRCDIR)/objout.o $(SRCDIR)/platform.o
 
 ################################################################################
 
@@ -86,6 +86,13 @@ $(SRCDIR)/assemble.o: $(SRCDIR)/assemble.c $(SRCDIR)/asm.h
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/assemble.c
+$(SRCDIR)/objout.o: $(SRCDIR)/objout.c $(SRCDIR)/asm.h
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/objout.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/objout.c
 $(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
@@ -96,11 +103,14 @@ $(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
 
 ################################################################################
 
-# Unit tests for the engine.
-test: test_expr asm tests/test_trunc.sh tests/longname.asm
+# Unit tests for the engine.  test_obj.sh checks the -R/-X object emitters
+# against committed golden files (no CP/M oracle needed); tools/vrel.sh does
+# the differential check against the original PSA PASM when tnylpo is present.
+test: test_expr asm tests/test_trunc.sh tests/test_obj.sh tests/longname.asm
 	@printf '%s\n' "" 2> /dev/null || :
 	@./test_expr
 	@./tests/test_trunc.sh
+	@./tests/test_obj.sh
 
 ################################################################################
 

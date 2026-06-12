@@ -191,14 +191,17 @@ usage (const char *prog, dialect_t dialect)
                  "    -p       Emulate PSA PASM 1.02 behavior%s\n"
                  "    -o file  Write the assembled binary image to file\n"
                  "    -P       Pad output to full CP/M record boundary\n"
-                 "    -l file  Write the listing to file (default: stderr)\n"
+                 "    -l file  Write the listing to file (default: stderr)\n",
+                 prog, (dialect == DIALECT_ZASM ? " (default)" : ""),
+                 (dialect == DIALECT_PASM ? " (default)" : ""));
+  (void)fprintf (stderr,
+                 "    -R file  Write the object module as binary TDL REL\n"
+                 "    -X file  Write the object module as ASCII-hex REL\n"
                  "    -L       Allow long (>6 character) symbol names\n"
                  "    -r file  Answer assembly-time prompts from file\n"
                  "    -e expr  Evaluate single expression and exit\n"
                  "    -h       Show this help text and exit\n"
-                 "\n",
-                 prog, (dialect == DIALECT_ZASM ? " (default)" : ""),
-                 (dialect == DIALECT_PASM ? " (default)" : ""));
+                 "\n");
 }
 
 /******************************************************************************/
@@ -211,6 +214,8 @@ main (int argc, char **argv)
   const char *src = NULL;
   const char *outpath = NULL;
   const char *lstpath = NULL;
+  const char *relpath = NULL;
+  const char *hexpath = NULL;
   int pad = 0;
   int i;
 
@@ -265,6 +270,32 @@ main (int argc, char **argv)
                 }
 
               lstpath = argv[++i];
+              break;
+
+            case 'R':
+              /* write the object module as a binary TDL REL file (.PBIN) */
+
+              if (i + 1 >= argc)
+                {
+                  (void)fprintf (stderr, "%s: -R needs a filename\n", prog);
+
+                  return 2;
+                }
+
+              relpath = argv[++i];
+              break;
+
+            case 'X':
+              /* write the object module as an ASCII-hex REL file (.PHEX) */
+
+              if (i + 1 >= argc)
+                {
+                  (void)fprintf (stderr, "%s: -X needs a filename\n", prog);
+
+                  return 2;
+                }
+
+              hexpath = argv[++i];
               break;
 
             case 'r':
@@ -343,7 +374,8 @@ main (int argc, char **argv)
       return 2;
     }
 
-  return asm_source (src, dialect, outpath, lstpath, pad, allow_long_symbols);
+  return asm_source (src, dialect, outpath, lstpath, relpath, hexpath, pad,
+                     allow_long_symbols);
 }
 
 /******************************************************************************/

@@ -1,0 +1,17 @@
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - .gitattributes
+# Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
+# SPDX-License-Identifier: MIT-0
+# scspell-id: 3d9fe262-65fd-11f1-ac3b-246e96298730
+
+################################################################################
+
+# Object-output golden fixtures are byte-exact: the binary .rel form is raw
+# bytes, and the ASCII .hex form embeds CR/LF record separators that must be
+# preserved verbatim for tests/test_obj.sh.  Treat them as binary so neither a
+# checkout nor a format-patch/am round-trip ever normalizes their line endings.
+tests/golden/*.rel binary
+tests/golden/*.hex binary
+
+################################################################################
+# vim: set ft=gitattributes ts=2 sw=2 tw=0 et :
+################################################################################

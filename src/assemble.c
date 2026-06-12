@@ -91,10 +91,33 @@ typedef struct
   /* label awaiting a multi-line '\' prompt value */
   symbol *pend_console;
 
-  /* flat output image (NULL unless -o given) */
+  /* flat output image (NULL unless an image/object output is requested) */
   u8 *image;
   u16 img_min, img_max;
   int img_any;
+
+  int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default) */
+  int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0)  */
+  u16 obj_start;     /* start address from `.END expr' (0 if none)         */
+  int obj_start_rel; /* relocation base of the start address               */
+
+  /* object output records the emitted byte stream in EMISSION order (not
+   * ascending address order): the originals write a record at each .LOC/ORG
+   * address discontinuity, so a program that revisits an earlier region (e.g.
+   * SARGON) interleaves records AND preserves each byte's emission-time value
+   * even when a later store overwrites that address.  em_byte[k]/em_rel[k] are
+   * the k-th emitted byte and its REL_* class; spans group consecutive emitted
+   * bytes into contiguous-address runs. */
+  u8 *em_byte;     /* emitted byte values, emission order (NULL = no record) */
+  u8 *em_rel;      /* REL_ABS/REL_LO/REL_HI per emitted byte                 */
+  long em_n;       /* number of emitted bytes recorded                       */
+  long em_cap;
+  int em_pending;  /* emit_word: 2 -> next byte REL_LO, then 1 -> REL_HI     */
+  u16 *span_a;     /* span start addresses */
+  u16 *span_n;     /* span lengths         */
+  int nspans;
+  int span_cap;
+  long emit_prev;  /* last address emitted this pass, or -1 */
 
   /* listing output stream (stderr, or the -l file) */
   FILE *lst;
@@ -157,6 +180,86 @@ idchar (int c)
 
 /******************************************************************************/
 
+/*
+ * Append one emitted byte (value v, at the current LC) to the object emission
+ * log and its containing span.  The byte's REL_* class comes from the pending
+ * reloc16 marker that emit_word sets.  Buffers grow on demand; an allocation
+ * failure simply drops the record (object output then degrades, never crashes).
+ */
+
+static void
+em_record (astate *a, u8 v)
+{
+  u8 cls = REL_ABS;
+
+  if (a->em_pending == 2)
+    {
+      cls = REL_LO; /* low byte of a relocatable 16-bit value */
+      a->em_pending = 1;
+    }
+  else if (a->em_pending == 1)
+    {
+      cls = REL_HI; /* high byte */
+      a->em_pending = 0;
+    }
+
+  if (a->em_n >= a->em_cap) /* grow the emission buffers */
+    {
+      long nc = a->em_cap * 2;
+      u8 *nb = (u8 *)realloc (a->em_byte, (size_t)nc);
+      u8 *nr = (u8 *)realloc (a->em_rel, (size_t)nc);
+
+      if (nb != NULL)
+        a->em_byte = nb;
+
+      if (nr != NULL)
+        a->em_rel = nr;
+
+      if (nb != NULL && nr != NULL)
+        a->em_cap = nc;
+    }
+
+  if (a->em_n >= a->em_cap)
+    return; /* out of memory */
+
+  a->em_byte[a->em_n] = v;
+  a->em_rel[a->em_n] = cls;
+  a->em_n++;
+
+  /* span: extend the current run, or open a new one at an address gap */
+  if (a->nspans > 0 && a->emit_prev >= 0 && (long)a->lc == a->emit_prev + 1)
+    a->span_n[a->nspans - 1]++;
+  else
+    {
+      if (a->nspans >= a->span_cap) /* grow the span arrays */
+        {
+          int sc = a->span_cap * 2;
+          u16 *na = (u16 *)realloc (a->span_a, (size_t)sc * sizeof (u16));
+          u16 *nn = (u16 *)realloc (a->span_n, (size_t)sc * sizeof (u16));
+
+          if (na != NULL)
+            a->span_a = na;
+
+          if (nn != NULL)
+            a->span_n = nn;
+
+          if (na != NULL && nn != NULL)
+            a->span_cap = sc;
+        }
+
+      if (a->nspans < a->span_cap)
+        {
+          a->span_a[a->nspans] = a->lc;
+          a->span_n[a->nspans] = 1;
+          a->nspans++;
+        }
+    }
+
+  a->emit_prev = (long)a->lc;
+}
+
+/******************************************************************************/
+
 static void
 emit (astate *a, u16 v)
 {
@@ -177,12 +280,33 @@ emit (astate *a, u16 v)
 
           a->img_any = 1;
         }
+
+      if (a->em_byte != NULL) /* object output: record in emission order */
+        em_record (a, (u8)(v & 0xFFu));
     }
 
   a->lc = (u16)(a->lc + 1);
 
   if (a->lc > a->prog_max)
     a->prog_max = a->lc;
+}
+
+/******************************************************************************/
+
+/*
+ * Emit a 16-bit value; when `reloc' is set, flag its two bytes in the emission
+ * log so the object emitter encodes a .PROG.-relative 16-bit datum.  The bytes
+ * are stored little-endian (Z80 order), as the listing already shows.
+ */
+
+static void
+emit_word (astate *a, u16 v, int reloc)
+{
+  if (a->pass == 2 && a->em_byte != NULL)
+    a->em_pending = reloc ? 2 : 0;
+
+  emit (a, (u16)(v & 0xFFu));
+  emit (a, (u16)(v >> 8));
 }
 
 /******************************************************************************/
@@ -674,8 +798,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (eval1 (a, &p, &v))
           aerr (a, line, "bad immediate");
 
-        emit (a, (u16)(v.value & 0xFF));
-        emit (a, (u16)(v.value >> 8));
+        emit_word (a, v.value, v.reloc != 0);
         break;
       }
 
@@ -694,8 +817,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       if (eval1 (a, &p, &v))
         aerr (a, line, "bad address");
 
-      emit (a, (u16)(v.value & 0xFF));
-      emit (a, (u16)(v.value >> 8));
+      emit_word (a, v.value, v.reloc != 0);
       break;
 
     case FMT_RST:
@@ -734,8 +856,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       if (eval1 (a, &p, &v))
         aerr (a, line, "bad address");
 
-      emit (a, (u16)(v.value & 0xFF));
-      emit (a, (u16)(v.value >> 8));
+      emit_word (a, v.value, v.reloc != 0);
       break;
 
     case FMT_EDHL:
@@ -864,8 +985,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (eval1 (a, &p, &v))
           aerr (a, line, "bad address");
 
-        emit (a, (u16)(v.value & 0xFF));
-        emit (a, (u16)(v.value >> 8));
+        emit_word (a, v.value, v.reloc != 0);
         break;
       }
 
@@ -925,10 +1045,10 @@ do_data (astate *a, const char *line, const char *p, int width)
               && a->nbytes / 2 < (int)sizeof (a->wreloc))
             a->wreloc[a->nbytes / 2] = (u8)(v.reloc != 0 ? '\'' : ' ');
 
-          emit (a, v.value);
-
           if (width == 2)
-            emit (a, (u16)(v.value >> 8));
+            emit_word (a, v.value, v.reloc != 0);
+          else
+            emit (a, v.value);
         }
 
       p = skipws (p);
@@ -1459,7 +1579,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   int bw = (a->dialect == DIALECT_PASM) ? 14 : 13; /* byte-field width */
   long loc = (a->lst_loc == -2) ? (long)lc0 : a->lst_loc;
   int rel = (a->lst_lreloc < 0) ? (a->lc_reloc != 0) : a->lst_lreloc;
-  int clen, scol;
+  int clen;
   char mark = 0; /* macro '+' / .INSERT '@' continuation marker, or none */
 
   if (a->lst_suppress) /* assembling only (e.g. a macro's first body line) */
@@ -1495,10 +1615,12 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   {
     int wrapw = (a->dialect == DIALECT_PASM) ? 79 : 72;
     int indent = 11 + bw;
+    /* PSA shows one word, no overstrike: the over-strike quirk is TDL-only */
     int over = (mark == 0 && a->lst_kind == 2 && a->nbytes >= 4 && loc >= 0
-                && a->dialect != DIALECT_PASM /* PSA shows one word, no overstrike */
+                && a->dialect != DIALECT_PASM
                 && (int)strlen (rawline) >= 2);
     const char *src;
+    int scol;
 
     if (over)
       {
@@ -1619,6 +1741,11 @@ sym_name_cmp (const void *pa, const void *pb)
       if (ra < 0)
         return 0;
     }
+
+#ifdef _CH_
+  /*NOTREACHED*/ /* unreachable: the loop always returns */
+  return 0;
+#endif
 }
 
 /******************************************************************************/
@@ -1648,7 +1775,8 @@ lst_symhead (astate *a)
   else
     {
       (void)fprintf (a->lst,
-                     "%-64sPAGE %d\n.MAIN. - %s\n+++++ SYMBOL TABLE +++++\n\n\n",
+                     "%-64sPAGE %d\n.MAIN. - %s\n"
+                     "+++++ SYMBOL TABLE +++++\n\n\n",
                      "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
                      a->title);
       a->lst_line = 8;
@@ -2112,7 +2240,6 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   char *args[8];
   int nargs = 0, i, j = 0;
   int outer = 0, start = 0;
-  u16 lc0 = a->lc;
   const char *p = skipws (argstr);
 
   if (a->macro_depth > 200)
@@ -2205,7 +2332,8 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
            */
           if (a->dialect == DIALECT_PASM)
             while (j > s
-                   && (argbuf[(long)j - 1] == ' ' || argbuf[(long)j - 1] == '\t'))
+                   && (argbuf[(long)j - 1] == ' '
+                       || argbuf[(long)j - 1] == '\t'))
               j--;
         }
 
@@ -2237,6 +2365,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
     {
       char ln0[512];
       char src[2048];
+      u16 lc0;
 
       a->mac_active = 1;
 
@@ -2758,6 +2887,9 @@ do_line (astate *a, const char *line)
           a->lc_reloc = (v.reloc != 0);
         }
 
+      /* an explicit origin pins the program: the .PROG. object segment then
+       * reports size 0 (the code is absolutely located, not relocatable) */
+      a->obj_org_used = 1;
       a->lst_loc = (long)a->lc; /* listing shows the LC after ORG */
     }
   else if (opeq (op, ".RADIX", NULL))
@@ -2784,9 +2916,15 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1; /* .RADIX has no location: blank the LOC column */
     }
   else if (opeq (op, ".PABS", NULL))
-    a->lc_reloc = 0;
+    {
+      a->lc_reloc = 0;
+      a->obj_abs = 1; /* absolute object output (Intel-hex `:' records) */
+    }
   else if (opeq (op, ".PREL", NULL))
-    a->lc_reloc = 1;
+    {
+      a->lc_reloc = 1;
+      a->obj_abs = 0;
+    }
   else if (opeq (op, ".TITLE", NULL))
     { /* capture the page subtitle (in both passes, so pass 2's page-1
        * heading already has it); the directive is not listed in the body */
@@ -2813,8 +2951,23 @@ do_line (astate *a, const char *line)
     }
   else if (opeq (op, ".END", "END"))
     {
+      const char *p = skipws (L.operands);
+
       a->ended = 1;
       a->lst_loc = -1; /* listing blanks the LOC column */
+
+      if (*p != '\0' && *p != ';') /* `.END expr' sets the module start addr */
+        {
+          value_t v;
+
+          if (eval1 (a, &p, &v))
+            aerr (a, line, "bad start address");
+          else
+            {
+              a->obj_start = v.value;
+              a->obj_start_rel = (v.reloc != 0);
+            }
+        }
     }
   else if ((mac = macro_lookup (a, op)) != NULL)
     {
@@ -2903,7 +3056,8 @@ process_file (astate *a, const char *path)
 
 int
 asm_source (const char *path, dialect_t dialect, const char *outpath,
-            const char *lstpath, int pad, int long_symbols)
+            const char *lstpath, const char *relpath, const char *hexpath,
+            int pad, int long_symbols)
 {
   astate a = { 0 };
   const char *slash, *base;
@@ -2996,11 +3150,58 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         }
     }
 
-  a.image = (outpath != NULL) ? (u8 *)calloc(65536UL, 1) : NULL;
+  /* an image is needed for -o and for any object output (-R/-X); the emission
+   * log and spans only for object output. */
+  a.image = (outpath != NULL || relpath != NULL || hexpath != NULL)
+                ? (u8 *)calloc (65536UL, 1)
+                : NULL;
+  a.em_byte = NULL;
+  a.em_rel = NULL;
+  a.em_n = 0;
+  a.em_cap = 0;
+  a.em_pending = 0;
+  a.span_a = NULL;
+  a.span_n = NULL;
+  a.nspans = 0;
+  a.span_cap = 0;
+  a.emit_prev = -1;
+
+  if (relpath != NULL || hexpath != NULL)
+    {
+      a.em_cap = 8192;
+      a.em_byte = (u8 *)malloc ((size_t)a.em_cap);
+      a.em_rel = (u8 *)malloc ((size_t)a.em_cap);
+      a.span_cap = 1024;
+      a.span_a = (u16 *)malloc ((size_t)a.span_cap * sizeof (u16));
+      a.span_n = (u16 *)malloc ((size_t)a.span_cap * sizeof (u16));
+
+      if (a.em_byte == NULL || a.em_rel == NULL || a.span_a == NULL
+          || a.span_n == NULL)
+        { /* out of memory: degrade to no object output */
+          if (a.em_byte != NULL)
+            FREE (a.em_byte);
+
+          if (a.em_rel != NULL)
+            FREE (a.em_rel);
+
+          if (a.span_a != NULL)
+            FREE (a.span_a);
+
+          if (a.span_n != NULL)
+            FREE (a.span_n);
+
+          a.em_cap = 0;
+          a.span_cap = 0;
+        }
+    }
 
   a.img_any = 0;
   a.img_min = 0;
   a.img_max = 0;
+  a.obj_abs = 0; /* default .PREL */
+  a.obj_org_used = 0;
+  a.obj_start = 0;
+  a.obj_start_rel = 0;
 
   a.pass = 1;
   a.radix = RADIX_DEFAULT;
@@ -3027,6 +3228,14 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.lc = 0;
   a.lc_reloc = 1;
   a.prog_max = 0;
+  a.obj_abs = 0;
+  a.obj_org_used = 0;
+  a.obj_start = 0;
+  a.obj_start_rel = 0;
+  a.em_n = 0; /* the emission log/spans are recorded in pass 2 only */
+  a.em_pending = 0;
+  a.nspans = 0;
+  a.emit_prev = -1;
   a.ended = 0;
   a.nalias = 0;
   a.cdepth = 0;
@@ -3077,8 +3286,61 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             }
         }
 
+      /* object output (-R binary REL, -X ASCII REL); both reuse one emitter */
+      if (a.img_any && (relpath != NULL || hexpath != NULL))
+        {
+          objspec os;
+
+          os.em_byte = a.em_byte;
+          os.em_rel = a.em_rel;
+          os.span_a = a.span_a;
+          os.span_n = a.span_n;
+          os.nspans = a.nspans;
+          /* .PROG. size = the LC high-water (segment span incl. any trailing
+           * reservation).  An explicit .LOC/ORG pins the code absolutely, so
+           * the segment then reports size 0, matching the originals. */
+          os.prog_size = a.obj_org_used ? 0u : a.prog_max;
+          os.data_size = 0;
+          os.blnk_size = 0;
+          os.abs_mode = a.obj_abs;
+          /* data-record base: .PROG.-relative (1) unless an explicit origin
+           * pinned the code absolutely (0) */
+          os.data_base = a.obj_org_used ? 0 : 1;
+          os.start = a.obj_start;
+          os.start_reloc = a.obj_start_rel;
+          os.emit_progid = (dialect == DIALECT_PASM);
+
+          if (relpath != NULL)
+            {
+              os.ascii = 0;
+
+              if (obj_write (relpath, &os) != 0)
+                (void)fprintf (stderr, "cannot write '%s'\n", relpath);
+            }
+
+          if (hexpath != NULL)
+            {
+              os.ascii = 1;
+
+              if (obj_write (hexpath, &os) != 0)
+                (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
+            }
+        }
+
       FREE (a.image);
     }
+
+  if (a.em_byte != NULL)
+    FREE (a.em_byte);
+
+  if (a.em_rel != NULL)
+    FREE (a.em_rel);
+
+  if (a.span_a != NULL)
+    FREE (a.span_a);
+
+  if (a.span_n != NULL)
+    FREE (a.span_n);
 
   {
     int e = a.errors;

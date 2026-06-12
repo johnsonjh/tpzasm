@@ -152,9 +152,49 @@ void lex_line (const char *line, line_t *out);
 /* ---- two-pass driver (src/assemble.c) ------------------------------ */
 
 int asm_source (const char *path, dialect_t dialect, const char *outpath,
-                const char *lstpath,
+                const char *lstpath, const char *relpath, /* -R: binary REL */
+                const char *hexpath,                      /* -X: ASCII REL  */
                 int pad, /* pad: 1=pad .com to next 128B boundary with 0x1A */
                 int long_symbols);
+
+/******************************************************************************/
+
+/* ---- object output (src/objout.c) ---------------------------------- */
+
+/*
+ * Per-byte relocation map, parallel to the assembled image.  Each emitted
+ * address is classified so the object emitter can build TDL `;' data records.
+ */
+
+# define REL_GAP 0 /* address not emitted (a .BLKB/.LOC gap)        */
+# define REL_ABS 1 /* absolute byte: load unmodified                */
+# define REL_LO  2 /* low byte of a .PROG.-relative 16-bit value    */
+# define REL_HI  3 /* high byte of that value (follows a REL_LO)    */
+
+typedef struct
+{
+  const u8 *em_byte;  /* emitted byte values, in emission order           */
+  const u8 *em_rel;   /* parallel REL_* class per emitted byte            */
+  const u16 *span_a;  /* emission-order span start addresses              */
+  const u16 *span_n;  /* emission-order span lengths                      */
+  int nspans;         /* number of emission spans                         */
+  unsigned prog_size; /* .PROG. segment size (LC high-water)              */
+  unsigned data_size; /* .DATA. segment size                             */
+  unsigned blnk_size; /* .BLNK. segment size                             */
+  int abs_mode;       /* 1 = .PABS (Intel `:' records), 0 = .PREL (`;')   */
+  int data_base;      /* data-record relocation base (1 .PROG., 0 pinned) */
+  unsigned start;     /* program start address (EOF record)              */
+  int start_reloc;    /* start-address relocation base (0 abs, 1 .PROG.)  */
+  int ascii;          /* 1 = ASCII (.PHEX), 0 = binary (.PBIN)            */
+  int emit_progid;    /* 1 = emit the `+' program-id record (PASM)        */
+} objspec;
+
+/*
+ * Write the TDL Object Module (or Intel-hex absolute module) for `spec' to
+ * `path'.  Returns 0 on success, non-zero on a file error.
+ */
+
+int obj_write (const char *path, const objspec *s);
 
 /******************************************************************************/
 
