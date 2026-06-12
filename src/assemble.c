@@ -1345,9 +1345,12 @@ parse_str_arg (const char *p, char *out)
  * (blank argument)
  */
 
-/* drop trailing blanks: a macro argument keeps the source whitespace before
- * its comment (so ST16 X,H passes "H\t"), but the string conditionals match
- * the originals by ignoring it */
+/*
+ * drop trailing blanks: a macro argument keeps the source whitespace
+ * before its comment (so ST16 X,H passes "H\t"), but the string
+ * conditionals match the originals by ignoring it
+ */
+
 static void
 rstrip (char *s)
 {
@@ -1823,8 +1826,11 @@ lst_symtab (astate *a)
         }
       else
         {
-          /* .PROG. (index 2) carries the program-segment size; the
-           * .BLNK./.DATA. rows stay 0000 for this absolute-segment output */
+          /*
+           * .PROG. (index 2) carries the program-segment size;
+           * the .BLNK./.DATA. rows stay 0000 for this absolute-segment output
+           */
+
           name = segname[(long)i - nuser];
           val = ((2 == (long)i - nuser) ? a->prog_max : 0);
           flag = segflag[(long)i - nuser];
@@ -2356,8 +2362,11 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
       a->mac_active = 1;
 
-      /* assemble body line 0 silently: it may emit bytes (folded onto the
-       * call line) or merely open a conditional that spans the body */
+      /*
+       * assemble body line 0 silently: it may emit bytes (folded onto
+       * the call line) or merely open a conditional that spans the body
+       */
+
       macro_subst (m, args, nargs, m->body[0], ln0);
       lc0 = a->lc;
       a->lst_suppress = 1;
@@ -2673,8 +2682,10 @@ do_line (astate *a, const char *line)
         }
 
       if (2 == a->pass)
-        { /* the originals list the conditional directive line itself, with
-           * a blank LC column */
+        { /*
+           * the originals list the conditional directive
+           * line itself, with a blank LC column
+           */
           a->lst_loc = -1;
           print_lst (a, lc0, line);
         }
@@ -2683,8 +2694,10 @@ do_line (astate *a, const char *line)
     }
 
   if (!casm (a))
-    { /* inside a skipped conditional block: the originals still list the
-       * source line, with a blank LC column and no emitted bytes */
+    { /*
+       * inside a skipped conditional block: the originals still list
+       * the source line, with a blank LC column and no emitted bytes
+       */
       if (2 == a->pass)
         {
           a->lst_loc = -1;
@@ -2768,13 +2781,12 @@ do_line (astate *a, const char *line)
         {
           symbol *s = sym_intern (a->syms, L.label);
           s->val = v;
-          s->defined = 1;
-          s->seen = (unsigned char)a->pass; /* claim the name so a later
-                                             * label keeps this value */
+          s->defined = 1;                   /* claim the name so a later */
+          s->seen = (unsigned char)a->pass; /* label keeps this value    */
         }
 
         a->lst_loc = (long)v.value;     /* listing: '=' shows the value */
-        a->lst_lreloc = (0 != v.reloc); /* and the value's reloc flag    */
+        a->lst_lreloc = (0 != v.reloc); /* and the value's reloc flag   */
       }
 
       if (2 == a->pass)
@@ -2802,8 +2814,10 @@ do_line (astate *a, const char *line)
   if (opeq (op, ".INSERT", NULL))
     {
       if (2 == a->pass)
-        { /* the .INSERT directive lists with a blank LC, and the inserted
-           * file's lines carry the '@' marker */
+        { /*
+           * the .INSERT directive lists with a blank LC, and
+           * the inserted file's lines carry the '@' marker
+           */
           a->lst_loc = -1;
           print_lst (a, lc0, line);
         }
@@ -2826,8 +2840,10 @@ do_line (astate *a, const char *line)
 
       if ('\0' != e1[0] && '\0' != e2[0] && a->nalias < MAXALIAS)
         {
-          /* the synonym e2 becomes an alias for the existing op e1;
-           * alias_from/alias_to elements are each char[NAMEBUF] */
+          /*
+           * the synonym e2 becomes an alias for the existing op e1;
+           * alias_from/alias_to elements are each char[NAMEBUF]
+           */
           (void)xstrlcpy (a->alias_from[a->nalias], e2, NAMEBUF);
           (void)xstrlcpy (a->alias_to[a->nalias], e1, NAMEBUF);
 
@@ -2907,8 +2923,10 @@ do_line (astate *a, const char *line)
       a->obj_abs = 0;
     }
   else if (opeq (op, ".TITLE", NULL))
-    { /* capture the page subtitle (in both passes, so pass 2's page-1
-       * heading already has it); the directive is not listed in the body */
+    { /*
+       * capture the page subtitle (in both passes, so pass 2's page-1
+       * heading already has it); the directive is not listed in the body
+       */
       const char *p = skipws (L.operands);
       char quote = (('\'' == *p || '"' == *p) ? *p : '\0');
       int n = 0;
@@ -3315,8 +3333,12 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
       FREE (a.image);
     }
 
-  /* on any OOM-degrade path above these were freed and NULLed, so the guarded
-   * FREEs here are no-ops; older cppcheck's doubleFree is a false positive */
+  /*
+   * on any OOM-degrade path above these were freed and
+   * NULLed, so the guarded FREEs here are no-ops; old
+   * cppcheck doubleFree warning is a false positive
+   */
+
   if (NULL != a.em_byte)
     FREE (a.em_byte); /* cppcheck-suppress doubleFree */
 

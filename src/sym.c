@@ -184,8 +184,11 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
               if (0 == v)
                 tmp[t++] = '0';
 
-              /* base is always 10 or 16, never 0; older cppcheck's
-               * zerodivcond is a false positive here */
+              /*
+               * base is always 10 or 16, never 0
+               * old cppcheck zerodivcond is a false positive
+               */
+
               while (0 != v)
                 {
                   unsigned d = v % base; /* cppcheck-suppress zerodivcond */
