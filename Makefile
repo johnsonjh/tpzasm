@@ -114,6 +114,24 @@ test: test_expr asm tests/test_trunc.sh tests/test_obj.sh tests/longname.asm
 
 ################################################################################
 
+# longtest: everything in 'test' plus the slow, tnylpo-gated checks -- the
+# differential object comparison against the original PSA PASM (tools/vrel.sh
+# over every fixture, including the absolute SARGON) and the SARGON playability
+# run (tests/test_play.sh).  The tnylpo-dependent parts skip cleanly when the
+# CP/M emulator is not installed.
+longtest: test tests/test_play.sh tools/vrel.sh
+	@if command -v tnylpo > /dev/null 2>&1; then \
+		for f in smoke data insn8080 objword sargon; do \
+			printf '%s\n' "vrel: $$f"; \
+			./tools/vrel.sh tests/$$f.asm || exit 1; \
+		done; \
+	else \
+		printf '%s\n' "SKIP: tnylpo not found; skipping vrel differential."; \
+	fi
+	@./tests/test_play.sh
+
+################################################################################
+
 test_expr: $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
@@ -211,8 +229,8 @@ tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 
 ################################################################################
 
-.PHONY: all clean distclean test tags etags ctags gtags TAGS GPATH GRTAGS \
-		GTAGS cscope cscope.out tag lint dmd
+.PHONY: all clean distclean test longtest tags etags ctags gtags TAGS GPATH \
+		GRTAGS GTAGS cscope cscope.out tag lint dmd
 
 ################################################################################
 

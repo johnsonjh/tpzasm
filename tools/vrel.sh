@@ -32,7 +32,18 @@ trap 'env rm -rf "$work"' EXIT
 "${ref}/asm" -p -R "${work}/clone.rel" -X "${work}/clone.hex" "${src}" \
   > /dev/null 2>&1
 
-# oracle: PSA PASM (.PBIN default -> .rel; add .PHEX copy for the ASCII form)
+# oracle: PSA PASM names its object after the source -- .rel for a relocatable
+# (.PREL) module, .hex for an absolute (.PABS) one -- so grab whichever it
+# wrote.  .PBIN (the default) yields the binary form; the .PHEX copy below the
+# ASCII form.  copy_obj <dest> copies whichever object PASM just produced.
+copy_obj()
+{
+  if [ -f "${work}/${base}.rel" ]; then
+    env cp -f "${work}/${base}.rel" "${1}"
+  elif [ -f "${work}/${base}.hex" ]; then
+    env cp -f "${work}/${base}.hex" "${1}"
+  fi
+}
 for f in "$(dirname "${src}")"/*.asm; do
   [ -f "${f}" ] || continue
   b=$(basename "${f}" | tr '[:upper:]' '[:lower:]')
@@ -42,18 +53,20 @@ for f in "$(dirname "${src}")"/*.asm; do
   } > "${work}/${b}"
 done
 env cp -f "${ref}/orig/pasm.com" "${work}/"
+rm -f "${work}/${base}.rel" "${work}/${base}.hex"
 (cd "${work}" && timeout 30 tnylpo -b pasm.com "${base}.asm" > /dev/null 2>&1)
-env cp -f "${work}/${base}.rel" "${work}/oracle.rel" 2> /dev/null || true
+copy_obj "${work}/oracle.rel"
 
-# ASCII oracle: prepend .PHEX, reassemble (still writes .rel, now ASCII text)
+# ASCII oracle: prepend .PHEX and reassemble (ASCII object, same extension).
 {
   printf '\t.PHEX\r\n'
   sed 's/$/\r/' "${src}"
   printf '\032'
 } \
   > "${work}/${base}.asm"
+rm -f "${work}/${base}.rel" "${work}/${base}.hex"
 (cd "${work}" && timeout 30 tnylpo -b pasm.com "${base}.asm" > /dev/null 2>&1)
-env cp -f "${work}/${base}.rel" "${work}/oracle.hex" 2> /dev/null || true
+copy_obj "${work}/oracle.hex"
 
 python3 - "${work}" << 'PY'
 import sys, os

@@ -5,12 +5,14 @@
 
 ################################################################################
 
-# Object-output golden fixtures are byte-exact: the binary .rel form is raw
-# bytes, and the ASCII .hex form embeds CR/LF record separators that must be
-# preserved verbatim for tests/test_obj.sh.  Treat them as binary so neither a
-# checkout nor a format-patch/am round-trip ever normalizes their line endings.
+# Golden fixtures are byte-exact: the binary .rel form is raw bytes, the ASCII
+# .hex form embeds CR/LF record separators, and the .play console transcript
+# carries trailing-space rows -- all must survive verbatim for tests/test_obj.sh
+# and tests/test_play.sh.  Treat them as binary so neither a checkout nor a
+# format-patch/am round-trip ever normalizes their line endings or whitespace.
 tests/golden/*.rel binary
 tests/golden/*.hex binary
+tests/golden/*.play binary
 
 ################################################################################
 # vim: set ft=gitattributes ts=2 sw=2 tw=0 et :

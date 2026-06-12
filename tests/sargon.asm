@@ -9,6 +9,32 @@
 ;***********************************************************
 
 ;***********************************************************
+; CP/M-2.2 PORT NOTES
+;***********************************************************
+;       This is a CP/M-2.2 port of the 1978 SARGON.  Every
+; console operation is routed through the BDOS (CALL 0005H):
+; the greeting, the running move list, and move entry all
+; work over an ordinary CP/M console, so the game is fully
+; playable from a plain terminal.
+;
+;       The machine SARGON was written for had a memory-
+; mapped video display.  The 8x8 board diagram (DSPBRD) and
+; the analyze-mode square cursor (BLNKER) were drawn straight
+; into video RAM at 0C000H.  This port has no such display:
+; DSPBRD's stores land in ordinary, invisible memory and
+; BLNKER is a do-nothing stub.  Play is unaffected -- you
+; follow the game in the text move list on the console -- but
+; there is no on-screen board.
+;
+;       Because of that, ANALYZE mode ("WOULD YOU LIKE TO
+; ANALYZE A POSITION?") is almost useless here.  It walks a
+; cursor square by square and expects you to SEE which square
+; is highlighted as you key in each piece; with no visible
+; board and no blink, you would be editing all 64 squares
+; blind.  Answer "N" at that prompt to skip straight to play.
+;***********************************************************
+
+;***********************************************************
 ; EQUATES
 ;***********************************************************
 ;
@@ -28,7 +54,9 @@ BPAWN   =       BLACK+PAWN
 ; Make the program absolute and locate it at the standard
 ; CP/M transient program area (0100H). The CP/M loader
 ; transfers control to 0100H, so place a jump to the real
-; entry point (DRIVER) there. START then follows at 0103H.
+; entry point (DRIVER) there. The data tables then begin at
+; START (0200H); see the TABLES SECTION note below for why
+; START is forced there rather than left at 0103H.
 ;***********************************************************
         .PABS
         .LOC    100H
@@ -36,6 +64,16 @@ BPAWN   =       BLACK+PAWN
 ;***********************************************************
 ; TABLES SECTION
 ;***********************************************************
+; START is forced to 0200H (not the 0103H that would follow
+; the JMP) so that TBASE = START+100H = 0300H lands on a page
+; boundary.  The board is addressed by storing an 8-bit
+; square index into the low byte of M1 (which holds TBASE)
+; and reloading IX from it (STA M1 / LIXD M1); that yields
+; TBASE+index only when TBASE's low byte is zero.  Without
+; this page alignment every board access is skewed by the
+; low byte and the program will not play correctly.
+;***********************************************************
+        .LOC    200H
 START:
         .LOC    START+80H
 TBASE   =       START+100H
@@ -2235,12 +2273,15 @@ SGEM2:  MOV     E,M             ; Next byte to output
 ;***********************************************************
 DRIVER: LXI     SP,STACK        ; Set stack pointer
         CLRSCR                  ; Blank out screen
-        PRTLIN  GRTTNG,34       ; Output greeting
+DRIV00: PRTLIN  GRTTNG,34       ; Output greeting
 DRIV01: CALL    CHARTR          ; Accept answer
         CARRET                  ; New line
         CPI     59H             ; Is it a 'Y' ?
-        JNZ     ANALYS          ; Yes - jump
-        SUB     A               ; Code of White is zero
+        JZ      DRIV02          ; Yes - start game
+        CPI     4EH             ; Is it an 'N' ?
+        JZ      ANALYS          ; Yes - go to analysis question
+        JMP     DRIV00          ; Repeat question on invalid input
+DRIV02: SUB     A               ; Code of White is zero
         STA     COLOR           ; White always moves first
         CALL    INTERR          ; Players color/search depth
         CALL    INITBD          ; Initialize board array
@@ -2604,6 +2645,8 @@ BITASN: SUB     A               ; Get ready for division
 PLYRMV: CALL    CHARTR          ; Accept "from" file letter
         CPI     12H             ; Is it instead a Control-R ?
         JZ      FM09            ; Yes - jump
+        CPI     21H             ; Skip control characters & space
+        JC      PLYRMV
         MOV     H,A             ; Save
         CALL    CHARTR          ; Accept "from" rank number
         MOV     L,A             ; Save
@@ -2654,20 +2697,20 @@ PL08:   LXI     H,LINECT        ; Address of screen line count
 ;***********************************************************
 ASNTBI: MOV     A,L             ; Ascii rank (1 - 8)
         SUI     30H             ; Rank 1 - 8
-        CPI     1               ; Check lower bound
-        JM      AT04            ; Jump if invalid
-        CPI     9               ; Check upper bound
-        JRNC    AT04            ; Jump if invalid
+        CPI     1               ; Check lower bound (rank 1)
+        JC      AT04            ; Jump if invalid (< 1)
+        CPI     9               ; Check upper bound (rank 8)
+        JNC     AT04            ; Jump if invalid (>= 9)
         INR     A               ; Rank 2 - 9
         MOV     D,A             ; Ready for multiplication
         MVI     E,10
         CALL    MLTPLY          ; Multiply
-        MOV     A,H             ; Ascii file letter (a - h)
+        MOV     A,H             ; Ascii file letter (A - H)
         SUI     40H             ; File 1 - 8
-        CPI     1               ; Check lower bound
-        JM      AT04            ; Jump if invalid
-        CPI     9               ; Check upper bound
-        JRNC    AT04            ; Jump if invalid
+        CPI     1               ; Check lower bound (file A)
+        JC      AT04            ; Jump if invalid (< 1)
+        CPI     9               ; Check upper bound (file H)
+        JNC     AT04            ; Jump if invalid (>= 9)
         ADD     D               ; File+Rank(20-90)=Board index
         MVI     B,0             ; Ok flag
         RET                     ; Return
@@ -2752,8 +2795,14 @@ VA10:   MVI     A,1             ; Set flag for invalid move
 ;                 for the first few lines of this routine are
 ;                 system dependent.
 ;***********************************************************
-CHARTR: MVI     C,1             ; BDOS console input (with echo)
+CHARTR: PUSH    B               ; Preserve registers across BDOS
+        PUSH    D
+        PUSH    H
+        MVI     C,1             ; BDOS console input (with echo)
         CALL    5               ; Read one char -> A
+        POP     H               ; Restore registers
+        POP     D
+        POP     B
         CPI     0DH             ; Carriage return ?
         RZ                      ; Yes - return
         CPI     0AH             ; Line feed ?
@@ -2888,11 +2937,14 @@ MA0C:   MVI     B,10            ; Blink again
 ; ARGUMENTS:  --  None
 ;***********************************************************
 ANALYS: PRTLIN  ANAMSG,37       ; "CARE TO ANALYSE A POSITION?"
-        CALL    CHARTR          ; Accept answer
+AN02:   CALL    CHARTR          ; Accept answer
         CARRET                  ; New line
-        CPI     4EH             ; Is answer a "N" ?
-        JRNZ    AN04            ; No - jump
-        EXIT                    ; Return to monitor
+        CPI     59H             ; Is it a 'Y' ?
+        JZ      AN04            ; Yes - jump
+        CPI     4EH             ; Is it an 'N' ?
+        JZ      AN03            ; Yes - exit
+        JMP     ANALYS          ; Repeat question on invalid input
+AN03:   EXIT                    ; Return to monitor
 AN04:   CALL    DSPBRD          ; Current board position
         MVI     A,21            ; First board index
 AN08:   STA     ANBDPS          ; Save
