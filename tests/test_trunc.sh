@@ -46,7 +46,7 @@ fi
 
 ################################################################################
 
-printf '\n%s\n\n' "SUCCESS: Symbol truncation tests passed."
+printf '\n%s\n' "SUCCESS: Symbol truncation tests passed."
 rm -f out.txt symtab.txt
 exit 0
 

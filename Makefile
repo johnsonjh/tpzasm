@@ -126,7 +126,8 @@ longtest: test tests/test_play.sh tools/vrel.sh
 			./tools/vrel.sh tests/$$f.asm || exit 1; \
 		done; \
 	else \
-		printf '%s\n' "SKIP: tnylpo not found; skipping vrel differential."; \
+		printf '%s\n' \
+			"SKIP: tnylpo not found; skipping vrel differential."; \
 	fi
 	@./tests/test_play.sh
 
