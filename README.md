@@ -109,13 +109,6 @@
 
 ## Notes
 
-* The `.DATE` and `.TIME` pseudo‑ops emit the assembly date (`MM/DD/YY`) and
-  time (`HH:MM:SS`) as eight ASCII bytes each.  For reproducible builds and
-  testing, **TPZASM** honors the
-  [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/)
-  environment variable (a UTC&nbsp;Unix timestamp) when it is set, and otherwise
-  uses the local clock.
-
 * **TPZASM** is ***not*** related to the similarly named
   [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM,
   [Megatokio](https://github.com/Megatokio) ZASM,
