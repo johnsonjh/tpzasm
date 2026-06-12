@@ -54,18 +54,15 @@ compilers are regularly tested.
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
-  survived.  Its behavior **has now been analyzed**: the assembly *engine* is
+  survived.  Its behavior **has now been analyzed**: the assembly output seems
   byte‑for‑byte identical to **PSA&nbsp;PASM&nbsp;1.02** (same instruction
   encoding and the same relocatable object output); only the *listing* format
   was reworked (source line numbers, line truncation instead of wrapping, and
-  an `=` value flag), and it exhibits several beta defects (an unfilled
-  date/time stamp, and the symbol table is sometimes omitted when macros are
-  defined).  Optional emulation of its listing style may be offered in a future
-  release, but the well‑behaved **1.02** output remains the reference.
-
-  * The **PSA&nbsp;PASM&nbsp;2.00G** binary has been verified to assemble
-    VEDIT‑PLUS identically to **PSA&nbsp;PASM&nbsp;1.02** and
-    **TDL&nbsp;ZASM&nbsp;2.21**.
+  an `=` value flag), and it exhibits several bugs/beta defects (*i.e.*, an
+  unfilled date/time stamp, the symbol table is sometimes omitted when macros
+  are defined).  Optional emulation of its listing style may be offered in a
+  future release, but the well‑behaved **1.02** output will remain
+  the reference.
 
 ## Notes
 
