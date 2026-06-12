@@ -46,11 +46,12 @@
 
 ## Status
 
-* **`TPZASM`** is \~**95%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+* **`TPZASM`** is \~**90%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.  It is fully dialect‑faithful and can
   assemble the substantial (\~30,000 SLOC)
-  [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) codebase, producing
-  byte‑for‑byte identical output to the reference assemblers.
+  [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) and (\~3,500 SLOCK)
+  [SARGON](tests/sargon.asm) codebases, producing byte‑for‑byte identical
+  output to the reference TDL/PSA assemblers.
 
   * Remaining known differences are mostly cosmetic issues in the generated
     listing output, and error‑handling behavior has only been lightly verified.
@@ -73,9 +74,8 @@
 
   **TPZASM** currently assembles a single module into the **`.PROG.`** segment
   (the **`.DATA.`** and **`.BLNK.`** segments are always reported as size `0`).
-
-  As a consequence, the following keywords are *recognized* (they will not
-  raise an error) but are **not not yet implemented**:
+  As a consequence, the following keywords are recognized (so they will not
+  raise any error) but are not not yet implemented:
 
   * `.PRGEND` for *library file generation*, which ends the current module
     like **`.END`** and then begins a fresh module in the same object file.
