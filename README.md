@@ -14,6 +14,8 @@
   [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
   tool, is also included.
 
+---
+
 <!-- toc -->
 
 - [Portability](#portability)
