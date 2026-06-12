@@ -14,6 +14,17 @@
   [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
   tool, is also included.
 
+<!-- toc -->
+
+- [Portability](#portability)
+- [Status](#status)
+- [Future](#future)
+- [Notes](#notes)
+- [Reference](#reference)
+- [License](#license)
+
+<!-- tocstop -->
+
 ## Portability
 
 * **TPZASM** should compile cleanly on any system with an
