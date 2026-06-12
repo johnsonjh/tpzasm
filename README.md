@@ -30,7 +30,7 @@ compilers are regularly tested.
 
 ## Status
 
-* **`TPZASM`** is \~**90%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+* **`TPZASM`** is \~**95%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.  It is fully dialect‑faithful and can
   assemble the substantial (\~30,000 SLOC)
   [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) codebase, producing
@@ -40,10 +40,10 @@ compilers are regularly tested.
     listing output, and error‑handling behavior has only been lightly verified.
 
   * **TPZASM** can write the assembled output as a raw binary image, or as a
-    **TDL&nbsp;Object&nbsp;Module** — relocatable (`.PREL`) or an absolute
-    Intel‑HEX module (`.PABS`) — serialized either as raw binary (the `-R`
-    flag, *i.e.* `.PBIN`) or as ASCII‑hex text (the `-X` flag, *i.e.*
-    `.PHEX`), byte‑for‑byte identical to the object output of
+    **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or an absolute
+    Intel‑HEX module (`.PABS`) formats, serialized either as raw binary
+    (the `-R` flag, *i.e.* `.PBIN`) or as ASCII‑hex text (the `-X` flag,
+    *i.e.* `.PHEX`), which is byte‑for‑byte identical to the object output of
     **PSA&nbsp;PASM&nbsp;1.02**.
 
 * **`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
