@@ -194,10 +194,10 @@ $(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c
 ################################################################################
 
 clean:
-	rm -f $(PROG) $(LINKS) hexcom test_expr ./.test
-	rm -f $(PROG).exe hexcom.exe test_expr.exe ./.test.exe
-	rm -f $(PROG).sym hexcom.sym test_expr.sym ./.test.sym
-	rm -f $(SRCDIR)/*.o ./.test.o
+	rm -f a.out $(PROG) $(LINKS) hexcom test_expr ./.test ./.t src/_chtmp.c
+	rm -f a.exe $(PROG).exe hexcom.exe test_expr.exe ./.test.exe ./.t.exe
+	rm -f a.sym $(PROG).sym hexcom.sym test_expr.sym ./.test.sym ./.t.sym
+	rm -f $(SRCDIR)/*.o
 	rm -f compile_commands.json log.pvs
 
 ################################################################################
@@ -208,8 +208,8 @@ lint:
 ################################################################################
 
 distclean: clean
-	rm -f src/_chtmp.c tags cscope.out GPATH GRTAGS GTAGS TAGS
-	rm -f -r ./pvsreport 2> /dev/null
+	rm -f tags cscope.out GPATH GRTAGS GTAGS TAGS
+	rm -f -r ./pvsreport core ./*.core core-* 2> /dev/null
 	command -v git > /dev/null 2>&1 && git clean -ndx 2> /dev/null || :
 
 ################################################################################

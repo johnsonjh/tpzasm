@@ -228,7 +228,7 @@ em_record (astate *a, u8 v)
 
   /* span: extend the current run, or open a new one at an address gap */
   if (a->nspans > 0 && a->emit_prev >= 0 && (long)a->lc == a->emit_prev + 1)
-    a->span_n[a->nspans - 1]++;
+    a->span_n[(long)a->nspans - 1]++;
   else
     {
       if (a->nspans >= a->span_cap) /* grow the span arrays */
@@ -2939,7 +2939,9 @@ do_line (astate *a, const char *line)
           a->title[n++] = *p++;
         }
 
-      while (n > 0 && (a->title[n - 1] == ' ' || a->title[n - 1] == '\t'))
+      while (n > 0
+             && (a->title[(long)n - 1] == ' '
+                 || a->title[(long)n - 1] == '\t'))
         n--; /* trim trailing blanks (unquoted form) */
 
       a->title[n] = '\0';

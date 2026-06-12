@@ -119,7 +119,7 @@ rb_name (recbuf *r, const char *s) /* 6 chars, left-justified, blank-filled */
       if (s[i] == '\0')
         break;
 
-      rb_lit (r, (u8)s[i]);
+      rb_lit (r, (unsigned)(u8)s[i]);
     }
 
   for (; i < 6; i++)
@@ -162,7 +162,7 @@ rb_flush (recbuf *r)
           if (r->lit[i])
             (void)fputc (r->val[i], r->f);
           else
-            put_hex2 (r->f, r->val[i]);
+            put_hex2 (r->f, (unsigned)r->val[i]);
         }
 
       put_hex2 (r->f, ck);
@@ -221,8 +221,8 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
 
       if (reloc)
         {
-          data[ndata + 1] = eb[i + 1];
-          cbit[ndata + 1] = 0; /* reloc16 high byte: trailing '0'        */
+          data[(long)ndata + 1] = eb[(long)i + 1];
+          cbit[(long)ndata + 1] = 0; /* reloc16 high byte: trailing '0'     */
         }
 
       ndata += id;
@@ -243,13 +243,13 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
       int k;
 
       for (k = 0; k < 8 && b + k < ndata; k++)
-        if (cbit[b + k])
+        if (cbit[(long)b + k])
           ctrl |= (0x80u >> k);
 
       rb_bin (&r, ctrl);
 
       for (k = 0; k < 8 && b + k < ndata; k++)
-        rb_bin (&r, data[b + k]);
+        rb_bin (&r, (unsigned)data[(long)b + k]);
     }
 
   rb_flush (&r);
@@ -276,7 +276,7 @@ emit_pabs_record (FILE *f, int ascii, const u8 *eb, long addr, int avail,
   rb_bin (&r, (unsigned)base); /* base/segment byte (Intel "unused" slot) */
 
   for (k = 0; k < n; k++)
-    rb_bin (&r, eb[k]);
+    rb_bin (&r, (unsigned)eb[k]);
 
   rb_flush (&r);
 
