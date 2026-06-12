@@ -118,9 +118,8 @@
 
 * **TPZASM** is ***not*** related to the similarly named
   [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM,
-  [Megatokio](https://github.com/Megatokio)
-  [zasm](https://github.com/Megatokio/zasm), Z80ASM from SLR Systems, or
-  [Pasmo](https://pasmo.speccy.org) Z80 assemblers.
+  [Megatokio](https://github.com/Megatokio) ZASM,
+  SLR Systems Z80ASM, or [Pasmo](https://pasmo.speccy.org) Z80 assemblers.
 
 ## Reference
 
