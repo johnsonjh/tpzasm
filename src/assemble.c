@@ -32,16 +32,19 @@
 #define MAXCOND 64
 #define MAXALIAS 128
 
-/* listing-control flag bits (a->lst_ctl); LSTC_DEFAULT reproduces the standard
- * listing exactly, so a source that uses none of these directives is unchanged.
+/*
+ * listing-control flag bits (a->lst_ctl); LSTC_DEFAULT
+ * reproduces the standard listing exactly, so a source
+ * that uses none of these directives is unchanged
  */
-#define LSTC_LIST   0x01u /* body listing on        (.LIST / .XLIST)        */
-#define LSTC_CTL    0x02u /* list control stmts     (.LCTL / .XCTL)         */
-#define LSTC_SYM    0x04u /* symbol table at .END   (.LSYM / .XSYM)         */
-#define LSTC_LADDR  0x08u /* 16-bit values swapped  (.LADDR / .XADDR)       */
-#define LSTC_LIMAGE 0x10u /* list every data byte   (.LIMAGE / .XIMAGE)     */
-#define LSTC_LALL   0x20u /* list all macro text    (.LALL)                 */
-#define LSTC_SALL   0x40u /* suppress macro text    (.SALL)                 */
+
+#define LSTC_LIST   0x01u /* body listing on        (.LIST / .XLIST) */
+#define LSTC_CTL    0x02u /* list control stmts     (.LCTL / .XCTL) */
+#define LSTC_SYM    0x04u /* symbol table at .END   (.LSYM / .XSYM) */
+#define LSTC_LADDR  0x08u /* 16-bit values swapped  (.LADDR / .XADDR) */
+#define LSTC_LIMAGE 0x10u /* list every data byte   (.LIMAGE / .XIMAGE) */
+#define LSTC_LALL   0x20u /* list all macro text    (.LALL) */
+#define LSTC_SALL   0x40u /* suppress macro text    (.SALL) */
 #define LSTC_DEFAULT (LSTC_LIST | LSTC_SYM)
 #define LSTC_SAVES 4 /* depth of the .SLIST/.RLIST push-down stack */
 
@@ -111,25 +114,29 @@ typedef struct
   int img_any;
 
   int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default) */
-  int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0)  */
-  int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)   */
-  u16 obj_start;     /* start address from `.END expr' (0 if none)         */
-  int obj_start_rel; /* relocation base of the start address               */
+  int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0) */
+  int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)  */
+  u16 obj_start;     /* start address from `.END expr' (0 if none) */
+  int obj_start_rel; /* relocation base of the start address */
 
-  /* object output records the emitted byte stream in EMISSION order (not
-   * ascending address order): the originals write a record at each .LOC/ORG
-   * address discontinuity, so a program that revisits an earlier region (e.g.
-   * SARGON) interleaves records AND preserves each byte's emission-time value
-   * even when a later store overwrites that address.  em_byte[k]/em_rel[k] are
-   * the k-th emitted byte and its REL_* class; spans group consecutive emitted
-   * bytes into contiguous-address runs. */
-  u8 *em_byte;     /* emitted byte values, emission order (NULL = no record) */
-  u8 *em_rel;      /* REL_ABS/REL_LO/REL_HI per emitted byte                 */
-  long em_n;       /* number of emitted bytes recorded                       */
+  /*
+   * object output records the emitted byte stream in EMISSION order
+   * (not ascending address order): the originals write a record at
+   * each .LOC/ORG address discontinuity, so a program that revisits
+   * an earlier region (e.g. SARGON) interleaves records AND preserves
+   * each byte's emission-time value even when a later store overwrites
+   * that address.  em_byte[k]/em_rel[k] are the k-th emitted byte and
+   * its REL_* class; spans group consecutive emitted bytes into
+   * contiguous-address runs.
+   */
+
+  u8 *em_byte;     /* emitted byte values, emission order (NULL=no record) */
+  u8 *em_rel;      /* REL_ABS/REL_LO/REL_HI per emitted byte */
+  long em_n;       /* number of emitted bytes recorded */
   long em_cap;
-  int em_pending;  /* emit_word: 2 -> next byte REL_LO, then 1 -> REL_HI     */
+  int em_pending;  /* emit_word: 2 -> next byte REL_LO, then 1 -> REL_HI */
   u16 *span_a;     /* span start addresses */
-  u16 *span_n;     /* span lengths         */
+  u16 *span_n;     /* span lengths */
   int nspans;
   int span_cap;
   long emit_prev;  /* last address emitted this pass, or -1 */
@@ -142,9 +149,9 @@ typedef struct
 
   /* macro support */
   unsigned genctr; /* counter for %-generated local labels */
-  int macro_depth; /* recursion guard                      */
+  int macro_depth; /* recursion guard */
   int macro_exit;  /* .EXIT: terminate the current expansion*/
-  unsigned scope;  /* local-symbol scope ('..' labels)     */
+  unsigned scope;  /* local-symbol scope ('..' labels) */
 
   /* macro call whose parenthesized argument spans several lines */
   int pending;
@@ -155,27 +162,30 @@ typedef struct
   u16 lc_stmt; /* statement-start LC, for '.' in operands */
 
   /* listing format (TDL ZASM vs PSA PASM) */
-  dialect_t dialect; /* selects the TDL vs PSA listing layout     */
-  unsigned lst_ctl;  /* listing-control flags (LSTC_*)            */
-  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack        */
-  int lst_nsave;     /* number of saved entries on that stack     */
-  int lst_ctlstmt;   /* this line is a listing-control statement  */
-  int lst_kind;      /* this line: 0 insn, 1 data bytes, 2 words  */
-  int lst_opw;       /* insn operand width (0/1/2) for value-form */
-  long lst_loc;      /* LOC-column value: -1 blank, -2 use lc0    */
-  long lst_line;     /* listing line counter, for pagination      */
-  int lst_page;      /* current listing page number               */
-  int lst_lreloc;    /* LC reloc: -1 use lc_reloc, else 0/1 flag  */
-  int lst_oreloc;    /* 16-bit insn operand reloc flag (0/1)      */
-  u8 wreloc[32];     /* per-.WORD-value reloc flag (' or space)   */
+  dialect_t dialect; /* selects the TDL vs PSA listing layout */
+  unsigned lst_ctl;  /* listing-control flags (LSTC_*) */
+  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack */
+  int lst_nsave; /* number of saved entries on that stack */
+  int lst_ctlstmt; /* this line is a listing-control statement */
+  int lst_kind; /* this line: 0 insn, 1 data bytes, 2 words */
+  int lst_opw; /* insn operand width (0/1/2) for value-form */
+  long lst_loc; /* LOC-column value: -1 blank, -2 use lc0 */
+  long lst_line; /* listing line counter, for pagination */
+  int lst_page; /* current listing page number */
+  int lst_lreloc; /* LC reloc: -1 use lc_reloc, else 0/1 flag */
+  int lst_oreloc; /* 16-bit insn operand reloc flag (0/1) */
+  u8 wreloc[32]; /* per-.WORD-value reloc flag (' or space) */
 
-  /* macro-expansion listing: the originals fold the body into the call line
-   * and flag continued statements with '+' */
+  /*
+   * macro-expansion listing: the originals fold the body into
+   * the call line and flag continued statements with '+'
+   */
+
   const char *mac_src; /* override source text for this listing line, or NULL */
-  int mac_plus;        /* place the '+' macro-continuation marker            */
-  int mac_active;      /* inside the outermost macro expansion's listing     */
-  int lst_suppress;    /* assemble a line but emit no listing output         */
-  int ins_depth;       /* .INSERT nesting: inserted lines carry the '@' mark */
+  int mac_plus; /* place the '+' macro-continuation marker */
+  int mac_active; /* inside the outermost macro expansion's listing */
+  int lst_suppress; /* assemble a line but emit no listing output */
+  int ins_depth; /* .INSERT nesting: inserted lines carry the '@' mark */
 } astate;
 
 /******************************************************************************/
@@ -201,10 +211,11 @@ idchar (int c)
 /******************************************************************************/
 
 /*
- * Append one emitted byte (value v, at the current LC) to the object emission
- * log and its containing span.  The byte's REL_* class comes from the pending
- * reloc16 marker that emit_word sets.  Buffers grow on demand; an allocation
- * failure simply drops the record (object output then degrades, never crashes).
+ * Append one emitted byte (value v, at the current LC) to the object
+ * emission log and its containing span.  The byte's REL_* class comes
+ * from the pending reloc16 marker that emit_word sets.  Buffers grow on
+ * demand; an allocation failure simply drops the record (object output
+ * then degrades, never crashes).
  */
 
 static void
@@ -314,9 +325,10 @@ emit (astate *a, u16 v)
 /******************************************************************************/
 
 /*
- * Emit a 16-bit value; when `reloc' is set, flag its two bytes in the emission
- * log so the object emitter encodes a .PROG.-relative 16-bit datum.  The bytes
- * are stored little-endian (Z80 order), as the listing already shows.
+ * Emit a 16-bit value; when `reloc' is set, flag its two bytes in the
+ * emission log so the object emitter encodes a .PROG.-relative 16-bit
+ * datum.  The bytes are stored little-endian (Z80 order), as the listing
+ * already shows.
  */
 
 static void
@@ -594,9 +606,10 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp)
 /******************************************************************************/
 
 /*
- * Encode one machine instruction.  Returns 1 if `mnem` (uppercase) is an
- * instruction, 0 otherwise.  Always emits the instruction's full size so the
- * location counter stays consistent across passes even on operand errors.
+ * Encode one machine instruction.  Returns 1 if `mnem`
+ * (uppercase) is an instruction, 0 otherwise.  Always emits
+ * the instruction's full size so the location counter stays
+ * consistent across passes even on operand errors.
  */
 
 static int
@@ -1230,12 +1243,11 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
 /******************************************************************************/
 
 /*
- * .DATE / .TIME : emit an 8-byte ASCII date ("MM/DD/YY") or time ("HH:MM:SS")
- * string at the current location.  The PSA original generates 8 spaces on a
- * host with no clock; we always have one, so we format the real date/time.
- * For reproducible builds and tests we honor SOURCE_DATE_EPOCH (a UTC Unix
- * timestamp) when it is set, otherwise the local clock.
- * (https://reproducible-builds.org/docs/source-date-epoch/)
+ * .DATE / .TIME : emit an 8-byte ASCII date ("MM/DD/YY") or time
+ * ("HH:MM:SS") string at the current location.  The PSA original
+ * generates 8 spaces on a host with no clock; we always have one,
+ * so we format the real date/time. For reproducible builds and
+ * tests we honor SOURCE_DATE_EPOCH.
  */
 
 static void
@@ -1256,7 +1268,7 @@ do_datetime (astate *a, int want_time)
       if (NULL != end && '\0' == *end && secs >= 0)
         {
           t = (time_t)secs;
-          tmv = gmtime (&t); /* SOURCE_DATE_EPOCH is interpreted as UTC */
+          tmv = gmtime (&t);
         }
     }
 
@@ -1281,8 +1293,8 @@ do_datetime (astate *a, int want_time)
 /******************************************************************************/
 
 /*
- * Radix-40 character value, or -1 if the character is not encodable.  The PSA
- * set is  ' '=0, '0'-'9'=1-10, 'A'-'Z'=11-36, '$'=37, '%'=38, '.'=39.
+ * Radix-40 character value, or -1 if the character is not encodable.
+ * The PSA set is  ' '=0, '0'-'9'=1-10, 'A'-'Z'=11-36, '$'=37, '%'=38, '.'=39.
  */
 
 static int
@@ -1316,8 +1328,8 @@ rad40_val (int c)
 /*
  * .RAD40 sym{,sym} : pack each symbol into four bytes of Radix-40 characters.
  * Three characters fill each of two big-endian 16-bit words (weights
- * 1600/40/1); at most six characters are used (extra encodable characters are
- * ignored), and a non-encodable character ends the symbol with an error.
+ * 1600/40/1); at most six characters are used (extra encodable characters
+ * are ignored), and a non-encodable character ends the symbol with an error.
  */
 
 static void
@@ -1389,7 +1401,7 @@ do_rad40 (astate *a, const char *line, const char *p)
  * now as no-ops; .PABS/.PREL below do affect the relocation mode).
  *
  * NOTE: .PRGEND (= .PRGEN) is recognized here only.  It is "library file
- * generation" -- it should end the current module like .END and then begin a
+ * generation".  It should end the current module like .END and then begin a
  * fresh module in the same object file.  That needs the multi-module / multi-
  * segment object model this single-.PROG.-segment engine does not yet have, so
  * for now a source with .PRGEND assembles as one module instead of several.
@@ -1474,12 +1486,13 @@ resolve_alias (const astate *a, char *op)
 /******************************************************************************/
 
 /*
- * The originals store pseudo-op names in a six-character-significant table, so
- * a directive whose documented spelling is longer than six characters is also
- * recognized by its first six (e.g. `.DEFIN' == `.DEFINE').  Rewrite such a
- * dot-directive in place to its canonical full name.  Only directives whose
- * canonical spelling exceeds six characters need an entry; the six-character
- * prefixes here are unambiguous, so this never over-matches a distinct op.
+ * The originals store pseudo-op names in a six-character-significant table,
+ * so a directive whose documented spelling is longer than six characters is
+ * also recognized by its first six (e.g. `.DEFIN' == `.DEFINE').  Rewrite
+ * such a dot-directive in place to its canonical full name.  Only directives
+ * whose canonical spelling exceeds six characters need an entry; the
+ * six-character prefixes here are unambiguous, so this never over-matches
+ * a distinct op.
  */
 
 static void
@@ -1648,10 +1661,10 @@ cond_test (const char *op, const value_t *v)
 /******************************************************************************/
 
 /*
- * Render the byte column the way the originals do: opcode bytes in order, an
- * 8-bit operand concatenated onto them, a 16-bit operand/word as a spaced
- * value field (little-endian bytes shown big-endian), and data as a byte
- * stream.
+ * Render the byte column the way the originals do: opcode bytes in order,
+ * an 8-bit operand concatenated onto them, a 16-bit operand/word as a
+ * spaced value field (little-endian bytes shown big-endian), and data
+ * as a byte stream.
  */
 
 static void
@@ -1666,8 +1679,10 @@ lst_bytes (const astate *a, char *col, size_t cap)
       for (i = 0; i + 1 < a->nbytes && i < maxw; i += 2)
         {
           int fl = a->wreloc[i / 2];
-          /* .XADDR (default) shows the 16-bit value; .LADDR shows the bytes in
-           * generated (memory) order -- least significant byte first. */
+          /*
+           * .XADDR (default) shows the 16-bit value; .LADDR shows the bytes in
+           * generated (memory) order -- least significant byte first.
+           */
           unsigned shown
               = ((a->lst_ctl & LSTC_LADDR)
                      ? (unsigned)((a->bytes[i] << 8) | a->bytes[(long)i + 1])
@@ -1742,9 +1757,11 @@ static int
 lst_wrap (astate *a, int col, int wrapw, int indent)
 {
   if (col >= wrapw)
-    { /* end this physical line and start an indented continuation; the
+    { /*
+       * end this physical line and start an indented continuation; the
        * originals paginate physical lines, so a continuation that lands on a
-       * full page is preceded by a form-feed and heading (a mid-line break) */
+       * full page is preceded by a form-feed and heading (a mid-line break)
+       */
       int k;
 
       (void)fputc ('\n', a->lst);
@@ -1816,8 +1833,11 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   if (a->lst_suppress) /* assembling only (e.g. a macro's first body line) */
     return;
 
-  /* listing-control gating: body listing off (.XLIST), or a listing-control
-   * statement that does not list itself (default, reset by .LCTL). */
+  /*
+   * listing-control gating: body listing off (.XLIST), or a listing-control
+   * statement that does not list itself (default, reset by .LCTL).
+   */
+
   if (!(a->lst_ctl & LSTC_LIST))
     return;
 
@@ -1827,8 +1847,10 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   if (NULL != a->mac_src) /* macro listing supplies the rendered source */
     rawline = a->mac_src;
   else if (a->mac_active)
-    { /* macro-expansion listing detail: .SALL suppresses the whole body,
-       * .XALL (default) drops the no-code lines, .LALL lists everything */
+    { /*
+       * macro-expansion listing detail: .SALL suppresses the whole body,
+       * .XALL (default) drops the no-code lines, .LALL lists everything
+       */
       if (a->lst_ctl & LSTC_SALL)
         return;
 
@@ -1836,8 +1858,10 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         return;
     }
 
-  /* inserted-file lines carry '@'; continued macro statements carry '+'
-   * (but not the macro call line, which sets mac_src with mac_plus clear) */
+  /*
+   * inserted-file lines carry '@'; continued macro statements carry '+'
+   * (but not the macro call line, which sets mac_src with mac_plus clear)
+   */
   if (a->ins_depth > 0)
     mark = '@';
   else if (a->mac_plus || (a->mac_active && NULL == a->mac_src))
@@ -1858,6 +1882,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
    * label loses its first two chars and a label-less ".WORD" lists as "WORD"
    * shifted left.  Macro/inserted lines instead carry a +/@ marker.
    */
+
   {
     int wrapw = ((DIALECT_PASM == a->dialect) ? 79 : 72);
     int indent = 11 + bw;
@@ -1884,8 +1909,11 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         scol = 11 + (clen > bw ? clen : bw);
       }
 
-    /* page full: form-feed + heading before this line's first physical row
-     * (continuation rows paginate inside lst_source) */
+    /*
+     * page full: form-feed + heading before this line's first
+     * physical row (continuation rows paginate inside lst_source)
+     */
+
     if (a->lst_line >= LST_PAGE)
       {
         (void)fputc ('\f', a->lst);
@@ -2570,7 +2598,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
           /*
            * Trailing whitespace handling is dialect-specific: TDL carries it
-           * into the expansion (it expands in the listing -- a call's trailing
+           * into the expansion (it expands in the listing - a call's trailing
            * tabs push a macro body's ']' to the right), while PSA trims it.
            * Either way it is harmless to the byte stream (the expression
            * scanner skips it).
@@ -2651,8 +2679,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       macro_subst (m, args, nargs, m->body[i], ln);
 
       if (outer && i == m->nbody - 1 && !(a->lst_ctl & LSTC_SALL))
-        { /* the body-close: force-list this last line with ']' appended
-           * (under .SALL the body text is suppressed, so fall through) */
+        { /*
+           * the body-close: force-list this last line with ']' appended
+           * (under .SALL the body text is suppressed, so fall through)
+           */
           char src[600];
           (void)xsnprintf (src, sizeof (src), "%s]", ln);
           a->mac_src = src;
@@ -2723,8 +2753,8 @@ do_line (astate *a, const char *line)
 
   a->nbytes = 0;
   a->lst_kind = 0;
-  a->lst_opw = 0;     /* default: instruction, no operand */
-  a->lst_loc = -2;    /* default: show the statement LC    */
+  a->lst_opw = 0; /* default: instruction, no operand */
+  a->lst_loc = -2; /* default: show the statement LC */
   a->lst_lreloc = -1; /* default: LC reloc from lc_reloc */
   a->lst_oreloc = 0;
   a->lst_ctlstmt = 0; /* set by the listing-control directives */
@@ -2843,8 +2873,10 @@ do_line (astate *a, const char *line)
     }
 
   if ('\0' == *bp || ';' == *bp)
-    { /* blank or comment-only line: the originals still list it, with a
-       * blank LC column (tabs in the source expand as usual) */
+    { /*
+       * blank or comment-only line: the originals still list it, with a
+       * blank LC column (tabs in the source expand as usual)
+       */
       if (2 == a->pass && casm (a))
         {
           a->lst_loc = -1;
@@ -2989,8 +3021,10 @@ do_line (astate *a, const char *line)
               const char *p = q + 1;
 
               if (reading)
-                { /* pass 1 (or undefined): blank line before the prompt;
-                   * pass 2 must stay silent (value already cached) */
+                { /*
+                   * pass 1 (or undefined): blank line before the prompt;
+                   * pass 2 must stay silent (value already cached)
+                   */
                   (void)fputc ('\n', stderr);
                   (void)fflush (stdout);
                   (void)fflush (stderr);
@@ -3062,9 +3096,11 @@ do_line (astate *a, const char *line)
       return;
     }
 
-  /* label (if any) already defined above.  The originals still list a
+  /*
+   * label (if any) already defined above.  The originals still list a
    * line with no operator: a label-only line shows its LC, while a blank
-   * or comment-only line has no location and blanks the LC column. */
+   * or comment-only line has no location and blanks the LC column.
+   */
   if ('\0' == op[0])
     {
       if (2 == a->pass)
@@ -3174,8 +3210,10 @@ do_line (astate *a, const char *line)
           a->lc_reloc = (0 != v.reloc);
         }
 
-      /* an explicit origin pins the program: the .PROG. object segment then
-       * reports size 0 (the code is absolutely located, not relocatable) */
+      /*
+       * an explicit origin pins the program: the .PROG. object segment then
+       * reports size 0 (the code is absolutely located, not relocatable)
+       */
       a->obj_org_used = 1;
       a->lst_loc = (long)a->lc; /* listing shows the LC after ORG */
     }
@@ -3305,18 +3343,22 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".SLIST", NULL))
-    { /* push the listing-control flags onto the save stack.  Unlike the other
+    { /*
+       * push the listing-control flags onto the save stack.  Unlike the other
        * control statements, .SLIST lists itself whenever body listing is on
-       * (it is not gated by .LCTL), so leave lst_ctlstmt clear. */
+       * (it is not gated by .LCTL), so leave lst_ctlstmt clear.
+       */
       if (a->lst_nsave < LSTC_SAVES)
         a->lst_save[a->lst_nsave++] = a->lst_ctl;
 
       a->lst_loc = -1;
     }
   else if (opeq (op, ".RLIST", NULL))
-    { /* restore the listing-control flags from the save stack.  The .RLIST line
+    { /*
+       * restore the listing-control flags from the save stack.  The .RLIST line
        * itself is listed under the PRE-restore flags (the restored flags take
-       * effect with the following statement), so list it before restoring. */
+       * effect with the following statement), so list it before restoring.
+       */
       a->lst_loc = -1;
 
       if (2 == a->pass)
@@ -3558,8 +3600,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         }
     }
 
-  /* an image is needed for -o and for any object output (-R/-X); the emission
-   * log and spans only for object output. */
+  /*
+   * an image is needed for -o and for any object output (-R/-X); the emission
+   * log and spans only for object output.
+   */
   a.image = ((NULL != outpath || NULL != relpath || NULL != hexpath)
                 ? (u8 *)calloc (65536UL, 1)
                 : NULL);
@@ -3714,15 +3758,19 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           os.span_a = a.span_a;
           os.span_n = a.span_n;
           os.nspans = a.nspans;
-          /* .PROG. size = the LC high-water (segment span incl. any trailing
+          /*
+           * .PROG. size = the LC high-water (segment span incl. any trailing
            * reservation).  An explicit .LOC/ORG pins the code absolutely, so
-           * the segment then reports size 0, matching the originals. */
+           * the segment then reports size 0, matching the originals.
+           */
           os.prog_size = (a.obj_org_used ? 0u : a.prog_max);
           os.data_size = 0;
           os.blnk_size = 0;
           os.abs_mode = a.obj_abs;
-          /* data-record base: .PROG.-relative (1) unless an explicit origin
-           * pinned the code absolutely (0) */
+          /*
+           * data-record base: .PROG.-relative (1) unless an explicit origin
+           * pinned the code absolutely (0)
+           */
           os.data_base = (a.obj_org_used ? 0 : 1);
           os.start = a.obj_start;
           os.start_reloc = a.obj_start_rel;

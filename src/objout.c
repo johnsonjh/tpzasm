@@ -47,9 +47,11 @@
 
 /******************************************************************************/
 
-/* A record being assembled: field byte values (for the checksum) plus a flag
+/*
+ * A record being assembled: field byte values (for the checksum) plus a flag
  * per byte saying whether it is binary (hex-expanded in ASCII mode) or a
- * literal ASCII character. */
+ * literal ASCII character.
+ */
 
 typedef struct
 {
@@ -198,15 +200,17 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
 {
   u8 data[REC_CAP + 2] = { 0 };
   u8 cbit[REC_CAP + 2] = { 0 }; /* control bit accompanying data[i] */
-  int i = 0;     /* emission-log bytes consumed by this record */
-  int ndata = 0; /* data bytes accumulated for this record     */
+  int i = 0; /* emission-log bytes consumed by this record */
+  int ndata = 0; /* data bytes accumulated for this record */
   int nctrl, c;
   recbuf r;
 
-  /* accept items while the count so far (data + control bytes) is below
+  /*
+   * accept items while the count so far (data + control bytes) is below
    * REC_CAP; the item is then added whole, so a 16-bit value never splits
-   * across a record (and may push the final count to 25 -- the originals admit
-   * a reloc16 begun while still under the cap). */
+   * across a record (and may push the final count to 25 - the originals
+   * emit a reloc16 begun while still under the cap).
+   */
   while (i < avail)
     {
       int reloc = (REL_LO == er[i]);
@@ -229,10 +233,12 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
       i += id;
     }
 
-  /* frame the record: ';' count load-addr(BE) reloc-base body.  The
+  /*
+   * frame the record: ';' count load-addr(BE) reloc-base body.  The
    * accumulation cap above keeps ndata well under the buffer size; pin that
    * bound explicitly (never triggers) so static analyzers can prove the
-   * data[]/cbit[] indexing below stays in range. */
+   * data[]/cbit[] indexing below stays in range.
+   */
   if (ndata > REC_CAP + 2)
     ndata = REC_CAP + 2;
 
@@ -265,8 +271,10 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
 
 /******************************************************************************/
 
-/* Emit one absolute ':' data record (up to REC_CAP bytes) from eb[], loading
- * at `addr'; returns the number of bytes consumed. */
+/*
+ * Emit one absolute ':' data record (up to REC_CAP bytes) from eb[], loading
+ * at `addr'; returns the number of bytes consumed.
+ */
 
 static int
 emit_pabs_record (FILE *f, int ascii, const u8 *eb, long addr, int avail,
@@ -324,9 +332,11 @@ obj_write (const char *path, const objspec *s)
       rb_flush (&r);
     }
 
-  /* '\' segment / relocation-base table: .PROG.=1, .DATA.=2, .BLNK.=3 (the
+  /*
+   * '\' segment / relocation-base table: .PROG.=1, .DATA.=2, .BLNK.=3 (the
    * caller reports size 0 for a pinned/absolute .PROG. segment).  Omitted under
-   * .XLINK, which writes a relocatable core image of `;' records only. */
+   * .XLINK, which writes a relocatable core image of `;' records only.
+   */
   if (!s->xlink)
     {
       rb_begin (&r, f, s->ascii, '\\');
@@ -343,11 +353,13 @@ obj_write (const char *path, const objspec *s)
       rb_flush (&r);
     }
 
-  /* data records: walk the emission-order spans (each a contiguous run of
+  /*
+   * data records: walk the emission-order spans (each a contiguous run of
    * emitted addresses), breaking every record at REC_CAP.  The originals write
    * records in emission order, so a span filled at a low address after a high
    * one produces a record that loads "backwards" -- this is required to match
-   * programs that revisit earlier regions via .LOC (e.g. SARGON). */
+   * programs that revisit earlier regions via .LOC (e.g. SARGON).
+   */
   {
     int sp;
     long emoff = 0; /* running offset into the emission log */

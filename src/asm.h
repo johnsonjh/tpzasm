@@ -94,7 +94,7 @@ symtab *sym_new (void);
 void sym_free (symtab *t);
 symbol *sym_lookup (const symtab *t, const char *name);
 symbol *sym_intern (symtab *t, const char *name);
-int sym_count (const symtab *t);                  /* number of symbols   */
+int sym_count (const symtab *t); /* number of symbols */
 void sym_collect (const symtab *t, symbol **buf); /* fill buf[0..count-1] */
 int ci_eq (const char *a, const char *b); /* actually in src/sym.c */
 
@@ -102,10 +102,10 @@ int ci_eq (const char *a, const char *b); /* actually in src/sym.c */
 
 /* ---- bounded, C89-only string/format helpers (src/sym.c) ----------- */
 
-/* strlcpy: copy src into dst[cap]; returns strlen(src).             */
+/* strlcpy: copy src into dst[cap]; returns strlen(src). */
 size_t xstrlcpy (char *dst, const char *src, size_t cap);
 
-/* strlcat: append src to dst[cap]; returns the would-be length.     */
+/* strlcat: append src to dst[cap]; returns the would-be length. */
 size_t xstrlcat (char *dst, const char *src, size_t cap);
 
 int xsnprintf (char *dst, size_t cap, const char *fmt, ...);
@@ -116,12 +116,12 @@ int xsnprintf (char *dst, size_t cap, const char *fmt, ...);
 
 typedef struct
 {
-  int radix;      /* current numeric radix (2/8/10/16)           */
-  symtab *syms;   /* symbols for lookups (NULL => none)          */
-  u16 lc;         /* location counter (for '.')                  */
-  int lc_reloc;   /* relocation coeff of '.'                     */
-  int undef0;     /* if set, undefined symbols evaluate to 0     */
-  unsigned scope; /* local-symbol scope ('..' labels)            */
+  int radix;      /* current numeric radix (2/8/10/16)       */
+  symtab *syms;   /* symbols for lookups (NULL => none)      */
+  u16 lc;         /* location counter (for '.')              */
+  int lc_reloc;   /* relocation coeff of '.'                 */
+  int undef0;     /* if set, undefined symbols evaluate to 0 */
+  unsigned scope; /* local-symbol scope ('..' labels)        */
 } eval_env;
 
 /******************************************************************************/
@@ -151,10 +151,10 @@ int expr_eval2 (const char *s, const eval_env *env, value_t *out,
 
 typedef struct
 {
-  char label[NAMEBUF];  /* label/symbol to define, or ""       */
-  char op[NAMEBUF];     /* mnemonic / pseudo-op, or ""         */
-  const char *operands; /* operand text (into the line), or " "*/
-  int assign;           /* 1: `label` = operands (= / EQU)     */
+  char label[NAMEBUF];  /* label/symbol to define, or ""        */
+  char op[NAMEBUF];     /* mnemonic / pseudo-op, or ""          */
+  const char *operands; /* operand text (into the line), or " " */
+  int assign;           /* 1: `label` = operands (= / EQU)      */
 } line_t;
 
 void lex_line (const char *line, line_t *out);
@@ -165,7 +165,7 @@ void lex_line (const char *line, line_t *out);
 
 int asm_source (const char *path, dialect_t dialect, const char *outpath,
                 const char *lstpath, const char *relpath, /* -R: binary REL */
-                const char *hexpath,                      /* -X: ASCII REL  */
+                const char *hexpath, /* -X: ASCII REL  */
                 int pad, /* pad: 1=pad .com to next 128B boundary with 0x1A */
                 int long_symbols);
 
@@ -178,10 +178,10 @@ int asm_source (const char *path, dialect_t dialect, const char *outpath,
  * address is classified so the object emitter can build TDL `;' data records.
  */
 
-# define REL_GAP 0 /* address not emitted (a .BLKB/.LOC gap)        */
-# define REL_ABS 1 /* absolute byte: load unmodified                */
-# define REL_LO  2 /* low byte of a .PROG.-relative 16-bit value    */
-# define REL_HI  3 /* high byte of that value (follows a REL_LO)    */
+# define REL_GAP 0 /* address not emitted (a .BLKB/.LOC gap)     */
+# define REL_ABS 1 /* absolute byte: load unmodified             */
+# define REL_LO  2 /* low byte of a .PROG.-relative 16-bit value */
+# define REL_HI  3 /* high byte of that value (follows a REL_LO) */
 
 typedef struct
 {
@@ -191,11 +191,11 @@ typedef struct
   const u16 *span_n;  /* emission-order span lengths                      */
   int nspans;         /* number of emission spans                         */
   unsigned prog_size; /* .PROG. segment size (LC high-water)              */
-  unsigned data_size; /* .DATA. segment size                             */
-  unsigned blnk_size; /* .BLNK. segment size                             */
+  unsigned data_size; /* .DATA. segment size                              */
+  unsigned blnk_size; /* .BLNK. segment size                              */
   int abs_mode;       /* 1 = .PABS (Intel `:' records), 0 = .PREL (`;')   */
   int data_base;      /* data-record relocation base (1 .PROG., 0 pinned) */
-  unsigned start;     /* program start address (EOF record)              */
+  unsigned start;     /* program start address (EOF record)               */
   int start_reloc;    /* start-address relocation base (0 abs, 1 .PROG.)  */
   int ascii;          /* 1 = ASCII (.PHEX), 0 = binary (.PBIN)            */
   int emit_progid;    /* 1 = emit the `+' program-id record (PASM)        */
@@ -215,28 +215,28 @@ int obj_write (const char *path, const objspec *s);
 
 typedef enum
 {
-  FMT_NONE,    /* no operand                            */
-  FMT_MOV,     /* MOV r,r : 0x40 | dst<<3 | src         */
-  FMT_DST,     /* reg in bits 3-5  (INR DCR)            */
-  FMT_MVI,     /* reg in bits 3-5 + imm8                */
-  FMT_SRC,     /* reg in bits 0-2  (ADD..CMP)           */
-  FMT_RP,      /* reg pair in bits 4-5 (INX DCX DAD)    */
-  FMT_LXI,     /* reg pair + imm16                      */
-  FMT_PUSHPOP, /* reg pair, SP slot is PSW              */
-  FMT_RP2,     /* reg pair B or D only (LDAX STAX)      */
-  FMT_IMM8,    /* opcode + imm8 (ADI.. IN OUT)          */
-  FMT_ADDR,    /* opcode + addr16 (JMP CALL LDA..)      */
-  FMT_RST,     /* opcode | n<<3                         */
-  FMT_REL,     /* Z80: opcode + signed relative disp    */
-  FMT_ED16,    /* Z80: ED + opcode + addr16             */
-  FMT_EDHL,    /* Z80: ED + (opcode | rp<<4)            */
-  FMT_ED0,     /* Z80: ED + opcode, no operand          */
+  FMT_NONE,    /* no operand                             */
+  FMT_MOV,     /* MOV r,r : 0x40 | dst<<3 | src          */
+  FMT_DST,     /* reg in bits 3-5  (INR DCR)             */
+  FMT_MVI,     /* reg in bits 3-5 + imm8                 */
+  FMT_SRC,     /* reg in bits 0-2  (ADD..CMP)            */
+  FMT_RP,      /* reg pair in bits 4-5 (INX DCX DAD)     */
+  FMT_LXI,     /* reg pair + imm16                       */
+  FMT_PUSHPOP, /* reg pair, SP slot is PSW               */
+  FMT_RP2,     /* reg pair B or D only (LDAX STAX)       */
+  FMT_IMM8,    /* opcode + imm8 (ADI.. IN OUT)           */
+  FMT_ADDR,    /* opcode + addr16 (JMP CALL LDA..)       */
+  FMT_RST,     /* opcode | n<<3                          */
+  FMT_REL,     /* Z80: opcode + signed relative disp     */
+  FMT_ED16,    /* Z80: ED + opcode + addr16              */
+  FMT_EDHL,    /* Z80: ED + (opcode | rp<<4)             */
+  FMT_ED0,     /* Z80: ED + opcode, no operand           */
   FMT_EDDST,   /* Z80: ED + (opcode | reg<<3) (INP OUTP) */
-  FMT_CBR,     /* Z80: CB + (opcode | reg)              */
-  FMT_CBB,     /* Z80: CB + (opcode | bit<<3 | reg)     */
-  FMT_IXP,     /* Z80: index prefix + opcode (PCIX..)   */
-  FMT_IXADD,   /* Z80: DADX/DADY (ADD IX/IY,rr)         */
-  FMT_IXADDR   /* Z80: LIXD/LIYD/SIXD/SIYD LD IX/IY,(a) */
+  FMT_CBR,     /* Z80: CB + (opcode | reg)               */
+  FMT_CBB,     /* Z80: CB + (opcode | bit<<3 | reg)      */
+  FMT_IXP,     /* Z80: index prefix + opcode (PCIX..)    */
+  FMT_IXADD,   /* Z80: DADX/DADY (ADD IX/IY,rr)          */
+  FMT_IXADDR   /* Z80: LIXD/LIYD/SIXD/SIYD LD IX/IY,(a)  */
 } insn_fmt_t;
 
 /******************************************************************************/

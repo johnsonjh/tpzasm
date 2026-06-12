@@ -13,8 +13,11 @@
 
 /******************************************************************************/
 
-#include "asm.h"
 #include <string.h>
+
+/******************************************************************************/
+
+#include "asm.h"
 
 /******************************************************************************/
 
@@ -148,30 +151,30 @@ static const insn TAB[] = {
   { "RETN", 0x45, FMT_ED0 },
 
   /* block move/compare/io, interrupt mode, I/R loads, decimal rotates */
-  { "LDI",  0xA0, FMT_ED0 },
-  { "LDD",  0xA8, FMT_ED0 },
-  { "CCI",  0xA1, FMT_ED0 },
-  { "CCD",  0xA9, FMT_ED0 },
-  { "CCIR", 0xB1, FMT_ED0 },
-  { "CCDR", 0xB9, FMT_ED0 },
-  { "INI",  0xA2, FMT_ED0 },
-  { "INIR", 0xB2, FMT_ED0 },
-  { "IND",  0xAA, FMT_ED0 },
-  { "INDR", 0xBA, FMT_ED0 },
-  { "OUTI", 0xA3, FMT_ED0 },
-  { "OUTIR", 0xB3, FMT_ED0 },
-  { "OUTD", 0xAB, FMT_ED0 },
-  { "OUTDR", 0xBB, FMT_ED0 },
-  { "IM0",  0x46, FMT_ED0 },
-  { "IM1",  0x56, FMT_ED0 },
-  { "IM2",  0x5E, FMT_ED0 },
-  { "LDAI", 0x57, FMT_ED0 },
-  { "STAI", 0x47, FMT_ED0 },
-  { "LDAR", 0x5F, FMT_ED0 },
-  { "STAR", 0x4F, FMT_ED0 },
-  { "RLD",  0x6F, FMT_ED0 },
-  { "RRD",  0x67, FMT_ED0 },
-  { "EXAF", 0x08, FMT_NONE },
+  { "LDI",   0xA0, FMT_ED0  },
+  { "LDD",   0xA8, FMT_ED0  },
+  { "CCI",   0xA1, FMT_ED0  },
+  { "CCD",   0xA9, FMT_ED0  },
+  { "CCIR",  0xB1, FMT_ED0  },
+  { "CCDR",  0xB9, FMT_ED0  },
+  { "INI",   0xA2, FMT_ED0  },
+  { "INIR",  0xB2, FMT_ED0  },
+  { "IND",   0xAA, FMT_ED0  },
+  { "INDR",  0xBA, FMT_ED0  },
+  { "OUTI",  0xA3, FMT_ED0  },
+  { "OUTIR", 0xB3, FMT_ED0  },
+  { "OUTD",  0xAB, FMT_ED0  },
+  { "OUTDR", 0xBB, FMT_ED0  },
+  { "IM0",   0x46, FMT_ED0  },
+  { "IM1",   0x56, FMT_ED0  },
+  { "IM2",   0x5E, FMT_ED0  },
+  { "LDAI",  0x57, FMT_ED0  },
+  { "STAI",  0x47, FMT_ED0  },
+  { "LDAR",  0x5F, FMT_ED0  },
+  { "STAR",  0x4F, FMT_ED0  },
+  { "RLD",   0x6F, FMT_ED0  },
+  { "RRD",   0x67, FMT_ED0  },
+  { "EXAF",  0x08, FMT_NONE },
 
   /* Z80 register I/O via (C): ED + (base | reg<<3) */
   { "INP",  0x40, FMT_EDDST }, /* IN  r,(C) */

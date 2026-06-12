@@ -184,6 +184,7 @@ usage (const char *prog, dialect_t dialect)
 # endif
 #endif
   ASM_URL);
+
   (void)fprintf (stderr,
                  "\n"
                  "  Usage: %s [options] <source[.asm]>\n\n"
@@ -192,8 +193,10 @@ usage (const char *prog, dialect_t dialect)
                  "    -o file  Write the assembled binary image to file\n"
                  "    -P       Pad output to full CP/M record boundary\n"
                  "    -l file  Write the listing to file (default: stderr)\n",
-                 prog, (DIALECT_ZASM == dialect ? " (default)" : ""),
+                 prog,
+                 (DIALECT_ZASM == dialect ? " (default)" : ""),
                  (DIALECT_PASM == dialect ? " (default)" : ""));
+
   (void)fprintf (stderr,
                  "    -R file  Write the object module as binary TDL REL\n"
                  "    -X file  Write the object module as ASCII-hex REL\n"

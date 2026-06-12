@@ -68,6 +68,27 @@
 
 ## Future
 
+* The full multi‑segment object model is not yet implemented, but is planned
+  for a future release.
+
+  **TPZASM** currently assembles a single module into the **`.PROG.`** segment
+  (the **`.DATA.`** and **`.BLNK.`** segments are always reported as size `0`).
+
+  As a consequence, the following keywords are *recognized* (they will not
+  raise an error) but are **not not yet implemented**:
+
+  * `.PRGEND` for *library file generation*, which ends the current module
+    like **`.END`** and then begins a fresh module in the same object file.
+    **TPZASM** treats it as a no‑op, so the source assembles as a single
+    module rather than several.
+
+  * The predefined segment‑base symbols `.PROG.`, `.DATA.`, and `.BLNK.`
+    resolve to each segment's relocatable origin in the original assemblers.
+    `.PROG.` maps cleanly onto the existing relocation model, but `.DATA.`
+    and `.BLNK.` require distinct segment‑relative relocation support that
+    **TPZASM** has not yet implemented, so they are currently left unresolved
+    (rather than relocated incorrectly).
+
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
   survived.
@@ -83,32 +104,6 @@
   Optional emulation of its improved listing style (without the disappearing
   symbol bugs) may be offered in a future release, but the well‑behaved
   **1.02** output currently remains the reference.
-
-* The **multi‑segment / multi‑module object model is not yet implemented.**
-  **TPZASM** currently assembles a single module into the **`.PROG.`** segment
-  (the **`.DATA.`** and **`.BLNK.`** segments are always reported as size 0).
-
-  As a consequence, the following keywords are *recognized* (they do not raise
-  an *unknown operator* error) but are **not fully implemented**:
-
-  * **`.PRGEND`** (and its six‑character form **`.PRGEN`**) — *library file
-    generation*, which ends the current module like **`.END`** and then begins
-    a fresh module in the same object file.  **TPZASM** treats it as a no‑op,
-    so the source assembles as a single module rather than several.
-
-  * The predefined segment‑base symbols **`.PROG.`**, **`.DATA.`**, and
-    **`.BLNK.`** — these resolve to each segment's relocatable origin in the
-    originals.  **`.PROG.`** maps cleanly onto the existing relocation model,
-    but **`.DATA.`** and **`.BLNK.`** require distinct segment‑relative
-    relocation classes that **TPZASM** does not yet model, so they are left
-    unresolved rather than relocated incorrectly.
-
-  Adding a multi‑segment, multi‑module object model (segment‑relative
-  relocation in the expression evaluator and the object emitter, plus
-  independent per‑module assembly for **`.PRGEND`**) is planned for a future
-  release.  None of these features are exercised by the SARGON or VEDIT‑PLUS
-  sources, so the single‑segment output remains byte‑for‑byte faithful for the
-  supported corpus.
 
 * Enhanced error reporting and diagnostics may be added to future versions.
 
@@ -130,6 +125,7 @@
 ## Reference
 
 * The [`orig/`](orig) directory contains the original CP/M‑80 executables.
+
 * The [`docs/`](docs) directory contains PDF‑format documentation for the
   assemblers (which is directly applicable to **TPZASM**).
 
