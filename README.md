@@ -49,7 +49,7 @@
 * **`TPZASM`** is \~**90%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.  It is fully dialect‑faithful and can
   assemble the substantial (\~30,000 SLOC)
-  [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) and (\~3,500 SLOCK)
+  [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) and (\~3,500 SLOC)
   [SARGON](tests/sargon.asm) codebases, producing byte‑for‑byte identical
   output to the reference TDL/PSA assemblers.
 
