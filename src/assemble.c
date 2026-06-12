@@ -3326,17 +3326,19 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
       FREE (a.image);
     }
 
+  /* on any OOM-degrade path above these were freed and NULLed, so the guarded
+   * FREEs here are no-ops; older cppcheck's doubleFree is a false positive */
   if (a.em_byte != NULL)
-    FREE (a.em_byte);
+    FREE (a.em_byte); /* cppcheck-suppress doubleFree */
 
   if (a.em_rel != NULL)
-    FREE (a.em_rel);
+    FREE (a.em_rel); /* cppcheck-suppress doubleFree */
 
   if (a.span_a != NULL)
-    FREE (a.span_a);
+    FREE (a.span_a); /* cppcheck-suppress doubleFree */
 
   if (a.span_n != NULL)
-    FREE (a.span_n);
+    FREE (a.span_n); /* cppcheck-suppress doubleFree */
 
   {
     int e = a.errors;

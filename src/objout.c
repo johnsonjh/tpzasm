@@ -196,8 +196,8 @@ static int
 emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
                   int avail, int base)
 {
-  u8 data[REC_CAP + 2];
-  u8 cbit[REC_CAP + 2]; /* control bit accompanying data[i] */
+  u8 data[REC_CAP + 2] = { 0 };
+  u8 cbit[REC_CAP + 2] = { 0 }; /* control bit accompanying data[i] */
   int i = 0;     /* emission-log bytes consumed by this record */
   int ndata = 0; /* data bytes accumulated for this record     */
   int nctrl, c;
