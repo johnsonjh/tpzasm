@@ -8,8 +8,8 @@
 
 # .DATE / .TIME regression (no CP/M oracle required).
 #
-# .DATE emits the eight ASCII bytes "MM/DD/YY" and .TIME emits "HH:MM:SS" at the
-# current location.  For reproducible builds the assembler honors
+# .DATE emits the eight ASCII bytes "MM/DD/YY" and .TIME emits "HH:MM:SS" at
+# the current location.  For reproducible builds the assembler honors
 # SOURCE_DATE_EPOCH (a UTC Unix timestamp); otherwise it uses the local clock.
 # This test pins SOURCE_DATE_EPOCH to a known instant and checks that the bytes
 # in the ASCII (-X) object record are exactly the expected date/time strings,
@@ -74,8 +74,7 @@ got=$(extract "${tmp}")
 
 # Expect MM/DD/YYHH:MM:SS : digits with '/' at 3,6 and ':' at 11,14 (0-based).
 case "${got}" in
-[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9]:[0-9][0-9]:[0-9][0-9])
-  ;;
+[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9]:[0-9][0-9]:[0-9][0-9]) ;;
 *)
   printf '%s\n' "FAILURE: .DATE/.TIME local fallback malformed: '${got}'"
   fail=1
