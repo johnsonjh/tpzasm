@@ -37,8 +37,8 @@
 static int
 idstart (int c)
 {
-  return isalpha (c) || c == '_' || c == '?' || c == '@' || c == '.'
-         || c == '%';
+  return isalpha (c) || '_' == c || '?' == c || '@' == c || '.' == c
+         || '%' == c;
 }
 
 /******************************************************************************/
@@ -46,8 +46,8 @@ idstart (int c)
 static int
 idchar (int c)
 {
-  return isalnum (c) || c == '_' || c == '?' || c == '@' || c == '.'
-         || c == '$' || c == '%';
+  return isalnum (c) || '_' == c || '?' == c || '@' == c || '.' == c
+         || '$' == c || '%' == c;
 }
 
 /******************************************************************************/
@@ -55,7 +55,7 @@ idchar (int c)
 static const char *
 skipws (const char *p)
 {
-  while (*p == ' ' || *p == '\t')
+  while (' ' == *p || '\t' == *p)
     p++;
 
   return p;
@@ -93,7 +93,7 @@ lex_line (const char *line, line_t *out)
   out->operands = p;
   out->assign = 0;
 
-  if (*p == '\0' || *p == ';')
+  if ('\0' == *p || ';' == *p)
     return;
 
   if (idstart ((unsigned char)*p))
@@ -102,11 +102,9 @@ lex_line (const char *line, line_t *out)
       const char *q = parse_id (p, tok1);
       const char *r = skipws (q);
 
-      if (*r == ':')
+      if (':' == *r)
         { /* label: */
-          /* False positive CWE-120: out->label[NAMEBUF] >= tok1
-           * (parse_id caps NAMEBUF-1) */
-          (void)strcpy (out->label, tok1); /* Flawfinder: ignore */
+          (void)xstrlcpy (out->label, tok1, sizeof (out->label));
           r = skipws (r + 1);
 
           if (idstart ((unsigned char)*r))
@@ -117,18 +115,14 @@ lex_line (const char *line, line_t *out)
           return;
         }
 
-      if (*r == '=')
+      if ('=' == *r)
         { /* symbol = / == expr */
-          /*
-           * False positive CWE-120: out->label[NAMEBUF] >= tok1
-           * (parse_id caps NAMEBUF-1)
-           */
-          (void)strcpy (out->label, tok1); /* Flawfinder: ignore */
-          (void)strcpy (out->op, "=");
+          (void)xstrlcpy (out->label, tok1, sizeof (out->label));
+          (void)xstrlcpy (out->op, "=", sizeof (out->op));
           out->assign = 1;
           r++;
 
-          if (*r == '=')
+          if ('=' == *r)
             r++; /* '==' entry/global assignment */
 
           out->operands = skipws (r);
@@ -141,13 +135,11 @@ lex_line (const char *line, line_t *out)
           char tok2[NAMEBUF];
           const char *s = parse_id (r, tok2);
 
-          if (strcmp (tok2, "EQU") == 0 || strcmp (tok2, "SET") == 0
-              || strcmp (tok2, "DEFL") == 0)
+          if (0 == strcmp (tok2, "EQU") || 0 == strcmp (tok2, "SET")
+              || 0 == strcmp (tok2, "DEFL"))
             {
-              /* False positive CWE-120: out->label[NAMEBUF] >= tok1,
-               * out->op[NAMEBUF] >= tok2 (parse_id caps NAMEBUF-1) */
-              (void)strcpy (out->label, tok1); /* Flawfinder: ignore */
-              (void)strcpy (out->op, tok2);    /* Flawfinder: ignore */
+              (void)xstrlcpy (out->label, tok1, sizeof (out->label));
+              (void)xstrlcpy (out->op, tok2, sizeof (out->op));
               out->assign = 1;
               out->operands = skipws (s);
 
@@ -156,8 +148,7 @@ lex_line (const char *line, line_t *out)
         }
 
       /* operator, no label */
-      /* False positive CWE-120: out->op[NAMEBUF] >= tok1 */
-      (void)strcpy (out->op, tok1); /* Flawfinder: ignore */
+      (void)xstrlcpy (out->op, tok1, sizeof (out->op));
       out->operands = r;
 
       return;

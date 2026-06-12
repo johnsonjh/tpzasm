@@ -16,7 +16,6 @@
 /******************************************************************************/
 
 #include <ctype.h>
-#include <stdio.h>
 
 /******************************************************************************/
 
@@ -64,7 +63,7 @@ efail (ectx *e, const char *m)
 static void
 skipws (ectx *e)
 {
-  while (*e->p == ' ' || *e->p == '\t')
+  while (' ' == *e->p || '\t' == *e->p)
     e->p++;
 }
 
@@ -120,7 +119,7 @@ scan_number (ectx *e)
   buf[n] = '\0';
   ndig = n;
 
-  if (*p == '.')
+  if ('.' == *p)
     {
       radix = 10;
       p++;
@@ -225,8 +224,8 @@ scan_number (ectx *e)
 static int
 idstart (int c)
 {
-  return isalpha (c) || c == '_' || c == '?' || c == '@' || c == '.'
-         || c == '%';
+  return isalpha (c) || '_' == c || '?' == c || '@' == c || '.' == c
+         || '%' == c;
 }
 
 /******************************************************************************/
@@ -234,8 +233,8 @@ idstart (int c)
 static int
 idchar (int c)
 {
-  return isalnum (c) || c == '_' || c == '?' || c == '@' || c == '.'
-         || c == '$' || c == '%';
+  return isalnum (c) || '_' == c || '?' == c || '@' == c || '.' == c
+         || '$' == c || '%' == c;
 }
 
 /******************************************************************************/
@@ -248,17 +247,17 @@ static value_t
 ev_primary (ectx *e)
 {
   skipws (e);
-  if (*e->p == '^')
+  if ('^' == *e->p)
     { /* TDL ^H/^D/^O/^B radix prefix */
       int c = toupper ((unsigned char)e->p[1]), rdx = 0;
 
-      if (c == 'H')
+      if ('H' == c)
         rdx = 16;
-      else if (c == 'D')
+      else if ('D' == c)
         rdx = 10;
-      else if (c == 'O' || c == 'Q')
+      else if ('O' == c || 'Q' == c)
         rdx = 8;
-      else if (c == 'B')
+      else if ('B' == c)
         rdx = 2;
 
       if (rdx)
@@ -284,18 +283,18 @@ ev_primary (ectx *e)
         }
     }
 
-  if (*e->p == '\'')
+  if ('\'' == *e->p)
     { /* character constant 'A' / 'AB' */
       u16 val = 0;
       e->p++;
 
-      while (*e->p != '\0' && *e->p != '\'')
+      while ('\0' != *e->p && '\'' != *e->p)
         {
           val = (u16)((val << 8) | (unsigned char)*e->p);
           e->p++;
         }
 
-      if (*e->p == '\'')
+      if ('\'' == *e->p)
         e->p++;
       else
         efail (e, "unterminated character constant");
@@ -303,14 +302,14 @@ ev_primary (ectx *e)
       return mkabs (val);
     }
 
-  if (*e->p == '(')
+  if ('(' == *e->p)
     {
       value_t v;
       e->p++;
       v = ev_addsub (e);
       skipws (e);
 
-      if (*e->p == ')')
+      if (')' == *e->p)
         e->p++;
       else
         efail (e, "missing ')'");
@@ -337,7 +336,7 @@ ev_primary (ectx *e)
 
       name[n] = '\0';
 
-      if (name[0] == '.' && name[1] == '\0')
+      if ('.' == name[0] && '\0' == name[1])
         { /* location counter */
           value_t r;
           r.value = e->env->lc;
@@ -347,18 +346,16 @@ ev_primary (ectx *e)
           return r;
         }
 
-      if (name[0] == '.' && name[1] == '.')
+      if ('.' == name[0] && '.' == name[1])
         { /* local: scope-qualify */
           char qn[IDBUF + 16];
-          /* False positive CWE-120: qn[IDBUF+16] >= %u + ':' + name */
-          (void)sprintf (qn, "%u:%s", /* Flawfinder: ignore */
-                         e->env->scope, name);
-          s = e->env->syms ? sym_lookup (e->env->syms, qn) : NULL;
+          (void)xsnprintf (qn, sizeof (qn), "%u:%s", e->env->scope, name);
+          s = (e->env->syms ? sym_lookup (e->env->syms, qn) : NULL);
         }
       else
-        s = e->env->syms ? sym_lookup (e->env->syms, name) : NULL;
+        s = (e->env->syms ? sym_lookup (e->env->syms, name) : NULL);
 
-      if (s != NULL && s->external)
+      if (NULL != s && s->external)
         {
           value_t r;
           r.value = 0;
@@ -368,7 +365,7 @@ ev_primary (ectx *e)
           return r;
         }
 
-      if (s == NULL || !s->defined)
+      if (NULL == s || !s->defined)
         {
           if (e->env->undef0)
             return mkabs (0); /* pass-1 tolerance */
@@ -393,7 +390,7 @@ ev_unary (ectx *e)
 {
   skipws (e);
 
-  if (*e->p == '-')
+  if ('-' == *e->p)
     {
       value_t v;
       e->p++;
@@ -408,7 +405,7 @@ ev_unary (ectx *e)
       return v;
     }
 
-  if (*e->p == '+')
+  if ('+' == *e->p)
     {
       e->p++;
 
@@ -426,7 +423,7 @@ v_absop (ectx *e, value_t a, value_t b, int op)
 {
   u16 x = a.value, y = b.value, v = 0;
 
-  if (a.ext || b.ext || a.reloc != 0 || b.reloc != 0)
+  if (a.ext || b.ext || 0 != a.reloc || 0 != b.reloc)
     {
       efail (e, "relocatable value in division/logical/shift");
 
@@ -436,7 +433,7 @@ v_absop (ectx *e, value_t a, value_t b, int op)
   switch (op)
     {
     case '/':
-      if (y == 0)
+      if (0 == y)
         {
           efail (e, "divide by zero");
 
@@ -447,7 +444,7 @@ v_absop (ectx *e, value_t a, value_t b, int op)
       break;
 
     case '@':
-      if (y == 0)
+      if (0 == y)
         {
           efail (e, "remainder by zero");
 
@@ -497,9 +494,9 @@ ev_shift (ectx *e) /* level 3 */
       value_t r;
       skipws (e);
 
-      if (*e->p == '<')
+      if ('<' == *e->p)
         op = '<';
-      else if (*e->p == '>')
+      else if ('>' == *e->p)
         op = '>';
       else
         return v;
@@ -528,11 +525,11 @@ ev_logical (ectx *e) /* level 4: & ! ^ */
       value_t r;
       skipws (e);
 
-      if (*e->p == '&')
+      if ('&' == *e->p)
         op = '&';
-      else if (*e->p == '!')
+      else if ('!' == *e->p)
         op = '!';
-      else if (*e->p == '^')
+      else if ('^' == *e->p)
         op = '^';
       else
         return v;
@@ -562,7 +559,7 @@ v_mul (ectx *e, value_t a, value_t b)
       return r;
     }
 
-  if (a.reloc != 0 && b.reloc != 0)
+  if (0 != a.reloc && 0 != b.reloc)
     {
       efail (e, "two relocatables multiplied");
 
@@ -588,13 +585,13 @@ ev_muldiv (ectx *e) /* level 5 */
       value_t r;
       skipws (e);
 
-      if (*e->p == '*')
+      if ('*' == *e->p)
         {
           e->p++;
           r = ev_logical (e);
           v = v_mul (e, v, r);
         }
-      else if (*e->p == '/')
+      else if ('/' == *e->p)
         {
           e->p++;
           r = ev_logical (e);
@@ -621,7 +618,7 @@ ev_rem (ectx *e) /* level 6 */
     {
       skipws (e);
 
-      if (*e->p == '@')
+      if ('@' == *e->p)
         {
           value_t r;
           e->p++;
@@ -644,7 +641,7 @@ static value_t
 v_addsub (ectx *e, value_t a, value_t b, int sub)
 {
   value_t r;
-  long bn = sub ? -b.reloc : b.reloc;
+  long bn = (sub ? -b.reloc : b.reloc);
 
   if (a.ext && b.ext)
     efail (e, "two externals combined");
@@ -652,10 +649,10 @@ v_addsub (ectx *e, value_t a, value_t b, int sub)
   if (sub && b.ext)
     efail (e, "external subtracted");
 
-  if ((a.ext && b.reloc != 0) || (b.ext && a.reloc != 0))
+  if ((a.ext && 0 != b.reloc) || (b.ext && 0 != a.reloc))
     efail (e, "external with relocatable");
 
-  r.ext = a.ext ? a.ext : b.ext;
+  r.ext = (a.ext ? a.ext : b.ext);
   r.reloc = a.reloc + bn;
   r.value = (u16)(sub ? a.value - b.value : a.value + b.value);
 
@@ -674,13 +671,13 @@ ev_addsub (ectx *e) /* level 7 (entry) */
       value_t r;
       skipws (e);
 
-      if (*e->p == '+')
+      if ('+' == *e->p)
         {
           e->p++;
           r = ev_rem (e);
           v = v_addsub (e, v, r, 0);
         }
-      else if (*e->p == '-')
+      else if ('-' == *e->p)
         {
           e->p++;
           r = ev_rem (e);
@@ -723,7 +720,7 @@ expr_eval2 (const char *s, const eval_env *env, value_t *out,
   e.msg = "";
   v = ev_addsub (&e);
 
-  if (!e.err && v.ext == NULL && v.reloc != 0 && v.reloc != 1)
+  if (!e.err && NULL == v.ext && 0 != v.reloc && 1 != v.reloc)
     efail (&e, "relocation error: coefficient not 0 or 1");
 
   if (endp)
@@ -756,10 +753,10 @@ expr_eval (const char *s, const eval_env *env, value_t *out, const char **err)
   if (rc)
     return rc;
 
-  while (*endp == ' ' || *endp == '\t')
+  while (' ' == *endp || '\t' == *endp)
     endp++;
 
-  if (*endp != '\0')
+  if ('\0' != *endp)
     {
       if (err)
         *err = "trailing characters";

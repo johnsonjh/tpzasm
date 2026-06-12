@@ -71,7 +71,7 @@ rd_byte (FILE *f, int *ok)
 
   c1 = fgetc (f);
 
-  if (c1 == EOF)
+  if (EOF == c1)
     {
       *ok = 0;
       return 0;
@@ -109,16 +109,16 @@ dump_record (unsigned recaddr, const unsigned char *data, int n)
 
   for (i = 0; i < n; i++)
     {
-      if (i % 16 == 0)
+      if (0 == i % 16)
         (void)printf ("%04X: ", (recaddr + (unsigned)i) & 0xFFFF);
 
       (void)printf ("%02X ", data[i]);
 
-      if ((i + 1) % 16 == 0)
+      if (0 == (i + 1) % 16)
         (void)printf ("\n");
     }
 
-  if (n % 16 != 0)
+  if (0 != n % 16)
     (void)printf ("\n");
 
   (void)fflush (stdout);
@@ -168,10 +168,10 @@ static size_t xstrcpy (char *dst, const char *src, size_t dstsz)
 {
   size_t n = 0;
 
-  if (dstsz == 0)
+  if (0 == dstsz)
     return 0;
 
-  while (n + 1 < dstsz && src[n] != '\0')
+  while (n + 1 < dstsz && '\0' != src[n])
     {
       dst[n] = src[n];
       n++;
@@ -188,7 +188,7 @@ static size_t xstrcat (char *dst, const char *src, size_t dstsz)
 {
   size_t n = 0;
 
-  while (n < dstsz && dst[n] != '\0')
+  while (n < dstsz && '\0' != dst[n])
     n++;
 
   if (n == dstsz)
@@ -197,7 +197,7 @@ static size_t xstrcat (char *dst, const char *src, size_t dstsz)
   {
     size_t m = 0;
 
-    while (n + 1 < dstsz && src[m] != '\0')
+    while (n + 1 < dstsz && '\0' != src[m])
       dst[n++] = src[m++];
 
     dst[n] = '\0';
@@ -244,18 +244,18 @@ main (int argc, char **argv)
   base[sizeof (base) - 1] = '\0';
   dot = strrchr (base, '.');
 
-  if (dot != NULL && (strcmp (dot, ".hex") == 0 || strcmp (dot, ".HEX") == 0))
+  if (NULL != dot && (0 == strcmp (dot, ".hex") || 0 == strcmp (dot, ".HEX")))
     *dot = '\0';
 
-  (void)xstrcpy(srcname, base, sizeof srcname);
-  (void)xstrcat(srcname, ".hex", sizeof srcname);
+  (void)xstrcpy(srcname, base, sizeof (srcname));
+  (void)xstrcat(srcname, ".hex", sizeof (srcname));
 
-  (void)xstrcpy(dstname, base, sizeof dstname);
-  (void)xstrcat(dstname, ".com", sizeof dstname);
+  (void)xstrcpy(dstname, base, sizeof (dstname));
+  (void)xstrcat(dstname, ".com", sizeof (dstname));
 
   src = fopen (srcname, "rb");
 
-  if (src == NULL)
+  if (NULL == src)
     fatal_load ("CANNOT OPEN SOURCE FILE", TPA);
 
   /*
@@ -265,7 +265,7 @@ main (int argc, char **argv)
 
   out = fopen (dstname, "wb");
 
-  if (out == NULL)
+  if (NULL == out)
     fatal_load ("DIRECTORY FULL", TPA);
 
   for (;;)
@@ -275,9 +275,9 @@ main (int argc, char **argv)
 
       do
         c = fgetc (src);
-      while (c != ':' && c != EOF && c != 0x1A);
+      while (':' != c && EOF != c && 0x1A != c);
 
-      if (c != ':')
+      if (':' != c)
         break; /* end of input: no further records */
 
       ll = rd_byte (src, &ok);
@@ -300,10 +300,10 @@ main (int argc, char **argv)
       if (!ok)
         record_error ("INVALID HEX DIGIT", addr, addr, data, 0);
 
-      if (tt == 0x01)
+      if (0x01 == tt)
         break; /* end-of-file record */
 
-      if (tt != 0x00)
+      if (0x00 != tt)
         continue; /* ignore other record types */
 
       /*
@@ -343,7 +343,7 @@ main (int argc, char **argv)
 
       sum += cc;
 
-      if ((sum & 0xFF) != 0)
+      if (0 != (sum & 0xFF))
         record_error ("CHECKSUM ERROR ", addr,
                       (addr + (unsigned)ll) & 0xFFFF, data, ll);
 
@@ -359,7 +359,7 @@ main (int argc, char **argv)
   if (ferror (src))
     {
       (void)fclose (src);
-      fatal_load ("DISK READ", have_first ? first_addr : (unsigned)TPA);
+      fatal_load ("DISK READ", (have_first ? first_addr : (unsigned)TPA));
     }
 
   (void)fclose (src);
@@ -370,11 +370,11 @@ main (int argc, char **argv)
       last_addr = 0;
     }
 
-  span = (last_addr >= first_addr) ? (last_addr - first_addr + 1) : 0;
+  span = ((last_addr >= first_addr) ? (last_addr - first_addr + 1) : 0);
   records = (span + RECSZ - 1) / RECSZ;
 
   /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
-  if (getenv ("HEXCOM_NO_PAD") == NULL)
+  if (NULL == getenv ("HEXCOM_NO_PAD"))
     {
       size_t pad_start = (size_t)first_addr + span;
       size_t pad_end = (size_t)first_addr + (size_t)records * RECSZ;
@@ -395,7 +395,7 @@ main (int argc, char **argv)
   (void)fflush (stderr);
 
   /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
-  write_size = ((getenv ("HEXCOM_NO_PAD") == NULL)
+  write_size = ((NULL == getenv ("HEXCOM_NO_PAD"))
                  ? (size_t)records * RECSZ
                  : (size_t)span);
 
@@ -405,7 +405,7 @@ main (int argc, char **argv)
       fatal_load ("DISK WRITE", first_addr);
     }
 
-  if (fclose (out) != 0)
+  if (0 != fclose (out))
     fatal_load ("CANNOT CLOSE FILE", first_addr);
 
   return 0;

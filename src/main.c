@@ -36,8 +36,8 @@ basename_of (const char *p)
   const char *b = p;
   const char *s;
 
-  for (s = p; *s != '\0'; ++s)
-    if (*s == '/' || *s == '\\')
+  for (s = p; '\0' != *s; ++s)
+    if ('/' == *s || '\\' == *s)
       b = s + 1;
 
   return b;
@@ -50,7 +50,7 @@ dialect_from_name (const char *argv0)
 {
   const char *b = basename_of (argv0);
 
-  if (strncmp (b, "pasm", 4) == 0)
+  if (0 == strncmp (b, "pasm", 4))
     return DIALECT_PASM;
 
   return DIALECT_ZASM;
@@ -72,18 +72,18 @@ trimstr (const char *s)
   char *d;
   int in_ws = 0;
 
-  if (s == 0)
+  if (0 == s)
     return "";
 
   slot = (slot + 1) % TRIMSTR_SLOTS;
   d = buf[slot];
 
-  while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
+  while (' ' == *s || '\t' == *s || '\n' == *s || '\r' == *s)
     s++;
 
-  for (; *s != '\0'; s++)
+  for (; '\0' != *s; s++)
     {
-      if (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
+      if (' ' == *s || '\t' == *s || '\n' == *s || '\r' == *s)
         {
           in_ws = 1;
 
@@ -99,7 +99,7 @@ trimstr (const char *s)
       *d++ = *s;
     }
 
-  if (d > buf[slot] && d[-1] == ' ')
+  if (d > buf[slot] && ' ' == d[-1])
     d--;
 
   *d = '\0';
@@ -126,22 +126,22 @@ static const char *osinfo(void)
 
   if (
 #ifdef HAVE_UTSNAME_H
-      arch == NULL &&
+      NULL == arch &&
 #endif
-      name == NULL)
+      NULL == name)
     return NULL;
 
   buf[0] = '(';
   buf[1] = '\0';
 
   /* cppcheck-suppress knownConditionTrueFalse */
-  if (name != NULL)
+  if (NULL != name)
     (void)strncat (buf, name, sizeof (buf) - strlen (buf) - 1);
 
 #ifdef HAVE_UTSNAME_H
-  if (arch != NULL)
+  if (NULL != arch)
     {
-      if (name != NULL)
+      if (NULL != name)
         (void)strncat (buf, "/", sizeof (buf) - strlen (buf) - 1);
 
       (void)strncat (buf, arch, sizeof (buf) - strlen (buf) - 1);
@@ -192,8 +192,8 @@ usage (const char *prog, dialect_t dialect)
                  "    -o file  Write the assembled binary image to file\n"
                  "    -P       Pad output to full CP/M record boundary\n"
                  "    -l file  Write the listing to file (default: stderr)\n",
-                 prog, (dialect == DIALECT_ZASM ? " (default)" : ""),
-                 (dialect == DIALECT_PASM ? " (default)" : ""));
+                 prog, (DIALECT_ZASM == dialect ? " (default)" : ""),
+                 (DIALECT_PASM == dialect ? " (default)" : ""));
   (void)fprintf (stderr,
                  "    -R file  Write the object module as binary TDL REL\n"
                  "    -X file  Write the object module as ASCII-hex REL\n"
@@ -225,7 +225,7 @@ main (int argc, char **argv)
     {
       const char *a = argv[i];
 
-      if (a[0] == '-' && a[1] != '\0' && a[2] == '\0')
+      if ('-' == a[0] && '\0' != a[1] && '\0' == a[2])
         {
           switch (a[1])
             {
@@ -311,7 +311,7 @@ main (int argc, char **argv)
                   return 2;
                 }
 
-              if (freopen (argv[++i], "r", stdin) == NULL)
+              if (NULL == freopen (argv[++i], "r", stdin))
                 {
                   (void)fprintf (stderr,
                                  "%s: cannot open response file '%s'\n", prog,
@@ -351,7 +351,7 @@ main (int argc, char **argv)
 
                 (void)printf ("%u (0x%04X)%s\n", (unsigned)v.value,
                               (unsigned)v.value,
-                              v.reloc ? " [relocatable]" : "");
+                              (v.reloc ? " [relocatable]" : ""));
 
                 return 0;
               }
@@ -367,7 +367,7 @@ main (int argc, char **argv)
         src = a;
     }
 
-  if (src == NULL)
+  if (NULL == src)
     {
       usage (prog, dialect);
 

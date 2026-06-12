@@ -100,6 +100,18 @@ int ci_eq (const char *a, const char *b); /* actually in src/sym.c */
 
 /******************************************************************************/
 
+/* ---- bounded, C89-only string/format helpers (src/sym.c) ----------- */
+
+/* strlcpy: copy src into dst[cap]; returns strlen(src).             */
+size_t xstrlcpy (char *dst, const char *src, size_t cap);
+
+/* strlcat: append src to dst[cap]; returns the would-be length.     */
+size_t xstrlcat (char *dst, const char *src, size_t cap);
+
+int xsnprintf (char *dst, size_t cap, const char *fmt, ...);
+
+/******************************************************************************/
+
 /* ---- expression evaluator (src/expr.c) ----------------------------- */
 
 typedef struct

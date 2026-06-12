@@ -116,7 +116,7 @@ rb_name (recbuf *r, const char *s) /* 6 chars, left-justified, blank-filled */
 
   for (i = 0; i < 6; i++)
     {
-      if (s[i] == '\0')
+      if ('\0' == s[i])
         break;
 
       rb_lit (r, (unsigned)(u8)s[i]);
@@ -209,8 +209,8 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
    * a reloc16 begun while still under the cap). */
   while (i < avail)
     {
-      int reloc = (er[i] == REL_LO);
-      int id = reloc ? 2 : 1;
+      int reloc = (REL_LO == er[i]);
+      int id = (reloc ? 2 : 1);
       int cnt = ndata + (ndata + 7) / 8; /* count if we stopped right here */
 
       if (cnt >= REC_CAP && ndata > 0)
@@ -229,7 +229,13 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
       i += id;
     }
 
-  /* frame the record: ';' count load-addr(BE) reloc-base body */
+  /* frame the record: ';' count load-addr(BE) reloc-base body.  The
+   * accumulation cap above keeps ndata well under the buffer size; pin that
+   * bound explicitly (never triggers) so static analyzers can prove the
+   * data[]/cbit[] indexing below stays in range. */
+  if (ndata > REC_CAP + 2)
+    ndata = REC_CAP + 2;
+
   nctrl = (ndata + 7) / 8;
   rb_begin (&r, f, ascii, ';');
   rb_bin (&r, (unsigned)(ndata + nctrl));
@@ -266,7 +272,7 @@ static int
 emit_pabs_record (FILE *f, int ascii, const u8 *eb, long addr, int avail,
                   int base)
 {
-  int n = (avail < REC_CAP) ? avail : REC_CAP;
+  int n = ((avail < REC_CAP) ? avail : REC_CAP);
   int k;
   recbuf r;
 
@@ -291,7 +297,7 @@ obj_write (const char *path, const objspec *s)
   FILE *f = fopen (path, "wb");
   recbuf r;
 
-  if (f == NULL)
+  if (NULL == f)
     return 1;
 
   /* '!' module identification record */
@@ -368,13 +374,13 @@ obj_write (const char *path, const objspec *s)
   }
 
   /* end-of-file record: zero count + start address + relocation base */
-  rb_begin (&r, f, s->ascii, s->abs_mode ? ':' : ';');
+  rb_begin (&r, f, s->ascii, (s->abs_mode ? ':' : ';'));
   rb_bin (&r, 0);
   rb_be16 (&r, s->start);
-  rb_bin (&r, s->abs_mode ? 0 : (unsigned)(s->start_reloc ? 1 : 0));
+  rb_bin (&r, (s->abs_mode ? 0 : (unsigned)(s->start_reloc ? 1 : 0)));
   rb_flush (&r);
 
-  if (fclose (f) != 0)
+  if (0 != fclose (f))
     return 1;
 
   return 0;

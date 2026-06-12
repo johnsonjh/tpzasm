@@ -199,8 +199,8 @@ insn_find (const char *upname)
 {
   const insn *p;
 
-  for (p = TAB; p->name != NULL; p++)
-    if (strcmp (p->name, upname) == 0)
+  for (p = TAB; NULL != p->name; p++)
+    if (0 == strcmp (p->name, upname))
       return p;
 
   return NULL;

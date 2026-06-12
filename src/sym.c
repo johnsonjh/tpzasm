@@ -15,6 +15,7 @@
 /******************************************************************************/
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,14 +32,221 @@ extern int allow_long_symbols;
 int
 ci_eq (const char *a, const char *b)
 {
-  while (*a != '\0'
+  while ('\0' != *a
          && toupper ((unsigned char)*a) == toupper ((unsigned char)*b))
     {
       a++;
       b++;
     }
 
-  return *a == '\0' && *b == '\0';
+  return '\0' == *a && '\0' == *b;
+}
+
+/******************************************************************************/
+
+size_t
+xstrlcpy (char *dst, const char *src, size_t cap)
+{
+  size_t i = 0;
+
+  if (0 != cap)
+    {
+      while (i + 1 < cap && '\0' != src[i])
+        {
+          dst[i] = src[i];
+          i++;
+        }
+
+      dst[i] = '\0';
+    }
+
+  while ('\0' != src[i])
+    i++;
+
+  return i;
+}
+
+/******************************************************************************/
+
+size_t
+xstrlcat (char *dst, const char *src, size_t cap)
+{
+  size_t dl = 0;
+  size_t i = 0;
+  size_t w;
+
+  while (dl < cap && '\0' != dst[dl])
+    dl++;
+
+  if (dl == cap)
+    {
+      while ('\0' != src[i])
+        i++;
+
+      return cap + i;
+    }
+
+  w = dl;
+
+  while ('\0' != src[i])
+    {
+      if (w + 1 < cap)
+        dst[w++] = src[i];
+
+      i++;
+    }
+
+  dst[w] = '\0';
+
+  return dl + i;
+}
+
+/******************************************************************************/
+
+int
+xsnprintf (char *dst, size_t cap, const char *fmt, ...)
+{
+  va_list ap;
+  size_t n = 0;
+  const char *f = fmt;
+
+  va_start (ap, fmt);
+
+  while ('\0' != *f)
+    {
+      if ('%' != *f)
+        {
+          if (n + 1 < cap)
+            dst[n] = *f;
+
+          n++;
+          f++;
+
+          continue;
+        }
+
+      f++;
+
+      {
+        int zero = 0;
+        int width = 0;
+
+        while ('0' == *f)
+          {
+            zero = 1;
+            f++;
+          }
+
+        while (*f >= '0' && *f <= '9')
+          {
+            width = width * 10 + (*f - '0');
+            f++;
+          }
+
+        switch (*f)
+          {
+          case 's':
+            {
+              const char *s = va_arg (ap, const char *);
+
+              while ('\0' != *s)
+                {
+                  if (n + 1 < cap)
+                    dst[n] = *s;
+
+                  n++;
+                  s++;
+                }
+            }
+
+            break;
+
+          case 'c':
+            {
+              int c = va_arg (ap, int);
+
+              if (n + 1 < cap)
+                dst[n] = (char)c;
+
+              n++;
+            }
+
+            break;
+
+          case 'u':
+          case 'X':
+            {
+              unsigned v = va_arg (ap, unsigned);
+              unsigned base = (('X' == *f) ? 16u : 10u);
+              char tmp[32];
+              int t = 0;
+
+              if (0 == v)
+                tmp[t++] = '0';
+
+              while (0 != v)
+                {
+                  unsigned d = v % base;
+                  int dc = ((d < 10u) ? ('0' + (int)d) : ('A' + (int)d - 10));
+                  tmp[t++] = (char)dc;
+                  v /= base;
+                }
+
+              while (t < width)
+                tmp[t++] = (char)((zero) ? '0' : ' ');
+
+              while (t > 0)
+                {
+                  t--;
+
+                  if (n + 1 < cap)
+                    dst[n] = tmp[t];
+
+                  n++;
+                }
+            }
+
+            break;
+
+          case '%':
+            if (n + 1 < cap)
+              dst[n] = '%';
+
+            n++;
+
+            break;
+
+          default:
+            if (n + 1 < cap)
+              dst[n] = '%';
+
+            n++;
+
+            if ('\0' != *f)
+              {
+                if (n + 1 < cap)
+                  dst[n] = *f;
+
+                n++;
+              }
+
+            break;
+          }
+
+        if ('\0' != *f)
+          f++;
+      }
+    }
+
+  if (0 != cap)
+    dst[((n < cap) ? n : cap - 1)] = '\0';
+
+  va_end (ap);
+
+  if (0 == cap)
+    return 0;
+
+  return (int)((n < cap) ? n : cap - 1);
 }
 
 /******************************************************************************/
@@ -68,17 +276,17 @@ hash (const char *s)
 symtab *
 sym_new (void)
 {
-  symtab *t = (symtab *)malloc (sizeof *t);
+  symtab *t = (symtab *)malloc (sizeof (*t));
   int i;
 
-  if (t == NULL)
+  if (NULL == t)
     return NULL;
 
   t->nbuckets = 1024;
   t->count = 0;
   t->bucket = (symbol **)malloc (sizeof (symbol *) * (unsigned)t->nbuckets);
 
-  if (t->bucket == NULL)
+  if (NULL == t->bucket)
     {
       FREE (t);
 
@@ -100,17 +308,17 @@ sym_lookup (const symtab *t, const char *name)
   char buf[7];
   const char *n = name;
 
-  if (t == NULL)
+  if (NULL == t)
     return NULL;
 
-  if (!allow_long_symbols && strchr (name, ':') == NULL)
+  if (!allow_long_symbols && NULL == strchr (name, ':'))
     {
       (void)strncpy (buf, name, 6);
       buf[6] = '\0';
       n = buf;
     }
 
-  for (s = t->bucket[hash (n) % (unsigned)t->nbuckets]; s != NULL;
+  for (s = t->bucket[hash (n) % (unsigned)t->nbuckets]; NULL != s;
        s = s->next)
     if (ci_eq (s->name, n))
       return s;
@@ -128,10 +336,10 @@ sym_intern (symtab *t, const char *name)
   char buf[7];
   const char *n = name;
 
-  if (t == NULL)
+  if (NULL == t)
     return NULL;
 
-  if (!allow_long_symbols && strchr (name, ':') == NULL)
+  if (!allow_long_symbols && NULL == strchr (name, ':'))
     {
       (void)strncpy (buf, name, 6);
       buf[6] = '\0';
@@ -140,18 +348,18 @@ sym_intern (symtab *t, const char *name)
 
   s = sym_lookup (t, n);
 
-  if (s != NULL)
+  if (NULL != s)
     return s;
 
   idx = hash (n) % (unsigned)t->nbuckets;
-  s = (symbol *)malloc (sizeof *s);
+  s = (symbol *)malloc (sizeof (*s));
 
-  if (s == NULL)
+  if (NULL == s)
     return NULL;
 
   s->name = (char *)malloc (strlen (n) + 1);
 
-  if (s->name == NULL)
+  if (NULL == s->name)
     {
       FREE (s);
       return NULL;
@@ -163,10 +371,11 @@ sym_intern (symtab *t, const char *name)
    * listing still shows the label as typed, from the source line).
    * False positive CWE-120: s->name = malloc(strlen(n)+1).
    */
+
   {
     size_t k;
 
-    for (k = 0; n[k] != '\0'; k++)
+    for (k = 0; '\0' != n[k]; k++)
       s->name[k] = (char)toupper ((unsigned char)n[k]);
 
     s->name[k] = '\0';
@@ -193,14 +402,14 @@ sym_free (symtab *t)
   int i;
   symbol *s, *nx;
 
-  if (t == NULL)
+  if (NULL == t)
     return;
 
   for (i = 0; i < t->nbuckets; i++)
     {
       s = t->bucket[i];
 
-      while (s != NULL)
+      while (NULL != s)
         {
           nx = s->next;
           FREE (s->name);
@@ -217,7 +426,7 @@ sym_free (symtab *t)
 int
 sym_count (const symtab *t)
 {
-  return (t != NULL) ? t->count : 0;
+  return ((NULL != t) ? t->count : 0);
 }
 
 /******************************************************************************/
@@ -228,11 +437,11 @@ sym_collect (const symtab *t, symbol **buf)
   int i, n = 0;
   symbol *s;
 
-  if (t == NULL)
+  if (NULL == t)
     return;
 
   for (i = 0; i < t->nbuckets; i++)
-    for (s = t->bucket[i]; s != NULL; s = s->next)
+    for (s = t->bucket[i]; NULL != s; s = s->next)
       buf[n++] = s;
 }
 

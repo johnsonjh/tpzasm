@@ -50,10 +50,10 @@ check (const char *expr, int radix, u16 ev, long er)
       (void)printf ("FAIL  %-12s -> ERROR (%s)\n", expr, err);
       fails++;
     }
-  else if (v.value != ev || v.reloc != er || v.ext != NULL)
+  else if (v.value != ev || v.reloc != er || NULL != v.ext)
     {
       (void)printf ("FAIL  %-12s = %u r%ld%s, want %u r%ld\n", expr, v.value,
-                    v.reloc, v.ext ? " EXT" : "", ev, er);
+                    v.reloc, (v.ext ? " EXT" : ""), ev, er);
       fails++;
     }
   else
@@ -77,8 +77,8 @@ check_ext (const char *expr, u16 ev, const char *extname)
       (void)printf ("FAIL  %-12s -> ERROR (%s)\n", expr, err);
       fails++;
     }
-  else if (v.value != ev || v.ext == NULL
-           || strcmp (v.ext->name, extname) != 0)
+  else if (v.value != ev || NULL == v.ext
+           || 0 != strcmp (v.ext->name, extname))
     {
       (void)printf ("FAIL  %-12s external mismatch\n", expr);
       fails++;
@@ -191,13 +191,13 @@ main (void)
     int n = sym_count (t);
     sym_collect (t, buf);
 
-    if (n != 6 || buf[0] == NULL)
+    if (6 != n || NULL == buf[0])
       {
         (void)printf ("FAIL  sym_count/collect (n=%d)\n", n);
         fails++;
       }
-    else if (expr_eval2 ("1+2;", &ENV, &v2, &endp2, &err2) || v2.value != 3
-             || *endp2 != ';')
+    else if (expr_eval2 ("1+2;", &ENV, &v2, &endp2, &err2) || 3 != v2.value
+             || ';' != *endp2)
       {
         (void)printf ("FAIL  expr_eval2\n");
         fails++;
@@ -208,8 +208,8 @@ main (void)
 
   sym_free (t);
   (void)printf ("\n%s (%d failure%s)\n",
-                fails ? "TESTS FAILED" : "ALL TESTS PASSED", fails,
-                fails == 1 ? "" : "s");
+                (fails ? "TESTS FAILED" : "ALL TESTS PASSED"), fails,
+                (1 == fails ? "" : "s"));
 
   return (fails ? 1 : 0);
 }

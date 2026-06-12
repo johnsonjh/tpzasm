@@ -207,7 +207,7 @@ const char *platform_name (void)
 #elif defined(_CH_)
   struct utsname chname;
 
-  if (uname (&chname) == -1)
+  if (-1 == uname (&chname))
     return "SoftIntegration Ch";
 
   string_t buf; /* Ch dynamic string */
