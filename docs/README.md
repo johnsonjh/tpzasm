@@ -6,10 +6,10 @@
 This directory contains the original documentation for the
 **TDL&nbsp;ZASM&nbsp;2.2** and **PSA&nbsp;PASM&nbsp;1.0** assemblers.
 
-|               File | Description                             | View                                                                                                    | Download                                                                                          |
-|-------------------:|:----------------------------------------|:--------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
-| **`TDL_ZASM.pdf`** | `TDL ZASM 2.2 Manual`&nbsp;(10/15/1977) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/TDL_ZASM.pdf) | [**PDF**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/TDL_ZASM.pdf) |
-| **`PSA_PASM.pdf`** | `PSA PASM 1.0 Manual`&nbsp;(02/01/1980) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/PSA_PASM.pdf) | [**PDF**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/PSA_PASM.pdf) |
+|                                                                                                         File | Description                             | View                                                                                                    |
+|-------------------------------------------------------------------------------------------------------------:|:----------------------------------------|:--------------------------------------------------------------------------------------------------------|
+| [**`TDL_ZASM.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/TDL_ZASM.pdf) | `TDL ZASM 2.2 Manual`&nbsp;(10/15/1977) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/TDL_ZASM.pdf) |
+| [**`PSA_PASM.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/PSA_PASM.pdf) | `PSA PASM 1.0 Manual`&nbsp;(02/01/1980) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/PSA_PASM.pdf) |
 
 <!--
 Local Variables:
