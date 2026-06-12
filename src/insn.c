@@ -46,6 +46,10 @@ static const insn TAB[] = {
   { "RP",   0xF0, FMT_NONE },
   { "RM",   0xF8, FMT_NONE },
 
+  /* parity flag read as overflow: RNO/RO alias RPO/RPE (same P/V flag) */
+  { "RNO",  0xE0, FMT_NONE },
+  { "RO",   0xE8, FMT_NONE },
+
   /* register moves / single register */
   { "MOV", 0x40, FMT_MOV },
   { "INR", 0x04, FMT_DST },
@@ -96,6 +100,8 @@ static const insn TAB[] = {
   { "JPE",  0xEA, FMT_ADDR },
   { "JP",   0xF2, FMT_ADDR },
   { "JM",   0xFA, FMT_ADDR },
+  { "JNO",  0xE2, FMT_ADDR }, /* overflow alias of JPO (P/V flag) */
+  { "JO",   0xEA, FMT_ADDR }, /* overflow alias of JPE (P/V flag) */
   { "CALL", 0xCD, FMT_ADDR },
   { "CNZ",  0xC4, FMT_ADDR },
   { "CZ",   0xCC, FMT_ADDR },
@@ -105,6 +111,8 @@ static const insn TAB[] = {
   { "CPE",  0xEC, FMT_ADDR },
   { "CP",   0xF4, FMT_ADDR },
   { "CM",   0xFC, FMT_ADDR },
+  { "CNO",  0xE4, FMT_ADDR }, /* overflow alias of CPO (P/V flag) */
+  { "CO",   0xEC, FMT_ADDR }, /* overflow alias of CPE (P/V flag) */
 
   /* restart */
   { "RST", 0xC7, FMT_RST },
@@ -147,7 +155,13 @@ static const insn TAB[] = {
   { "CCIR", 0xB1, FMT_ED0 },
   { "CCDR", 0xB9, FMT_ED0 },
   { "INI",  0xA2, FMT_ED0 },
+  { "INIR", 0xB2, FMT_ED0 },
+  { "IND",  0xAA, FMT_ED0 },
+  { "INDR", 0xBA, FMT_ED0 },
   { "OUTI", 0xA3, FMT_ED0 },
+  { "OUTIR", 0xB3, FMT_ED0 },
+  { "OUTD", 0xAB, FMT_ED0 },
+  { "OUTDR", 0xBB, FMT_ED0 },
   { "IM0",  0x46, FMT_ED0 },
   { "IM1",  0x56, FMT_ED0 },
   { "IM2",  0x5E, FMT_ED0 },
@@ -158,6 +172,10 @@ static const insn TAB[] = {
   { "RLD",  0x6F, FMT_ED0 },
   { "RRD",  0x67, FMT_ED0 },
   { "EXAF", 0x08, FMT_NONE },
+
+  /* Z80 register I/O via (C): ED + (base | reg<<3) */
+  { "INP",  0x40, FMT_EDDST }, /* IN  r,(C) */
+  { "OUTP", 0x41, FMT_EDDST }, /* OUT (C),r */
 
   /* CB rotates/shifts (register/M form): CB + (base | reg) */
   { "RLCR", 0x00, FMT_CBR },

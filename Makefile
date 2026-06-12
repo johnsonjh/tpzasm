@@ -106,11 +106,13 @@ $(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
 # Unit tests for the engine.  test_obj.sh checks the -R/-X object emitters
 # against committed golden files (no CP/M oracle needed); tools/vrel.sh does
 # the differential check against the original PSA PASM when tnylpo is present.
-test: test_expr asm tests/test_trunc.sh tests/test_obj.sh tests/longname.asm
+test: test_expr asm tests/test_trunc.sh tests/test_obj.sh \
+	tests/test_datetime.sh tests/longname.asm
 	@printf '%s\n' "" 2> /dev/null || :
 	@./test_expr
 	@./tests/test_trunc.sh
 	@./tests/test_obj.sh
+	@./tests/test_datetime.sh
 
 ################################################################################
 
@@ -121,7 +123,7 @@ test: test_expr asm tests/test_trunc.sh tests/test_obj.sh tests/longname.asm
 # CP/M emulator is not installed.
 longtest: test tests/test_play.sh tools/vrel.sh
 	@if command -v tnylpo > /dev/null 2>&1; then \
-		for f in smoke data insn8080 objword sargon; do \
+		for f in smoke data insn8080 objword sargon newkw; do \
 			printf '%s\n' "vrel: $$f"; \
 			./tools/vrel.sh tests/$$f.asm || exit 1; \
 		done; \

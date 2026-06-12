@@ -199,6 +199,7 @@ typedef struct
   int start_reloc;    /* start-address relocation base (0 abs, 1 .PROG.)  */
   int ascii;          /* 1 = ASCII (.PHEX), 0 = binary (.PBIN)            */
   int emit_progid;    /* 1 = emit the `+' program-id record (PASM)        */
+  int xlink;          /* 1 = .XLINK: omit the `!'/`\\' link records       */
 } objspec;
 
 /*
@@ -230,6 +231,7 @@ typedef enum
   FMT_ED16,    /* Z80: ED + opcode + addr16             */
   FMT_EDHL,    /* Z80: ED + (opcode | rp<<4)            */
   FMT_ED0,     /* Z80: ED + opcode, no operand          */
+  FMT_EDDST,   /* Z80: ED + (opcode | reg<<3) (INP OUTP) */
   FMT_CBR,     /* Z80: CB + (opcode | reg)              */
   FMT_CBB,     /* Z80: CB + (opcode | bit<<3 | reg)     */
   FMT_IXP,     /* Z80: index prefix + opcode (PCIX..)   */

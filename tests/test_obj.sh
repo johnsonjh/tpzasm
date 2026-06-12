@@ -20,10 +20,11 @@ set -eu
 # Each entry: source[.asm] under tests/, golden basename under tests/golden/.
 # Covers relocatable (.PREL) modules with multi-record packing and a
 # relocation-control-byte straddle (objword), the .BLKB gap case (data), the
-# full 8080 instruction sweep (insn8080), and an absolute (.PABS) program that
+# full 8080 instruction sweep (insn8080), an absolute (.PABS) program that
 # revisits earlier addresses via .LOC, exercising emission-order records and
-# overwritten bytes (sargon).
-cases="smoke data insn8080 objword sargon"
+# overwritten bytes (sargon), and the Z80 I/O / overflow-alias instructions plus
+# .RAD40, the .SYN family, .EXIT/.IF1/.IF2, and the truncated spellings (newkw).
+cases="smoke data insn8080 objword sargon newkw"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

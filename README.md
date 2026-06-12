@@ -84,9 +84,42 @@
   symbol bugs) may be offered in a future release, but the well‑behaved
   **1.02** output currently remains the reference.
 
+* The **multi‑segment / multi‑module object model is not yet implemented.**
+  **TPZASM** currently assembles a single module into the **`.PROG.`** segment
+  (the **`.DATA.`** and **`.BLNK.`** segments are always reported as size 0).
+
+  As a consequence, the following keywords are *recognized* (they do not raise
+  an *unknown operator* error) but are **not fully implemented**:
+
+  * **`.PRGEND`** (and its six‑character form **`.PRGEN`**) — *library file
+    generation*, which ends the current module like **`.END`** and then begins
+    a fresh module in the same object file.  **TPZASM** treats it as a no‑op,
+    so the source assembles as a single module rather than several.
+
+  * The predefined segment‑base symbols **`.PROG.`**, **`.DATA.`**, and
+    **`.BLNK.`** — these resolve to each segment's relocatable origin in the
+    originals.  **`.PROG.`** maps cleanly onto the existing relocation model,
+    but **`.DATA.`** and **`.BLNK.`** require distinct segment‑relative
+    relocation classes that **TPZASM** does not yet model, so they are left
+    unresolved rather than relocated incorrectly.
+
+  Adding a multi‑segment, multi‑module object model (segment‑relative
+  relocation in the expression evaluator and the object emitter, plus
+  independent per‑module assembly for **`.PRGEND`**) is planned for a future
+  release.  None of these features are exercised by the SARGON or VEDIT‑PLUS
+  sources, so the single‑segment output remains byte‑for‑byte faithful for the
+  supported corpus.
+
 * Enhanced error reporting and diagnostics may be added to future versions.
 
 ## Notes
+
+* The `.DATE` and `.TIME` pseudo‑ops emit the assembly date (`MM/DD/YY`) and
+  time (`HH:MM:SS`) as eight ASCII bytes each.  For reproducible builds and
+  testing, **TPZASM** honors the
+  [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/)
+  environment variable (a UTC&nbsp;Unix timestamp) when it is set, and otherwise
+  uses the local clock.
 
 * **TPZASM** is ***not*** related to the similarly named
   [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM,

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 /******************************************************************************/
 
@@ -30,6 +31,19 @@
 
 #define MAXCOND 64
 #define MAXALIAS 128
+
+/* listing-control flag bits (a->lst_ctl); LSTC_DEFAULT reproduces the standard
+ * listing exactly, so a source that uses none of these directives is unchanged.
+ */
+#define LSTC_LIST   0x01u /* body listing on        (.LIST / .XLIST)        */
+#define LSTC_CTL    0x02u /* list control stmts     (.LCTL / .XCTL)         */
+#define LSTC_SYM    0x04u /* symbol table at .END   (.LSYM / .XSYM)         */
+#define LSTC_LADDR  0x08u /* 16-bit values swapped  (.LADDR / .XADDR)       */
+#define LSTC_LIMAGE 0x10u /* list every data byte   (.LIMAGE / .XIMAGE)     */
+#define LSTC_LALL   0x20u /* list all macro text    (.LALL)                 */
+#define LSTC_SALL   0x40u /* suppress macro text    (.SALL)                 */
+#define LSTC_DEFAULT (LSTC_LIST | LSTC_SYM)
+#define LSTC_SAVES 4 /* depth of the .SLIST/.RLIST push-down stack */
 
 /******************************************************************************/
 
@@ -98,6 +112,7 @@ typedef struct
 
   int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default) */
   int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0)  */
+  int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)   */
   u16 obj_start;     /* start address from `.END expr' (0 if none)         */
   int obj_start_rel; /* relocation base of the start address               */
 
@@ -128,6 +143,7 @@ typedef struct
   /* macro support */
   unsigned genctr; /* counter for %-generated local labels */
   int macro_depth; /* recursion guard                      */
+  int macro_exit;  /* .EXIT: terminate the current expansion*/
   unsigned scope;  /* local-symbol scope ('..' labels)     */
 
   /* macro call whose parenthesized argument spans several lines */
@@ -140,6 +156,10 @@ typedef struct
 
   /* listing format (TDL ZASM vs PSA PASM) */
   dialect_t dialect; /* selects the TDL vs PSA listing layout     */
+  unsigned lst_ctl;  /* listing-control flags (LSTC_*)            */
+  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack        */
+  int lst_nsave;     /* number of saved entries on that stack     */
+  int lst_ctlstmt;   /* this line is a listing-control statement  */
   int lst_kind;      /* this line: 0 insn, 1 data bytes, 2 words  */
   int lst_opw;       /* insn operand width (0/1/2) for value-form */
   long lst_loc;      /* LOC-column value: -1 blank, -2 use lc0    */
@@ -880,6 +900,22 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       emit (a, in->opcode);
       break;
 
+    case FMT_EDDST: /* INP/OUTP r : ED + (opcode | reg<<3) */
+      {
+        int r = parse_reg8 (&p);
+        if (r < 0)
+          {
+            aerr (a, line, "register expected");
+            emit (a, 0xED);
+            emit (a, in->opcode);
+            break;
+          }
+
+        emit (a, 0xED);
+        emit (a, (u16)(in->opcode | (r << 3)));
+        break;
+      }
+
     case FMT_CBR:
       {
         int r = parse_reg8 (&p);
@@ -1194,20 +1230,182 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
 /******************************************************************************/
 
 /*
+ * .DATE / .TIME : emit an 8-byte ASCII date ("MM/DD/YY") or time ("HH:MM:SS")
+ * string at the current location.  The PSA original generates 8 spaces on a
+ * host with no clock; we always have one, so we format the real date/time.
+ * For reproducible builds and tests we honor SOURCE_DATE_EPOCH (a UTC Unix
+ * timestamp) when it is set, otherwise the local clock.
+ * (https://reproducible-builds.org/docs/source-date-epoch/)
+ */
+
+static void
+do_datetime (astate *a, int want_time)
+{
+  char buf[16];
+  /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
+  const char *epoch = getenv ("SOURCE_DATE_EPOCH");
+  const struct tm *tmv = NULL;
+  time_t t;
+  int i;
+
+  if (NULL != epoch && '\0' != epoch[0])
+    {
+      char *end = NULL;
+      long secs = strtol (epoch, &end, 10);
+
+      if (NULL != end && '\0' == *end && secs >= 0)
+        {
+          t = (time_t)secs;
+          tmv = gmtime (&t); /* SOURCE_DATE_EPOCH is interpreted as UTC */
+        }
+    }
+
+  if (NULL == tmv)
+    {
+      t = time (NULL);
+      tmv = localtime (&t);
+    }
+
+  if (NULL == tmv
+      || 0
+             == strftime (buf, sizeof (buf),
+                          (want_time ? "%H:%M:%S" : "%m/%d/%y"), tmv))
+    (void)xstrlcpy (buf, "        ", sizeof (buf)); /* no clock: 8 spaces */
+
+  a->lst_kind = 1; /* listing: byte stream */
+
+  for (i = 0; i < 8; i++)
+    emit (a, (u16)(unsigned char)buf[i]);
+}
+
+/******************************************************************************/
+
+/*
+ * Radix-40 character value, or -1 if the character is not encodable.  The PSA
+ * set is  ' '=0, '0'-'9'=1-10, 'A'-'Z'=11-36, '$'=37, '%'=38, '.'=39.
+ */
+
+static int
+rad40_val (int c)
+{
+  c = toupper ((unsigned char)c);
+
+  if (' ' == c)
+    return 0;
+
+  if (c >= '0' && c <= '9')
+    return 1 + (c - '0');
+
+  if (c >= 'A' && c <= 'Z')
+    return 11 + (c - 'A');
+
+  if ('$' == c)
+    return 37;
+
+  if ('%' == c)
+    return 38;
+
+  if ('.' == c)
+    return 39;
+
+  return -1;
+}
+
+/******************************************************************************/
+
+/*
+ * .RAD40 sym{,sym} : pack each symbol into four bytes of Radix-40 characters.
+ * Three characters fill each of two big-endian 16-bit words (weights
+ * 1600/40/1); at most six characters are used (extra encodable characters are
+ * ignored), and a non-encodable character ends the symbol with an error.
+ */
+
+static void
+do_rad40 (astate *a, const char *line, const char *p)
+{
+  a->lst_kind = 1; /* listing: byte stream */
+
+  for (;;)
+    {
+      int ch[6];
+      int n = 0, bad = 0, i;
+      unsigned long w;
+
+      p = skipws (p);
+
+      if ('\0' == *p || ';' == *p)
+        break;
+
+      while ('\0' != *p && ';' != *p && ',' != *p
+             && !isspace ((unsigned char)*p))
+        {
+          int v = rad40_val ((unsigned char)*p);
+
+          if (v < 0)
+            {
+              bad = 1; /* stop at the first non-encodable character */
+              break;
+            }
+
+          if (n < 6)
+            ch[n++] = v; /* characters past the sixth are ignored */
+
+          p++;
+        }
+
+      if (bad)
+        {
+          aerr (a, line, "bad RAD40 character");
+
+          while ('\0' != *p && ';' != *p && ',' != *p
+                 && !isspace ((unsigned char)*p))
+            p++; /* swallow the rest of the malformed symbol */
+        }
+
+      for (i = n; i < 6; i++)
+        ch[i] = 0; /* space-pad the trailing positions */
+
+      w = (unsigned long)ch[0] * 1600UL + (unsigned long)ch[1] * 40UL
+          + (unsigned long)ch[2];
+      emit (a, (u16)((w >> 8) & 0xFFUL));
+      emit (a, (u16)(w & 0xFFUL));
+
+      w = (unsigned long)ch[3] * 1600UL + (unsigned long)ch[4] * 40UL
+          + (unsigned long)ch[5];
+      emit (a, (u16)((w >> 8) & 0xFFUL));
+      emit (a, (u16)(w & 0xFFUL));
+
+      p = skipws (p);
+
+      if (',' == *p)
+        p++;
+    }
+}
+
+/******************************************************************************/
+
+/*
  * listing / output-format directives that emit no bytes (handled for
- * now as no-ops; .PABS/.PREL below do affect the relocation mode)
+ * now as no-ops; .PABS/.PREL below do affect the relocation mode).
+ *
+ * NOTE: .PRGEND (= .PRGEN) is recognized here only.  It is "library file
+ * generation" -- it should end the current module like .END and then begin a
+ * fresh module in the same object file.  That needs the multi-module / multi-
+ * segment object model this single-.PROG.-segment engine does not yet have, so
+ * for now a source with .PRGEND assembles as one module instead of several.
+ * The segment-base symbols .PROG./.DATA./.BLNK. are likewise not yet resolved
+ * (see the README "Future" section).
  */
 
 static int
 is_noop_dir (const char *op)
 {
   static const char *list[]
-      = { ".PHEX",   ".PBIN",   ".XLINK",   ".LADDR",  ".SALL",   ".LALL",
-          ".LIST",   ".XLIST",  ".PAGE",    ".EJECT",  ".TITLE",  ".SBTTL",
-          ".SUBTTL", ".IDENT",  ".REQUEST", ".NAME",   ".RELOC",  ".COMMENT",
-          ".I8080",  ".Z80",    ".LALL",    ".ENTRY",  ".INTERN", "PUBLIC",
-          ".PUBLIC", ".PRNTX",  ".PRINTX",  ".EXTERN", "EXTRN",   ".EXTRN",
-          "COMMON",  ".COMMON", NULL };
+      = { ".PHEX",   ".PBIN",    ".PAGE",   ".EJECT",  ".TITLE",  ".SBTTL",
+          ".SUBTTL", ".IDENT",   ".REQUEST", ".NAME",  ".RELOC",  ".COMMENT",
+          ".I8080",  ".Z80",     ".ENTRY",  ".INTERN", "PUBLIC",  ".PUBLIC",
+          ".PRNTX",  ".PRINTX",  ".EXTERN", "EXTRN",   ".EXTRN",  "COMMON",
+          ".COMMON", ".PRGEND",  NULL };
   int i;
 
   for (i = 0; NULL != list[i]; i++)
@@ -1276,6 +1474,41 @@ resolve_alias (const astate *a, char *op)
 /******************************************************************************/
 
 /*
+ * The originals store pseudo-op names in a six-character-significant table, so
+ * a directive whose documented spelling is longer than six characters is also
+ * recognized by its first six (e.g. `.DEFIN' == `.DEFINE').  Rewrite such a
+ * dot-directive in place to its canonical full name.  Only directives whose
+ * canonical spelling exceeds six characters need an entry; the six-character
+ * prefixes here are unambiguous, so this never over-matches a distinct op.
+ */
+
+static void
+canon_dir (char *op)
+{
+  static const struct
+  {
+    const char *prefix6; /* first six significant characters */
+    const char *canon;   /* canonical full spelling          */
+  } tab[] = { { ".DEFIN", ".DEFINE" }, { ".EXTER", ".EXTERN" },
+              { ".INSER", ".INSERT" }, { ".INTER", ".INTERN" },
+              { ".REMAR", ".REMARK" }, { ".IFNDE", ".IFNDEF" },
+              { ".PRGEN", ".PRGEND" }, { NULL, NULL } };
+  int i;
+
+  if ('.' != op[0] || strlen (op) < 6)
+    return;
+
+  for (i = 0; NULL != tab[i].prefix6; i++)
+    if (0 == strncmp (op, tab[i].prefix6, 6))
+      {
+        (void)xstrlcpy (op, tab[i].canon, NAMEBUF);
+        return;
+      }
+}
+
+/******************************************************************************/
+
+/*
  * Are we currently assembling?
  * (not inside a skipped conditional block)
  */
@@ -1302,7 +1535,8 @@ is_conditional (const char *op)
       || 0 == strcmp (op, ".IFG") || 0 == strcmp (op, ".IFGE")
       || 0 == strcmp (op, ".IFDEF") || 0 == strcmp (op, ".IFNDEF")
       || 0 == strcmp (op, ".IFIDN") || 0 == strcmp (op, ".IFDIF")
-      || 0 == strcmp (op, ".IFB") || 0 == strcmp (op, ".IFNB");
+      || 0 == strcmp (op, ".IFB") || 0 == strcmp (op, ".IFNB")
+      || 0 == strcmp (op, ".IF1") || 0 == strcmp (op, ".IF2");
 }
 
 /******************************************************************************/
@@ -1432,11 +1666,14 @@ lst_bytes (const astate *a, char *col, size_t cap)
       for (i = 0; i + 1 < a->nbytes && i < maxw; i += 2)
         {
           int fl = a->wreloc[i / 2];
-          cn += xsnprintf (
-              col + cn, cap - (size_t)cn, "%s%04X%c",
-              (i ? "   " : ""),
-              (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8)),
-              (fl ? fl : ' '));
+          /* .XADDR (default) shows the 16-bit value; .LADDR shows the bytes in
+           * generated (memory) order -- least significant byte first. */
+          unsigned shown
+              = ((a->lst_ctl & LSTC_LADDR)
+                     ? (unsigned)((a->bytes[i] << 8) | a->bytes[(long)i + 1])
+                     : (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8)));
+          cn += xsnprintf (col + cn, cap - (size_t)cn, "%s%04X%c",
+                           (i ? "   " : ""), shown, (fl ? fl : ' '));
         }
 
       while (cn > 0 && ' ' == col[(long)cn - 1])
@@ -1579,10 +1816,25 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   if (a->lst_suppress) /* assembling only (e.g. a macro's first body line) */
     return;
 
+  /* listing-control gating: body listing off (.XLIST), or a listing-control
+   * statement that does not list itself (default, reset by .LCTL). */
+  if (!(a->lst_ctl & LSTC_LIST))
+    return;
+
+  if (a->lst_ctlstmt && !(a->lst_ctl & LSTC_CTL))
+    return;
+
   if (NULL != a->mac_src) /* macro listing supplies the rendered source */
     rawline = a->mac_src;
-  else if (a->mac_active && 0 == a->nbytes)
-    return; /* inside a macro: control-flow statements are not listed */
+  else if (a->mac_active)
+    { /* macro-expansion listing detail: .SALL suppresses the whole body,
+       * .XALL (default) drops the no-code lines, .LALL lists everything */
+      if (a->lst_ctl & LSTC_SALL)
+        return;
+
+      if (0 == a->nbytes && !(a->lst_ctl & LSTC_LALL))
+        return;
+    }
 
   /* inserted-file lines carry '@'; continued macro statements carry '+'
    * (but not the macro call line, which sets mac_src with mac_plus clear) */
@@ -2373,7 +2625,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       do_line (a, ln0);
       a->lst_suppress = 0;
 
-      if (a->nbytes > 0)
+      if (a->lst_ctl & LSTC_SALL)
+        (void)xsnprintf (src, sizeof (src), "%s",
+                         callline); /* .SALL: the bare call line only */
+      else if (a->nbytes > 0)
         (void)xsnprintf (src, sizeof (src), "%s[%s%s", callline, ln0,
                          ((1 == m->nbody) ? "]" : ""));
       else
@@ -2389,10 +2644,15 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   for (i = start; i < m->nbody; i++)
     {
       char ln[512];
+
+      if (a->macro_exit) /* .EXIT terminated this expansion early */
+        break;
+
       macro_subst (m, args, nargs, m->body[i], ln);
 
-      if (outer && i == m->nbody - 1)
-        { /* the body-close: force-list this last line with ']' appended */
+      if (outer && i == m->nbody - 1 && !(a->lst_ctl & LSTC_SALL))
+        { /* the body-close: force-list this last line with ']' appended
+           * (under .SALL the body text is suppressed, so fall through) */
           char src[600];
           (void)xsnprintf (src, sizeof (src), "%s]", ln);
           a->mac_src = src;
@@ -2406,6 +2666,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
     }
 
   a->macro_depth--;
+  a->macro_exit = 0; /* the .EXIT (if any) terminated only this expansion */
 
   if (outer)
     a->mac_active = 0;
@@ -2466,6 +2727,7 @@ do_line (astate *a, const char *line)
   a->lst_loc = -2;    /* default: show the statement LC    */
   a->lst_lreloc = -1; /* default: LC reloc from lc_reloc */
   a->lst_oreloc = 0;
+  a->lst_ctlstmt = 0; /* set by the listing-control directives */
 
   if (a->ended)
     return;
@@ -2605,6 +2867,7 @@ do_line (astate *a, const char *line)
 
       op[k] = '\0';
       resolve_alias (a, op);
+      canon_dir (op); /* accept the six-char-truncated directive spellings */
     }
 
   /*
@@ -2659,6 +2922,10 @@ do_line (astate *a, const char *line)
           if (0 == strcmp (op, ".IFIDN") || 0 == strcmp (op, ".IFDIF")
               || 0 == strcmp (op, ".IFB") || 0 == strcmp (op, ".IFNB"))
             t = str_cond_test (op, q);
+          else if (0 == strcmp (op, ".IF1")) /* TRUE on pass 1 */
+            t = (1 == a->pass);
+          else if (0 == strcmp (op, ".IF2")) /* TRUE on pass 2 (not pass 1) */
+            t = (2 == a->pass);
           else if (0 == strcmp (op, ".IFDEF") || 0 == strcmp (op, ".IFNDEF"))
             {
               char nm[NAMEBUF];
@@ -2827,8 +3094,13 @@ do_line (astate *a, const char *line)
       a->ins_depth--;
       return;
     }
-  else if (opeq (op, ".OPSYN", NULL))
+  else if (opeq (op, ".OPSYN", ".SYN") || opeq (op, ".SYSYN", ".MASYN"))
     {
+      /*
+       * synonym definition (.SYN/.OPSYN/.SYSYN/.MASYN: `sym1,sym2' makes sym2
+       * a synonym for sym1).  The four differ only in which symbol class the
+       * original searches; we resolve them all through one alias table.
+       */
       char e1[NAMEBUF], e2[NAMEBUF];
       const char *q = parse_opname (L.operands, e1);
       q = skipws (q);
@@ -2840,17 +3112,29 @@ do_line (astate *a, const char *line)
 
       if ('\0' != e1[0] && '\0' != e2[0] && a->nalias < MAXALIAS)
         {
-          /*
-           * the synonym e2 becomes an alias for the existing op e1;
-           * alias_from/alias_to elements are each char[NAMEBUF]
-           */
+          /* alias_from/alias_to elements are each char[NAMEBUF] */
           (void)xstrlcpy (a->alias_from[a->nalias], e2, NAMEBUF);
           (void)xstrlcpy (a->alias_to[a->nalias], e1, NAMEBUF);
 
           a->nalias++;
         }
 
-      a->lst_loc = -1; /* .OPSYN has no location: blank the LOC column */
+      a->lst_loc = -1; /* a synonym has no location: blank the LOC column */
+    }
+  else if (opeq (op, ".ERROR", NULL))
+    { /* force a user assembly error; the line text carries the message */
+      aerr (a, line, "user .ERROR");
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".REMARK", NULL))
+    /* a remark listed in the source body; emits no bytes */
+    a->lst_loc = -1;
+  else if (opeq (op, ".EXIT", NULL))
+    { /* terminate the current macro expansion early */
+      if (a->macro_depth > 0)
+        a->macro_exit = 1;
+
+      a->lst_loc = -1;
     }
   else if (opeq (op, ".DEFINE", NULL))
     {
@@ -2871,6 +3155,12 @@ do_line (astate *a, const char *line)
     do_ascii (a, line, L.operands, 1);
   else if (opeq (op, ".ASCIS", "DCS"))
     do_ascii (a, line, L.operands, 2);
+  else if (opeq (op, ".DATE", NULL))
+    do_datetime (a, 0);
+  else if (opeq (op, ".TIME", NULL))
+    do_datetime (a, 1);
+  else if (opeq (op, ".RAD40", NULL))
+    do_rad40 (a, line, L.operands);
   else if (opeq (op, ".LOC", "ORG") || opeq (op, ".ORG", NULL))
     {
       value_t v;
@@ -2921,6 +3211,121 @@ do_line (astate *a, const char *line)
     {
       a->lc_reloc = 1;
       a->obj_abs = 0;
+    }
+  else if (opeq (op, ".LINK", NULL))
+    { /* emit the full link records (the default) */
+      a->obj_xlink = 0;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XLINK", NULL))
+    { /* relocatable core image: suppress the !/\ link records */
+      a->obj_xlink = 1;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".LIST", NULL))
+    {
+      a->lst_ctl |= LSTC_LIST;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XLIST", NULL))
+    {
+      a->lst_ctl &= ~LSTC_LIST;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".LCTL", NULL))
+    {
+      a->lst_ctl |= LSTC_CTL;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XCTL", NULL))
+    {
+      a->lst_ctl &= ~LSTC_CTL;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".LSYM", NULL) || opeq (op, ".PSYM", NULL))
+    { /* enable the symbol-table listing (.LSYM local, .PSYM public) */
+      a->lst_ctl |= LSTC_SYM;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XSYM", NULL) || opeq (op, ".XPSYM", NULL))
+    { /* suppress the symbol-table listing at .END */
+      a->lst_ctl &= ~LSTC_SYM;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".LADDR", NULL))
+    {
+      a->lst_ctl |= LSTC_LADDR;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XADDR", NULL))
+    {
+      a->lst_ctl &= ~LSTC_LADDR;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".LIMAGE", ".LIMAG"))
+    {
+      a->lst_ctl |= LSTC_LIMAGE;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XIMAGE", ".XIMAG"))
+    {
+      a->lst_ctl &= ~LSTC_LIMAGE;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".LALL", NULL))
+    { /* list all macro expansion text */
+      a->lst_ctl |= LSTC_LALL;
+      a->lst_ctl &= ~LSTC_SALL;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XALL", NULL))
+    { /* list only the code-generating macro lines (the default) */
+      a->lst_ctl &= ~(LSTC_LALL | LSTC_SALL);
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".SALL", NULL))
+    { /* suppress all macro expansion text */
+      a->lst_ctl |= LSTC_SALL;
+      a->lst_ctl &= ~LSTC_LALL;
+      a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".SLIST", NULL))
+    { /* push the listing-control flags onto the save stack.  Unlike the other
+       * control statements, .SLIST lists itself whenever body listing is on
+       * (it is not gated by .LCTL), so leave lst_ctlstmt clear. */
+      if (a->lst_nsave < LSTC_SAVES)
+        a->lst_save[a->lst_nsave++] = a->lst_ctl;
+
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".RLIST", NULL))
+    { /* restore the listing-control flags from the save stack.  The .RLIST line
+       * itself is listed under the PRE-restore flags (the restored flags take
+       * effect with the following statement), so list it before restoring. */
+      a->lst_loc = -1;
+
+      if (2 == a->pass)
+        print_lst (a, lc0, line);
+
+      if (a->lst_nsave > 0)
+        a->lst_ctl = a->lst_save[--a->lst_nsave];
+
+      return;
     }
   else if (opeq (op, ".TITLE", NULL))
     { /*
@@ -3220,9 +3625,13 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.in_prompt = 0;
   a.genctr = 0;
   a.macro_depth = 0;
+  a.macro_exit = 0;
   a.scope = 0;
   a.pending = 0;
   a.pend_console = NULL;
+  a.lst_ctl = LSTC_DEFAULT;
+  a.lst_nsave = 0;
+  a.obj_xlink = 0;
 
   process_file (&a, srcpath);
 
@@ -3246,9 +3655,13 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.img_any = 0;
   a.genctr = 0;
   a.macro_depth = 0;
+  a.macro_exit = 0;
   a.scope = 0;
   a.pending = 0;
   a.pend_console = NULL;
+  a.lst_ctl = LSTC_DEFAULT;
+  a.lst_nsave = 0;
+  a.obj_xlink = 0;
   macro_free_all (&a);
   a.defining = NULL;
   a.def_started = 0;
@@ -3256,7 +3669,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   process_file (&a, srcpath);
 
-  lst_symtab (&a);
+  if (a.lst_ctl & LSTC_SYM) /* .XSYM/.XPSYM suppress the symbol-table listing */
+    lst_symtab (&a);
+
   (void)fprintf (a.lst, "\n%d error(s)\n", a.errors);
 
   /* with -l to a real file, also report the count on the console */
@@ -3312,6 +3727,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           os.start = a.obj_start;
           os.start_reloc = a.obj_start_rel;
           os.emit_progid = (DIALECT_PASM == dialect);
+          os.xlink = a.obj_xlink;
 
           if (NULL != relpath)
             {

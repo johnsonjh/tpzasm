@@ -300,10 +300,13 @@ obj_write (const char *path, const objspec *s)
   if (NULL == f)
     return 1;
 
-  /* '!' module identification record */
-  rb_begin (&r, f, s->ascii, '!');
-  rb_name (&r, ".MAIN.");
-  rb_flush (&r);
+  /* '!' module identification record (omitted under .XLINK) */
+  if (!s->xlink)
+    {
+      rb_begin (&r, f, s->ascii, '!');
+      rb_name (&r, ".MAIN.");
+      rb_flush (&r);
+    }
 
   /* '+' program identification record (PASM emits it; ZASM omits it) */
   if (s->emit_progid)
@@ -322,19 +325,23 @@ obj_write (const char *path, const objspec *s)
     }
 
   /* '\' segment / relocation-base table: .PROG.=1, .DATA.=2, .BLNK.=3 (the
-   * caller reports size 0 for a pinned/absolute .PROG. segment). */
-  rb_begin (&r, f, s->ascii, '\\');
-  rb_bin (&r, 3);
-  rb_name (&r, ".PROG.");
-  rb_bin (&r, 1);
-  rb_be16 (&r, s->prog_size);
-  rb_name (&r, ".DATA.");
-  rb_bin (&r, 2);
-  rb_be16 (&r, s->data_size);
-  rb_name (&r, ".BLNK.");
-  rb_bin (&r, 3);
-  rb_be16 (&r, s->blnk_size);
-  rb_flush (&r);
+   * caller reports size 0 for a pinned/absolute .PROG. segment).  Omitted under
+   * .XLINK, which writes a relocatable core image of `;' records only. */
+  if (!s->xlink)
+    {
+      rb_begin (&r, f, s->ascii, '\\');
+      rb_bin (&r, 3);
+      rb_name (&r, ".PROG.");
+      rb_bin (&r, 1);
+      rb_be16 (&r, s->prog_size);
+      rb_name (&r, ".DATA.");
+      rb_bin (&r, 2);
+      rb_be16 (&r, s->data_size);
+      rb_name (&r, ".BLNK.");
+      rb_bin (&r, 3);
+      rb_be16 (&r, s->blnk_size);
+      rb_flush (&r);
+    }
 
   /* data records: walk the emission-order spans (each a contiguous run of
    * emitted addresses), breaking every record at REC_CAP.  The originals write
