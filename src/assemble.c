@@ -947,7 +947,7 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
   if (a->lst_nec > 0) /* the operand parse already raised an error: leave it */
     return;
 
-  if (FMT_NONE == (int)in->fmt) /* a no-operand instruction */
+  if (FMT_NONE == in->fmt) /* a no-operand instruction */
     {
       t = skipws (ops);
 
@@ -2351,7 +2351,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
       int b0 = k * cap;
       long bend = (long)b0 + cap; /* widen the sum (op +) to a long */
       int b1 = (int)((bend < a->nbytes) ? bend : a->nbytes);
-      int so = ((0 == k) ? 0 : a->limg_split[k - 1]);
+      int so = ((0 == k) ? 0 : a->limg_split[(long)k - 1]);
       int se = ((k == a->limg_ns) ? srclen : a->limg_split[k]);
       char bf[40];
       int bn = 0, i, col, indent;
@@ -3217,7 +3217,24 @@ macro_free_all (astate *a)
 /*
  * accumulate body text (the [...] block) while a->defining is set;
  * the macro is added to the table when the matching ']' closes it.
+ *
+ * Every body line is malloc'd (dupstr) and handed to macro_addbody(), which
+ * stores it in m->body[] or frees it; m itself is malloc'd in do_define() and
+ * linked into a->macros (and freed by macro_free_all()).  An older gcc
+ * -fanalyzer cannot follow the pointer's escape through the array member and
+ * the macro list and reports a spurious leak here; restructuring through the
+ * transfer-of-ownership helper did not satisfy it, so suppress that one
+ * false positive locally (no leak: see macro_free_all()).
  */
+
+/* -Wanalyzer-malloc-leak is a real-gcc-only option; clang (which also defines
+ * __GNUC__) and the gcc-compatible compilers below would reject the pragma
+ * under -Werror, so guard it to real gcc. */
+#if defined(__GNUC__) && !defined(__clang__) \
+    && !(defined(__OPEN64__) || defined(__OPENCC__) || defined(__PCC__))
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wanalyzer-malloc-leak"
+#endif
 
 static void
 macro_capture (astate *a, const char *p)
@@ -3276,6 +3293,11 @@ macro_capture (astate *a, const char *p)
   buf[n] = '\0';
   macro_addbody (m, dupstr (buf));
 }
+
+#if defined(__GNUC__) && !defined(__clang__) \
+    && !(defined(__OPEN64__) || defined(__OPENCC__) || defined(__PCC__))
+# pragma GCC diagnostic pop
+#endif
 
 /******************************************************************************/
 
