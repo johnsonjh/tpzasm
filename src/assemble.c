@@ -2386,6 +2386,10 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
       int se = ((k == a->limg_ns) ? srclen : a->limg_split[k]);
       char bf[40];
       int bn = 0, i, col, indent;
+      /* TDL lays a multi-word .WORD line's value field over the first two
+       * source columns (each word in an 8-column slot); PSA shows one word per
+       * line, so it never reaches two words and never overstrikes. */
+      int over = (word && DIALECT_PASM != a->dialect && (b1 - b0) >= 4);
 
       if (a->lst_line >= LST_PAGE) /* page full */
         {
@@ -2404,9 +2408,20 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
               int wf = ((wi < (int)sizeof (a->wreloc)) ? a->wreloc[wi] : 0);
               unsigned wv
                   = (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8));
-              bn += xsnprintf (bf + bn, sizeof (bf) - (size_t)bn, "%s%04X%s",
-                               ((i > b0) ? "   " : ""), wv,
-                               ((wf > 0) ? seg_flag (wf, a->dialect) : ""));
+
+              if (over) /* each word in an 8-column slot */
+                {
+                  bn += xsnprintf (bf + bn, sizeof (bf) - (size_t)bn, "%04X%s",
+                                   wv,
+                                   ((wf > 0) ? seg_flag (wf, a->dialect) : ""));
+
+                  while (bn < 8 && (i + 2) < b1) /* pad all but the last word */
+                    bf[bn++] = ' ';
+                }
+              else
+                bn += xsnprintf (bf + bn, sizeof (bf) - (size_t)bn, "%s%04X%s",
+                                 ((i > b0) ? "   " : ""), wv,
+                                 ((wf > 0) ? seg_flag (wf, a->dialect) : ""));
             }
         }
       else
@@ -2417,17 +2432,40 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
         }
 
       bf[bn] = '\0';
-      (void)fprintf (a->lst, "   %04X%-4s%-*s", (unsigned)loc, lfl, bw, bf);
-      col = 11 + bw;
       indent = 11 + bw;
 
-      if (k > 0) /* continuation lines lead with a `\' */
+      if (over)
+        { /*
+           * the un-padded word field, then pad to the source column two past
+           * the normal indent: the value field overstrikes the leading two
+           * source columns (the `\t.' lead on line 0, the `\'+comma on a
+           * continuation), so no `\' marker is emitted and the source starts
+           * two columns in.
+           */
+          int p;
+
+          (void)fprintf (a->lst, "   %04X%-4s%s", (unsigned)loc, lfl, bf);
+
+          for (p = 11 + bn; p < indent + 2; p++)
+            (void)fputc (' ', a->lst);
+
+          col = indent + 2;
+        }
+      else
         {
-          (void)fputc ('\\', a->lst);
-          col++;
+          (void)fprintf (a->lst, "   %04X%-4s%-*s", (unsigned)loc, lfl, bw, bf);
+          col = indent;
+
+          if (k > 0) /* continuation lines lead with a `\' */
+            {
+              (void)fputc ('\\', a->lst);
+              col++;
+            }
         }
 
-      for (i = so; i < se; i++) /* the source chunk, tabs expanded */
+      /* the source chunk, tabs expanded (relative to the normal indent); an
+       * overstrike drops its leading two columns */
+      for (i = so + (over ? ((k > 0) ? 1 : 2) : 0); i < se; i++)
         {
           if ('\t' == rawline[i])
             {
