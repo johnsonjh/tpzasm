@@ -123,7 +123,7 @@ test: test_expr asm tests/test_trunc.sh tests/test_obj.sh \
 # CP/M emulator is not installed.
 longtest: test tests/test_play.sh tools/vrel.sh
 	@if command -v tnylpo > /dev/null 2>&1; then \
-		for f in smoke data insn8080 objword sargon newkw; do \
+		for f in smoke data insn8080 objword sargon newkw seg blnk ext; do \
 			printf '%s\n' "vrel: $$f"; \
 			./tools/vrel.sh tests/$$f.asm || exit 1; \
 		done; \

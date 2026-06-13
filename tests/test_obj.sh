@@ -24,7 +24,7 @@ set -eu
 # revisits earlier addresses via .LOC, exercising emission-order records and
 # overwritten bytes (sargon), and the Z80 I/O / overflow-alias instructions plus
 # .RAD40, the .SYN family, .EXIT/.IF1/.IF2, and the truncated spellings (newkw).
-cases="smoke data insn8080 objword sargon newkw"
+cases="smoke data insn8080 objword sargon newkw seg blnk ext"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

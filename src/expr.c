@@ -76,6 +76,7 @@ mkabs (u16 v)
 
   r.value = v;
   r.reloc = 0;
+  r.base = 0;
   r.ext = NULL;
 
   return r;
@@ -341,6 +342,21 @@ ev_primary (ectx *e)
           value_t r;
           r.value = e->env->lc;
           r.reloc = e->env->lc_reloc;
+          r.base = (e->env->lc_reloc ? e->env->lc_base : 0);
+          r.ext = NULL;
+
+          return r;
+        }
+
+      if (ci_eq (name, ".PROG.") || ci_eq (name, ".DATA.")
+          || ci_eq (name, ".BLNK."))
+        { /* predefined segment base: value = the segment's live high-water */
+          value_t r;
+          int b = (ci_eq (name, ".PROG.") ? 1 : (ci_eq (name, ".DATA.") ? 2
+                                                                        : 3));
+          r.value = (e->env->seg_hw ? e->env->seg_hw[b] : 0);
+          r.reloc = 1;
+          r.base = b;
           r.ext = NULL;
 
           return r;
@@ -356,10 +372,11 @@ ev_primary (ectx *e)
         s = (e->env->syms ? sym_lookup (e->env->syms, name) : NULL);
 
       if (NULL != s && s->external)
-        {
+        { /* external symbol: relative to its assigned external base (>=4) */
           value_t r;
           r.value = 0;
-          r.reloc = 0;
+          r.reloc = 1;
+          r.base = s->val.base;
           r.ext = s;
 
           return r;
@@ -568,6 +585,8 @@ v_mul (ectx *e, value_t a, value_t b)
 
   r.value = (u16)(a.value * b.value);
   r.reloc = (long)a.value * b.reloc + (long)b.value * a.reloc;
+  /* the (at most one) relocatable operand carries the base into the product */
+  r.base = ((0 != r.reloc) ? (a.reloc ? a.base : b.base) : 0);
   r.ext = NULL;
 
   return r;
@@ -652,8 +671,14 @@ v_addsub (ectx *e, value_t a, value_t b, int sub)
   if ((a.ext && 0 != b.reloc) || (b.ext && 0 != a.reloc))
     efail (e, "external with relocatable");
 
+  /* two relocatable operands must share a base; the only legal mixed-base
+   * combination is one that cancels (same base, opposite coefficients). */
+  if (0 != a.reloc && 0 != b.reloc && a.base != b.base)
+    efail (e, "different relocation bases");
+
   r.ext = (a.ext ? a.ext : b.ext);
   r.reloc = a.reloc + bn;
+  r.base = ((0 == r.reloc) ? 0 : (a.reloc ? a.base : b.base));
   r.value = (u16)(sub ? a.value - b.value : a.value + b.value);
 
   return r;
@@ -711,7 +736,10 @@ expr_eval2 (const char *s, const eval_env *env, value_t *out,
       def.syms = NULL;
       def.lc = 0;
       def.lc_reloc = 0;
+      def.lc_base = 0;
+      def.seg_hw = NULL;
       def.undef0 = 0;
+      def.scope = 0;
       e.env = &def;
     }
 
@@ -722,6 +750,10 @@ expr_eval2 (const char *s, const eval_env *env, value_t *out,
 
   if (!e.err && NULL == v.ext && 0 != v.reloc && 1 != v.reloc)
     efail (&e, "relocation error: coefficient not 0 or 1");
+
+  /* a relocatable result must resolve to one of the segment bases */
+  if (!e.err && NULL == v.ext && 1 == v.reloc && (v.base < 1 || v.base > 3))
+    efail (&e, "relocation error: no relocation base");
 
   if (endp)
     *endp = e.p;

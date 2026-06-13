@@ -65,6 +65,8 @@ typedef struct
 {
   u16 value;
   long reloc;         /* relocation coefficient n             */
+  int base;           /* relocation base: 0 abs, 1 .PROG.,    */
+                      /* 2 .DATA., 3 .BLNK., >=4 external      */
   struct symbol *ext; /* external symbol referenced, or NULL  */
 } value_t;
 
@@ -76,7 +78,10 @@ typedef struct symbol
   value_t val;
   unsigned char defined;
   unsigned char external;
-  unsigned char seen; /* pass # in which last defined as a label */
+  unsigned char internal; /* .INTERN: emit an internal-symbol (`#') record */
+  unsigned char entry;    /* .ENTRY: also an entry point (`@' record)      */
+  unsigned char seen;     /* pass # in which last defined as a label       */
+  unsigned short decl;    /* .INTERN/.ENTRY declaration order (for records) */
   struct symbol *next;
 } symbol;
 
@@ -116,12 +121,14 @@ int xsnprintf (char *dst, size_t cap, const char *fmt, ...);
 
 typedef struct
 {
-  int radix;      /* current numeric radix (2/8/10/16)       */
-  symtab *syms;   /* symbols for lookups (NULL => none)      */
-  u16 lc;         /* location counter (for '.')              */
-  int lc_reloc;   /* relocation coeff of '.'                 */
-  int undef0;     /* if set, undefined symbols evaluate to 0 */
-  unsigned scope; /* local-symbol scope ('..' labels)        */
+  int radix;          /* current numeric radix (2/8/10/16)       */
+  symtab *syms;       /* symbols for lookups (NULL => none)      */
+  u16 lc;             /* location counter (for '.')              */
+  int lc_reloc;       /* relocation coeff of '.'                 */
+  int lc_base;        /* relocation base of '.' (active segment) */
+  const u16 *seg_hw;  /* per-base high-water [1..3], or NULL     */
+  int undef0;         /* if set, undefined symbols evaluate to 0 */
+  unsigned scope;     /* local-symbol scope ('..' labels)        */
 } eval_env;
 
 /******************************************************************************/
@@ -178,17 +185,28 @@ int asm_source (const char *path, dialect_t dialect, const char *outpath,
  * address is classified so the object emitter can build TDL `;' data records.
  */
 
-# define REL_GAP 0 /* address not emitted (a .BLKB/.LOC gap)     */
-# define REL_ABS 1 /* absolute byte: load unmodified             */
-# define REL_LO  2 /* low byte of a .PROG.-relative 16-bit value */
-# define REL_HI  3 /* high byte of that value (follows a REL_LO) */
+# define REL_GAP  0 /* address not emitted (a .BLKB/.LOC gap)      */
+# define REL_ABS  1 /* absolute byte: load unmodified              */
+# define REL_LO   2 /* low byte of a relocatable 16-bit value      */
+# define REL_HI   3 /* high byte of that value (follows a REL_LO)  */
+# define REL_EXT8 4 /* single 8-bit byte relative to an external   */
+
+/* one internal/external symbol entry for the `#'/`&'/`\\' object records */
+typedef struct
+{
+  char name[8]; /* up to 6 significant characters */
+  int base;     /* relocation base number         */
+  u16 value;    /* symbol value / segment size    */
+} objsym;
 
 typedef struct
 {
   const u8 *em_byte;  /* emitted byte values, in emission order           */
   const u8 *em_rel;   /* parallel REL_* class per emitted byte            */
+  const u8 *em_tbase; /* parallel target base of each REL_LO 16-bit datum */
   const u16 *span_a;  /* emission-order span start addresses              */
   const u16 *span_n;  /* emission-order span lengths                      */
+  const u8 *span_seg; /* parallel active relocation base per span         */
   int nspans;         /* number of emission spans                         */
   unsigned prog_size; /* .PROG. segment size (LC high-water)              */
   unsigned data_size; /* .DATA. segment size                              */
@@ -200,6 +218,13 @@ typedef struct
   int ascii;          /* 1 = ASCII (.PHEX), 0 = binary (.PBIN)            */
   int emit_progid;    /* 1 = emit the `+' program-id record (PASM)        */
   int xlink;          /* 1 = .XLINK: omit the `!'/`\\' link records       */
+  const char *modname; /* `!' module name (.IDENT, default ".MAIN.")      */
+  const objsym *exts;  /* external bases for the `\\' record (size 0)      */
+  int nexts;
+  const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for `#'        */
+  int nints;
+  const objsym *ents;  /* entry points (.ENTRY) for the `@' record         */
+  int nents;
 } objspec;
 
 /*

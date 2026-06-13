@@ -50,15 +50,45 @@ check (const char *expr, int radix, u16 ev, long er)
       (void)printf ("FAIL  %-12s -> ERROR (%s)\n", expr, err);
       fails++;
     }
-  else if (v.value != ev || v.reloc != er || NULL != v.ext)
+  else if (v.value != ev || v.reloc != er || NULL != v.ext
+           || v.base != (0 != er ? 1 : 0))
     {
-      (void)printf ("FAIL  %-12s = %u r%ld%s, want %u r%ld\n", expr, v.value,
-                    v.reloc, (v.ext ? " EXT" : ""), ev, er);
+      (void)printf ("FAIL  %-12s = %u r%ld b%d%s, want %u r%ld b%d\n", expr,
+                    v.value, v.reloc, v.base, (v.ext ? " EXT" : ""), ev, er,
+                    (0 != er ? 1 : 0));
       fails++;
     }
   else
-    (void)printf ("ok    %-12s = %u (0x%04X) r%ld\n", expr, v.value, v.value,
-                  v.reloc);
+    (void)printf ("ok    %-12s = %u (0x%04X) r%ld b%d\n", expr, v.value,
+                  v.value, v.reloc, v.base);
+}
+
+/******************************************************************************/
+
+/* like check(), but asserts an explicit relocation base (for .DATA./.BLNK.) */
+static void
+check_seg (const char *expr, u16 ev, long er, int base)
+{
+  value_t v;
+  const char *err;
+  eval_env e = ENV;
+
+  e.radix = 10;
+
+  if (expr_eval (expr, &e, &v, &err))
+    {
+      (void)printf ("FAIL  %-12s -> ERROR (%s)\n", expr, err);
+      fails++;
+    }
+  else if (v.value != ev || v.reloc != er || v.base != base || NULL != v.ext)
+    {
+      (void)printf ("FAIL  %-12s = %u r%ld b%d, want %u r%ld b%d\n", expr,
+                    v.value, v.reloc, v.base, ev, er, base);
+      fails++;
+    }
+  else
+    (void)printf ("ok    %-12s = %u (0x%04X) r%ld b%d\n", expr, v.value,
+                  v.value, v.reloc, v.base);
 }
 
 /******************************************************************************/
@@ -121,18 +151,36 @@ main (void)
   symtab *t = sym_new ();
   symbol *s;
 
-  s = sym_intern (t, "X");
+  s = sym_intern (t, "X"); /* .PROG.-relative (base 1) */
   s->defined = 1;
   s->val.value = 0x100;
   s->val.reloc = 1;
+  s->val.base = 1;
   s = sym_intern (t, "Y");
   s->defined = 1;
   s->val.value = 0x200;
   s->val.reloc = 1;
+  s->val.base = 1;
   s = sym_intern (t, "Z");
   s->defined = 1;
   s->val.value = 0x300;
   s->val.reloc = 1;
+  s->val.base = 1;
+  s = sym_intern (t, "D1"); /* .DATA.-relative (base 2) */
+  s->defined = 1;
+  s->val.value = 0x80;
+  s->val.reloc = 1;
+  s->val.base = 2;
+  s = sym_intern (t, "D2");
+  s->defined = 1;
+  s->val.value = 0x90;
+  s->val.reloc = 1;
+  s->val.base = 2;
+  s = sym_intern (t, "BK"); /* .BLNK.-relative (base 3) */
+  s->defined = 1;
+  s->val.value = 0x10;
+  s->val.reloc = 1;
+  s->val.base = 3;
   s = sym_intern (t, "A");
   s->defined = 1;
   s->val.value = 5;
@@ -146,6 +194,8 @@ main (void)
   ENV.syms = t;
   ENV.lc = 0x40;
   ENV.lc_reloc = 1;
+  ENV.lc_base = 1;
+  ENV.seg_hw = NULL;
   ENV.undef0 = 0;
   ENV.scope = 0;
 
@@ -169,6 +219,33 @@ main (void)
   check (".", 10, 0x40, 1); /* location counter */
   check (".+2", 10, 0x42, 1);
 
+  /* multi-segment relocation bases (.DATA. base 2, .BLNK. base 3) */
+  check_seg ("D1", 0x80, 1, 2);     /* .DATA.-relative          */
+  check_seg ("D1+5", 0x85, 1, 2);   /* .DATA. + constant        */
+  check ("D1-D2", 10, 0xFFF0, 0);   /* same base cancels -> abs */
+  check_seg ("BK+1", 0x11, 1, 3);   /* .BLNK.-relative          */
+  check_seg ("X+(D1-D2)", 0xF0, 1, 1); /* T+(V-W): base 1 result */
+
+  /* predefined base symbols resolve to the live per-segment high-water */
+  {
+    static const u16 hw[4] = { 0, 0x10, 0x20, 0x30 };
+    value_t v;
+    const char *err;
+    eval_env e = ENV;
+    e.radix = 10;
+    e.seg_hw = hw;
+
+    if (expr_eval (".DATA.+2", &e, &v, &err) || 0x22 != v.value || 1 != v.reloc
+        || 2 != v.base || NULL != v.ext)
+      {
+        (void)printf ("FAIL  .DATA.+2 base symbol\n");
+        fails++;
+      }
+    else
+      (void)printf ("ok    .DATA.+2 = 0x%04X r%ld b%d\n", v.value, v.reloc,
+                    v.base);
+  }
+
   /* externals (additive only) */
   check_ext ("E", 0, "E");
   check_ext ("E+5", 5, "E");
@@ -183,6 +260,10 @@ main (void)
   check_err ("E*2"); /* external in multiply */
   check_err ("E+X"); /* external with relocatable */
   check_err ("E-E"); /* two externals */
+  check_err ("D1+X"); /* different relocation bases (.DATA. + .PROG.) */
+  check_err ("D1-X"); /* different relocation bases */
+  check_err ("BK+X"); /* different relocation bases (.BLNK. + .PROG.) */
+  check_err ("2*D1"); /* relocatable coefficient 2 */
 
   {
     symbol *buf[64];
@@ -191,7 +272,7 @@ main (void)
     int n = sym_count (t);
     sym_collect (t, buf);
 
-    if (6 != n || NULL == buf[0])
+    if (9 != n || NULL == buf[0])
       {
         (void)printf ("FAIL  sym_count/collect (n=%d)\n", n);
         fails++;
@@ -203,7 +284,7 @@ main (void)
         fails++;
       }
     else
-      (void)printf ("ok    sym/eval2 API  = 6 syms, eval2 ok\n");
+      (void)printf ("ok    sym/eval2 API  = 9 syms, eval2 ok\n");
   }
 
   sym_free (t);

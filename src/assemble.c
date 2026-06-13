@@ -31,6 +31,7 @@
 
 #define MAXCOND 64
 #define MAXALIAS 128
+#define LOC_STK_DEPTH 32 /* .LOC/.RELOC save-stack depth */
 
 /*
  * listing-control flag bits (a->lst_ctl); LSTC_DEFAULT
@@ -77,7 +78,19 @@ typedef struct
   int radix;
   u16 lc;
   int lc_reloc;
-  u16 prog_max; /* high-water LC: the .PROG. segment size */
+  int base;        /* active relocation base: 1 .PROG., 2 .DATA., 3 .BLNK. */
+  u16 seg_hw[4];   /* per-base high-water (size); [1]=.PROG. [2]=.DATA. ... */
+  /* .LOC/.RELOC LIFO stack of (lc, base, reloc-mode) */
+  struct
+  {
+    u16 lc;
+    int base;
+    int reloc;
+  } loc_stk[LOC_STK_DEPTH];
+  int loc_sp;
+  int next_ebase;  /* next external relocation-base number to assign (>=4) */
+  int next_decl;   /* next .INTERN/.ENTRY declaration sequence number      */
+  char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
   int errors;
   int ended;
   u8 bytes[64];
@@ -130,16 +143,19 @@ typedef struct
    * contiguous-address runs.
    */
 
-  u8 *em_byte;     /* emitted byte values, emission order (NULL=no record) */
-  u8 *em_rel;      /* REL_ABS/REL_LO/REL_HI per emitted byte */
-  long em_n;       /* number of emitted bytes recorded */
+  u8 *em_byte;      /* emitted byte values, emission order (NULL=no record) */
+  u8 *em_rel;       /* REL_ABS/REL_LO/REL_HI per emitted byte */
+  u8 *em_tbase;     /* target relocation base of each REL_LO 16-bit datum */
+  long em_n;        /* number of emitted bytes recorded */
   long em_cap;
-  int em_pending;  /* emit_word: 2 -> next byte REL_LO, then 1 -> REL_HI */
-  u16 *span_a;     /* span start addresses */
-  u16 *span_n;     /* span lengths */
+  int em_pending;   /* emit_word: 2 -> next byte REL_LO, then 1 -> REL_HI */
+  int em_pend_base; /* target base of the reloc16 emit_word is emitting */
+  u16 *span_a;      /* span start addresses */
+  u16 *span_n;      /* span lengths */
+  u8 *span_seg;     /* active relocation base per span */
   int nspans;
   int span_cap;
-  long emit_prev;  /* last address emitted this pass, or -1 */
+  long emit_prev;   /* last address emitted this pass, or -1 */
 
   /* listing output stream (stderr, or the -l file) */
   FILE *lst;
@@ -172,9 +188,9 @@ typedef struct
   long lst_loc; /* LOC-column value: -1 blank, -2 use lc0 */
   long lst_line; /* listing line counter, for pagination */
   int lst_page; /* current listing page number */
-  int lst_lreloc; /* LC reloc: -1 use lc_reloc, else 0/1 flag */
-  int lst_oreloc; /* 16-bit insn operand reloc flag (0/1) */
-  u8 wreloc[32]; /* per-.WORD-value reloc flag (' or space) */
+  int lst_lbase; /* LC relocation base: -1 derive from lc_reloc/base, else # */
+  int lst_obase; /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext) */
+  u8 wreloc[32]; /* per-.WORD-value relocation base (0 abs, 1/2/3/ext) */
 
   /*
    * macro-expansion listing: the originals fold the body into
@@ -233,12 +249,18 @@ em_record (astate *a, u8 v)
       cls = REL_HI; /* high byte */
       a->em_pending = 0;
     }
+  else if (3 == a->em_pending)
+    {
+      cls = REL_EXT8; /* single 8-bit byte relative to an external base */
+      a->em_pending = 0;
+    }
 
   if (a->em_n >= a->em_cap) /* grow the emission buffers */
     {
       long nc = a->em_cap * 2;
       u8 *nb = (u8 *)realloc (a->em_byte, (size_t)nc);
       u8 *nr = (u8 *)realloc (a->em_rel, (size_t)nc);
+      u8 *nt = (u8 *)realloc (a->em_tbase, (size_t)nc);
 
       if (NULL != nb)
         a->em_byte = nb;
@@ -246,7 +268,10 @@ em_record (astate *a, u8 v)
       if (NULL != nr)
         a->em_rel = nr;
 
-      if (NULL != nb && NULL != nr)
+      if (NULL != nt)
+        a->em_tbase = nt;
+
+      if (NULL != nb && NULL != nr && NULL != nt)
         a->em_cap = nc;
     }
 
@@ -255,10 +280,18 @@ em_record (astate *a, u8 v)
 
   a->em_byte[a->em_n] = v;
   a->em_rel[a->em_n] = cls;
+  /* the target base rides with the low byte of a relocatable datum */
+  a->em_tbase[a->em_n]
+      = (u8)((REL_LO == cls || REL_EXT8 == cls) ? a->em_pend_base : 0);
   a->em_n++;
 
-  /* span: extend the current run, or open a new one at an address gap */
-  if (a->nspans > 0 && a->emit_prev >= 0 && (long)a->lc == a->emit_prev + 1)
+  /* span: extend the current run, or open a new one at an address gap OR
+   * an active-base change (each ';' record carries a single base; absolute
+   * code is base 0, relocatable code its active segment 1/2/3). */
+  {
+  u8 seg = (u8)(a->lc_reloc ? a->base : 0);
+  if (a->nspans > 0 && a->emit_prev >= 0 && (long)a->lc == a->emit_prev + 1
+      && a->span_seg[(long)a->nspans - 1] == seg)
     a->span_n[(long)a->nspans - 1]++;
   else
     {
@@ -267,6 +300,7 @@ em_record (astate *a, u8 v)
           int sc = a->span_cap * 2;
           u16 *na = (u16 *)realloc (a->span_a, (size_t)sc * sizeof (u16));
           u16 *nn = (u16 *)realloc (a->span_n, (size_t)sc * sizeof (u16));
+          u8 *ng = (u8 *)realloc (a->span_seg, (size_t)sc * sizeof (u8));
 
           if (NULL != na)
             a->span_a = na;
@@ -274,7 +308,10 @@ em_record (astate *a, u8 v)
           if (NULL != nn)
             a->span_n = nn;
 
-          if (NULL != na && NULL != nn)
+          if (NULL != ng)
+            a->span_seg = ng;
+
+          if (NULL != na && NULL != nn && NULL != ng)
             a->span_cap = sc;
         }
 
@@ -282,9 +319,11 @@ em_record (astate *a, u8 v)
         {
           a->span_a[a->nspans] = a->lc;
           a->span_n[a->nspans] = 1;
+          a->span_seg[a->nspans] = seg;
           a->nspans++;
         }
     }
+  }
 
   a->emit_prev = (long)a->lc;
 }
@@ -318,8 +357,8 @@ emit (astate *a, u16 v)
 
   a->lc = (u16)(a->lc + 1);
 
-  if (a->lc > a->prog_max)
-    a->prog_max = a->lc;
+  if (a->lc > a->seg_hw[a->base])
+    a->seg_hw[a->base] = a->lc;
 }
 
 /******************************************************************************/
@@ -332,13 +371,53 @@ emit (astate *a, u16 v)
  */
 
 static void
-emit_word (astate *a, u16 v, int reloc)
+emit_word (astate *a, u16 v, int reloc, int base)
 {
   if (2 == a->pass && NULL != a->em_byte)
-    a->em_pending = (reloc ? 2 : 0);
+    {
+      a->em_pending = (reloc ? 2 : 0);
+      a->em_pend_base = (reloc ? base : 0);
+    }
 
   emit (a, (u16)(v & 0xFFu));
   emit (a, (u16)(v >> 8));
+}
+
+/******************************************************************************/
+
+static void aerr (astate *a, const char *line, const char *msg); /* forward */
+
+/*
+ * Emit one 8-bit operand byte.  An external reference produces a `111' control
+ * code (base# + 8-bit value, range -128..255); 8-bit relocation relative to a
+ * program segment (1/2/3) is illegal in the dialect and is rejected.
+ */
+
+static void
+emit_imm8 (astate *a, const char *line, const value_t *v)
+{
+  if (NULL != v->ext)
+    {
+      int sv = ((v->value < 0x8000) ? (int)v->value : (int)v->value - 0x10000);
+
+      if (sv < -128 || sv > 255)
+        aerr (a, line, "8-bit external out of range");
+
+      if (2 == a->pass && NULL != a->em_byte)
+        {
+          a->em_pending = 3;
+          a->em_pend_base = v->base;
+        }
+
+      emit (a, (u16)(v->value & 0xFFu));
+    }
+  else
+    {
+      if (0 != v->reloc)
+        aerr (a, line, "8-bit relocation illegal");
+
+      emit (a, v->value);
+    }
 }
 
 /******************************************************************************/
@@ -366,6 +445,8 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.syms = a->syms;
   env.lc = a->lc_stmt;
   env.lc_reloc = a->lc_reloc;
+  env.lc_base = a->base;
+  env.seg_hw = a->seg_hw; /* live per-segment high-water for .PROG./.DATA. */
   env.undef0 = (1 == a->pass);
   env.scope = a->scope;
   rc = expr_eval2 (*pp, &env, v, &endp, &err);
@@ -374,6 +455,7 @@ eval1 (astate *a, const char **pp, value_t *v)
     {
       v->value = 0;
       v->reloc = 0;
+      v->base = 0;
       v->ext = NULL;
     }
 
@@ -650,6 +732,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
   a->lst_opw = fmt_opw (in->fmt); /* for the value-form listing byte column */
   v.reloc = 0; /* default if no 16-bit operand is evaluated */
+  v.base = 0;
 
   ifmt = (int)in->fmt;
 
@@ -736,7 +819,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (eval1 (a, &p, &v))
           aerr (a, line, "bad immediate");
 
-        emit (a, v.value);
+        emit_imm8 (a, line, &v);
         break;
       }
 
@@ -831,7 +914,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (eval1 (a, &p, &v))
           aerr (a, line, "bad immediate");
 
-        emit_word (a, v.value, 0 != v.reloc);
+        emit_word (a, v.value, 0 != v.reloc, v.base);
         break;
       }
 
@@ -841,7 +924,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       if (eval1 (a, &p, &v))
         aerr (a, line, "bad immediate");
 
-      emit (a, v.value);
+      emit_imm8 (a, line, &v);
       break;
 
     case FMT_ADDR:
@@ -850,7 +933,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       if (eval1 (a, &p, &v))
         aerr (a, line, "bad address");
 
-      emit_word (a, v.value, 0 != v.reloc);
+      emit_word (a, v.value, 0 != v.reloc, v.base);
       break;
 
     case FMT_RST:
@@ -889,7 +972,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       if (eval1 (a, &p, &v))
         aerr (a, line, "bad address");
 
-      emit_word (a, v.value, 0 != v.reloc);
+      emit_word (a, v.value, 0 != v.reloc, v.base);
       break;
 
     case FMT_EDHL:
@@ -1034,7 +1117,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (eval1 (a, &p, &v))
           aerr (a, line, "bad address");
 
-        emit_word (a, v.value, 0 != v.reloc);
+        emit_word (a, v.value, 0 != v.reloc, v.base);
         break;
       }
 
@@ -1042,7 +1125,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       return 0;
     }
 
-  a->lst_oreloc = ((2 == a->lst_opw) ? (0 != v.reloc) : 0);
+  a->lst_obase = ((2 == a->lst_opw) ? (0 != v.reloc ? v.base : 0) : 0);
 
   return 1;
 }
@@ -1092,12 +1175,12 @@ do_data (astate *a, const char *line, const char *p, int width)
         {
           if (2 == a->pass && 2 == width
               && a->nbytes / 2 < (int)sizeof (a->wreloc))
-            a->wreloc[a->nbytes / 2] = (u8)(0 != v.reloc ? '\'' : ' ');
+            a->wreloc[a->nbytes / 2] = (u8)(0 != v.reloc ? v.base : 0);
 
           if (2 == width)
-            emit_word (a, v.value, 0 != v.reloc);
+            emit_word (a, v.value, 0 != v.reloc, v.base);
           else
-            emit (a, v.value);
+            emit_imm8 (a, line, &v);
         }
 
       p = skipws (p);
@@ -1136,8 +1219,8 @@ do_blk (astate *a, const char *line, const char *p, int width)
   for (i = 0; i < n; i++)
     a->lc = (u16)(a->lc + 1);
 
-  if (a->lc > a->prog_max)
-    a->prog_max = a->lc;
+  if (a->lc > a->seg_hw[a->base])
+    a->seg_hw[a->base] = a->lc;
 }
 
 /******************************************************************************/
@@ -1202,7 +1285,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
             q++;
 
           last_lc = a->lc;
-          emit (a, v.value);
+          emit_imm8 (a, line, &v);
           started = 1;
           p = q;
         }
@@ -1214,7 +1297,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
             aerr (a, line, "bad expression");
 
           last_lc = a->lc;
-          emit (a, v.value);
+          emit_imm8 (a, line, &v);
           started = 1;
         }
 
@@ -1401,11 +1484,11 @@ do_rad40 (astate *a, const char *line, const char *p)
  * now as no-ops; .PABS/.PREL below do affect the relocation mode).
  *
  * NOTE: .PRGEND (= .PRGEN) is recognized here only.  It is "library file
- * generation".  It should end the current module like .END and then begin a
- * fresh module in the same object file.  That needs the multi-module / multi-
- * segment object model this single-.PROG.-segment engine does not yet have, so
- * for now a source with .PRGEND assembles as one module instead of several.
- * The segment-base symbols .PROG./.DATA./.BLNK. are likewise not yet resolved
+ * generation": it should end the current module like .END and then begin a
+ * fresh, independent module in the same object file.  Correct support needs
+ * each module assembled as its own two-pass unit (so forward references resolve
+ * within their module), which this whole-file two-pass driver does not yet do,
+ * so for now a source with .PRGEND assembles as one module instead of several
  * (see the README "Future" section).
  */
 
@@ -1414,10 +1497,9 @@ is_noop_dir (const char *op)
 {
   static const char *list[]
       = { ".PHEX",   ".PBIN",    ".PAGE",   ".EJECT",  ".TITLE",  ".SBTTL",
-          ".SUBTTL", ".IDENT",   ".REQUEST", ".NAME",  ".RELOC",  ".COMMENT",
-          ".I8080",  ".Z80",     ".ENTRY",  ".INTERN", "PUBLIC",  ".PUBLIC",
-          ".PRNTX",  ".PRINTX",  ".EXTERN", "EXTRN",   ".EXTRN",  "COMMON",
-          ".COMMON", ".PRGEND",  NULL };
+          ".SUBTTL", ".REQUEST", ".NAME",   ".COMMENT", ".I8080", ".Z80",
+          "PUBLIC",  ".PUBLIC",  ".PRNTX",  ".PRINTX", "COMMON",  ".COMMON",
+          ".PRGEND", NULL };
   int i;
 
   for (i = 0; NULL != list[i]; i++)
@@ -1667,6 +1749,34 @@ cond_test (const char *op, const value_t *v)
  * as a byte stream.
  */
 
+/*
+ * Listing relocation-base flag: .PROG. = ', .DATA. = " (PSA) / * (TDL),
+ * .BLNK. = :03, and any external base = :NN (its two-digit base number).
+ * Absolute (base 0) has no flag.  Returns a pointer to a static or literal
+ * string (single use per call -- the :NN form shares one buffer).
+ */
+
+static const char *
+seg_flag (int base, dialect_t dialect)
+{
+  static char buf[8];
+
+  if (base <= 0)
+    return "";
+
+  if (1 == base)
+    return "'";
+
+  if (2 == base)
+    return ((DIALECT_PASM == dialect) ? "\"" : "*");
+
+  (void)xsnprintf (buf, sizeof (buf), ":%02X", base);
+
+  return buf;
+}
+
+/******************************************************************************/
+
 static void
 lst_bytes (const astate *a, char *col, size_t cap)
 {
@@ -1678,7 +1788,8 @@ lst_bytes (const astate *a, char *col, size_t cap)
 
       for (i = 0; i + 1 < a->nbytes && i < maxw; i += 2)
         {
-          int fl = a->wreloc[i / 2];
+          int wb = a->wreloc[i / 2];
+          const char *fl = ((wb > 0) ? seg_flag (wb, a->dialect) : " ");
           /*
            * .XADDR (default) shows the 16-bit value; .LADDR shows the bytes in
            * generated (memory) order -- least significant byte first.
@@ -1687,8 +1798,8 @@ lst_bytes (const astate *a, char *col, size_t cap)
               = ((a->lst_ctl & LSTC_LADDR)
                      ? (unsigned)((a->bytes[i] << 8) | a->bytes[(long)i + 1])
                      : (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8)));
-          cn += xsnprintf (col + cn, cap - (size_t)cn, "%s%04X%c",
-                           (i ? "   " : ""), shown, (fl ? fl : ' '));
+          cn += xsnprintf (col + cn, cap - (size_t)cn, "%s%04X%s",
+                           (i ? "   " : ""), shown, fl);
         }
 
       while (cn > 0 && ' ' == col[(long)cn - 1])
@@ -1725,7 +1836,7 @@ lst_bytes (const astate *a, char *col, size_t cap)
           cn += xsnprintf (
               col + cn, cap - (size_t)cn, " %04X%s",
               (unsigned)(a->bytes[nop] | (a->bytes[(long)nop + 1] << 8)),
-              (a->lst_oreloc ? "'" : ""));
+              seg_flag (a->lst_obase, a->dialect));
         }
     }
 
@@ -1826,7 +1937,9 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   char col[40];
   int bw = ((DIALECT_PASM == a->dialect) ? 14 : 13); /* byte-field width */
   long loc = ((-2 == a->lst_loc) ? (long)lc0 : a->lst_loc);
-  int rel = ((a->lst_lreloc < 0) ? (0 != a->lc_reloc) : a->lst_lreloc);
+  int lbase
+      = ((a->lst_lbase < 0) ? (a->lc_reloc ? a->base : 0) : a->lst_lbase);
+  const char *lfl = ((lbase > 0) ? seg_flag (lbase, a->dialect) : " ");
   int clen;
   char mark = 0; /* macro '+' / .INSERT '@' continuation marker, or none */
 
@@ -1924,8 +2037,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       {
         int p;
 
-        (void)fprintf (a->lst, "   %04X%c   %s", (unsigned)loc,
-                       (rel ? '\'' : ' '), col);
+        (void)fprintf (a->lst, "   %04X%s   %s", (unsigned)loc, lfl, col);
 
         for (p = 11 + clen; p < scol; p++)
           (void)fputc (' ', a->lst);
@@ -1935,16 +2047,16 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         if (loc < 0)
           (void)fprintf (a->lst, "           %-*s%c", bw - 1, col, mark);
         else
-          (void)fprintf (a->lst, "   %04X%c   %-*s%c", (unsigned)loc,
-                         (rel ? '\'' : ' '), bw - 1, col, mark);
+          (void)fprintf (a->lst, "   %04X%s   %-*s%c", (unsigned)loc, lfl,
+                         bw - 1, col, mark);
       }
     else
       {
         if (loc < 0) /* .END and other blank-LOC lines */
           (void)fprintf (a->lst, "           %-*s", bw, col);
         else
-          (void)fprintf (a->lst, "   %04X%c   %-*s", (unsigned)loc,
-                         (rel ? '\'' : ' '), bw, col);
+          (void)fprintf (a->lst, "   %04X%s   %-*s", (unsigned)loc, lfl, bw,
+                         col);
       }
 
     lst_source (a, src, scol, wrapw, indent);
@@ -2025,6 +2137,111 @@ sym_name_cmp (const void *pa, const void *pb)
 /******************************************************************************/
 
 /*
+ * qsort comparator ordering symbols by their .EXTERN/.INTERN/.ENTRY
+ * declaration sequence -- the order the originals write the `\'/`#'/`@'
+ * records.  (An external's base number is assigned in the same sequence, so
+ * this also orders the externals by relocation base.)
+ */
+
+static int
+cmp_decl (const void *pa, const void *pb)
+{
+  int x = (int)(*(symbol *const *)pa)->decl;
+  int y = (int)(*(symbol *const *)pb)->decl;
+
+  return ((x > y) - (x < y));
+}
+
+/*
+ * Collect the external/internal/entry symbols into objsym arrays (each sized
+ * sym_count(t)) for the `\'/`#'/`@' object records, in the originals' emission
+ * order.
+ */
+
+static void
+collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
+                  int *nints, objsym *ents, int *nents)
+{
+  int total = sym_count (t);
+  symbol **all, **es, **is, **ts;
+  int ne = 0, ni = 0, nt = 0, i;
+
+  *nexts = 0;
+  *nints = 0;
+  *nents = 0;
+
+  if (total <= 0)
+    return;
+
+  all = (symbol **)malloc ((size_t)total * sizeof (symbol *));
+  es = (symbol **)malloc ((size_t)total * sizeof (symbol *));
+  is = (symbol **)malloc ((size_t)total * sizeof (symbol *));
+  ts = (symbol **)malloc ((size_t)total * sizeof (symbol *));
+
+  if (NULL == all || NULL == es || NULL == is || NULL == ts)
+    {
+      if (NULL != all)
+        FREE (all);
+      if (NULL != es)
+        FREE (es);
+      if (NULL != is)
+        FREE (is);
+      if (NULL != ts)
+        FREE (ts);
+      return;
+    }
+
+  sym_collect (t, all);
+
+  for (i = 0; i < total; i++)
+    {
+      if (all[i]->external)
+        es[ne++] = all[i];
+
+      if (all[i]->internal && !all[i]->entry)
+        is[ni++] = all[i]; /* plain internals (entries form their own group) */
+
+      if (all[i]->entry)
+        ts[nt++] = all[i];
+    }
+
+  qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl);
+  qsort (is, (size_t)ni, sizeof (symbol *), cmp_decl);
+  qsort (ts, (size_t)nt, sizeof (symbol *), cmp_decl);
+
+  for (i = 0; i < ne; i++)
+    {
+      (void)xstrlcpy (exts[i].name, es[i]->name, sizeof (exts[i].name));
+      exts[i].base = es[i]->val.base;
+      exts[i].value = 0; /* external reference: size 0 */
+    }
+
+  for (i = 0; i < ni; i++)
+    {
+      (void)xstrlcpy (ints[i].name, is[i]->name, sizeof (ints[i].name));
+      ints[i].base = is[i]->val.base;
+      ints[i].value = is[i]->val.value;
+    }
+
+  for (i = 0; i < nt; i++)
+    {
+      (void)xstrlcpy (ents[i].name, ts[i]->name, sizeof (ents[i].name));
+      ents[i].base = ts[i]->val.base;
+      ents[i].value = ts[i]->val.value;
+    }
+
+  *nexts = ne;
+  *nints = ni;
+  *nents = nt;
+  FREE (all);
+  FREE (es);
+  FREE (is);
+  FREE (ts);
+}
+
+/******************************************************************************/
+
+/*
  * End-of-listing symbol table on a fresh page: each entry is "%-6s %04X" plus
  * a 6-char flag field, 3-per-line (TDL) / 4 (PSA); user symbols sorted
  * alphabe- tically with the .BLNK./.DATA./.PROG. segment entries appended
@@ -2099,10 +2316,25 @@ lst_symtab (astate *a)
 
       if (i < nuser)
         {
+          static char ubuf[12];
+          const char *g = seg_flag ((int)all[i]->val.base, a->dialect);
+          int gl = 0;
           name = all[i]->name;
           val = all[i]->val.value;
-          /* relocatable symbols carry a quote after the value */
-          flag = ((0 != all[i]->val.reloc) ? "'     " : "      ");
+
+          /* relocatable symbols carry their base flag, padded to six cols
+           * (the flag is at most three characters: ', ", *, or :NN) */
+          while (gl < 6 && '\0' != g[gl])
+            {
+              ubuf[gl] = g[gl];
+              gl++;
+            }
+
+          while (gl < 6)
+            ubuf[gl++] = ' ';
+
+          ubuf[gl] = '\0';
+          flag = ubuf;
         }
       else
         {
@@ -2112,7 +2344,7 @@ lst_symtab (astate *a)
            */
 
           name = segname[(long)i - nuser];
-          val = ((2 == (long)i - nuser) ? a->prog_max : 0);
+          val = a->seg_hw[3 - ((long)i - nuser)];
           flag = segflag[(long)i - nuser];
         }
 
@@ -2736,6 +2968,7 @@ console_read (const astate *a, symbol *s)
   iv = strtol (ibuf, (char **)NULL, a->radix);
   s->val.value = (u16)iv;
   s->val.reloc = 0;
+  s->val.base = 0;
   s->val.ext = NULL;
   s->defined = 1;
 }
@@ -2755,8 +2988,8 @@ do_line (astate *a, const char *line)
   a->lst_kind = 0;
   a->lst_opw = 0; /* default: instruction, no operand */
   a->lst_loc = -2; /* default: show the statement LC */
-  a->lst_lreloc = -1; /* default: LC reloc from lc_reloc */
-  a->lst_oreloc = 0;
+  a->lst_lbase = -1; /* default: LC base from lc_reloc/base */
+  a->lst_obase = 0;
   a->lst_ctlstmt = 0; /* set by the listing-control directives */
 
   if (a->ended)
@@ -2935,6 +3168,7 @@ do_line (astate *a, const char *line)
 
           s->val.value = a->lc;
           s->val.reloc = a->lc_reloc;
+          s->val.base = (a->lc_reloc ? a->base : 0);
           s->val.ext = NULL;
           s->defined = 1;
           s->seen = (unsigned char)a->pass;
@@ -3087,7 +3321,7 @@ do_line (astate *a, const char *line)
         }
 
         a->lst_loc = (long)v.value;     /* listing: '=' shows the value */
-        a->lst_lreloc = (0 != v.reloc); /* and the value's reloc flag   */
+        a->lst_lbase = (0 != v.reloc ? v.base : 0); /* the value's base flag */
       }
 
       if (2 == a->pass)
@@ -3162,6 +3396,84 @@ do_line (astate *a, const char *line)
       aerr (a, line, "user .ERROR");
       a->lst_loc = -1;
     }
+  else if (opeq (op, ".EXTERN", ".EXTRN") || opeq (op, "EXTRN", NULL))
+    { /* declare external symbols; each gets a sequential base number (>=4) */
+      const char *q = L.operands;
+
+      for (;;)
+        {
+          char nm[NAMEBUF];
+          q = parse_opname (q, nm);
+
+          if ('\0' != nm[0])
+            {
+              symbol *s = sym_intern (a->syms, nm);
+
+              if (!s->external)
+                {
+                  s->external = 1;
+                  s->val.value = 0;
+                  s->val.reloc = 0;
+                  s->val.base = a->next_ebase++;
+                  s->val.ext = NULL;
+                  s->decl = (unsigned short)a->next_decl++;
+                }
+            }
+
+          q = skipws (q);
+
+          if (',' == *q)
+            q++;
+          else
+            break;
+        }
+
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".ENTRY", NULL) || opeq (op, ".INTERN", NULL))
+    { /* mark internal symbols (.ENTRY symbols are also entry points) */
+      int is_entry = opeq (op, ".ENTRY", NULL);
+      const char *q = L.operands;
+
+      for (;;)
+        {
+          char nm[NAMEBUF];
+          q = parse_opname (q, nm);
+
+          if ('\0' != nm[0])
+            {
+              symbol *s = sym_intern (a->syms, nm);
+
+              if (!s->internal)
+                {
+                  s->internal = 1;
+                  s->decl = (unsigned short)a->next_decl++;
+                }
+
+              if (is_entry)
+                s->entry = 1;
+            }
+
+          q = skipws (q);
+
+          if (',' == *q)
+            q++;
+          else
+            break;
+        }
+
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".IDENT", NULL))
+    { /* set the module name carried in the `!' object record */
+      char nm[NAMEBUF];
+      (void)parse_opname (L.operands, nm);
+
+      if ('\0' != nm[0])
+        (void)xstrlcpy (a->modname, nm, sizeof (a->modname));
+
+      a->lst_loc = -1;
+    }
   else if (opeq (op, ".REMARK", NULL))
     /* a remark listed in the source body; emits no bytes */
     a->lst_loc = -1;
@@ -3206,16 +3518,56 @@ do_line (astate *a, const char *line)
         aerr (a, line, "bad ORG");
       else
         {
+          /* save the current (lc, base, mode) so .RELOC can restore it */
+          if (a->loc_sp
+              < LOC_STK_DEPTH)
+            {
+              a->loc_stk[a->loc_sp].lc = a->lc;
+              a->loc_stk[a->loc_sp].base = a->base;
+              a->loc_stk[a->loc_sp].reloc = a->lc_reloc;
+              a->loc_sp++;
+            }
+
           a->lc = v.value;
-          a->lc_reloc = (0 != v.reloc);
+
+          if (0 != v.reloc && v.base >= 1 && v.base <= 3)
+            { /* switch to the named segment, resuming its high-water */
+              a->base = v.base;
+              a->lc_reloc = 1;
+            }
+          else
+            {
+              /*
+               * an absolute origin pins the program: the .PROG. object
+               * segment then reports size 0 (the code is absolutely located,
+               * not relocatable).  A *relocatable* origin merely switches the
+               * active base and does not pin the program.
+               */
+              a->lc_reloc = 0;
+              a->obj_org_used = 1;
+            }
         }
 
-      /*
-       * an explicit origin pins the program: the .PROG. object segment then
-       * reports size 0 (the code is absolutely located, not relocatable)
-       */
-      a->obj_org_used = 1;
       a->lst_loc = (long)a->lc; /* listing shows the LC after ORG */
+    }
+  else if (opeq (op, ".RELOC", NULL))
+    { /* restore the (lc, base, mode) before the immediately preceding .LOC;
+       * an empty stack is equivalent to .LOC 0 of .PROG. */
+      if (a->loc_sp > 0)
+        {
+          a->loc_sp--;
+          a->lc = a->loc_stk[a->loc_sp].lc;
+          a->base = a->loc_stk[a->loc_sp].base;
+          a->lc_reloc = a->loc_stk[a->loc_sp].reloc;
+        }
+      else
+        {
+          a->lc = 0;
+          a->base = 1;
+          a->lc_reloc = 1;
+        }
+
+      a->lst_loc = (long)a->lc;
     }
   else if (opeq (op, ".RADIX", NULL))
     {
@@ -3609,11 +3961,14 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
                 : NULL);
   a.em_byte = NULL;
   a.em_rel = NULL;
+  a.em_tbase = NULL;
   a.em_n = 0;
   a.em_cap = 0;
   a.em_pending = 0;
+  a.em_pend_base = 0;
   a.span_a = NULL;
   a.span_n = NULL;
+  a.span_seg = NULL;
   a.nspans = 0;
   a.span_cap = 0;
   a.emit_prev = -1;
@@ -3623,12 +3978,14 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
       a.em_cap = 8192;
       a.em_byte = (u8 *)malloc ((size_t)a.em_cap);
       a.em_rel = (u8 *)malloc ((size_t)a.em_cap);
+      a.em_tbase = (u8 *)malloc ((size_t)a.em_cap);
       a.span_cap = 1024;
       a.span_a = (u16 *)malloc ((size_t)a.span_cap * sizeof (u16));
       a.span_n = (u16 *)malloc ((size_t)a.span_cap * sizeof (u16));
+      a.span_seg = (u8 *)malloc ((size_t)a.span_cap * sizeof (u8));
 
-      if (NULL == a.em_byte || NULL == a.em_rel || NULL == a.span_a
-          || NULL == a.span_n)
+      if (NULL == a.em_byte || NULL == a.em_rel || NULL == a.em_tbase
+          || NULL == a.span_a || NULL == a.span_n || NULL == a.span_seg)
         { /* out of memory: degrade to no object output */
           if (NULL != a.em_byte)
             FREE (a.em_byte);
@@ -3636,11 +3993,17 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           if (NULL != a.em_rel)
             FREE (a.em_rel);
 
+          if (NULL != a.em_tbase)
+            FREE (a.em_tbase);
+
           if (NULL != a.span_a)
             FREE (a.span_a);
 
           if (NULL != a.span_n)
             FREE (a.span_n);
+
+          if (NULL != a.span_seg)
+            FREE (a.span_seg);
 
           a.em_cap = 0;
           a.span_cap = 0;
@@ -3659,6 +4022,12 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.radix = RADIX_DEFAULT;
   a.lc = 0;
   a.lc_reloc = 1;
+  a.base = 1; /* implicit start: .LOC 0 of .PROG. */
+  a.next_ebase = 4;
+  a.next_decl = 1;
+  (void)xstrlcpy (a.modname, ".MAIN.", sizeof (a.modname));
+  a.seg_hw[0] = a.seg_hw[1] = a.seg_hw[2] = a.seg_hw[3] = 0;
+  a.loc_sp = 0;
   a.errors = 0;
   a.ended = 0;
   a.nalias = 0;
@@ -3683,7 +4052,12 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.radix = RADIX_DEFAULT;
   a.lc = 0;
   a.lc_reloc = 1;
-  a.prog_max = 0;
+  a.base = 1; /* implicit start: .LOC 0 of .PROG. */
+  a.next_ebase = 4;
+  a.next_decl = 1;
+  (void)xstrlcpy (a.modname, ".MAIN.", sizeof (a.modname));
+  a.seg_hw[0] = a.seg_hw[1] = a.seg_hw[2] = a.seg_hw[3] = 0;
+  a.loc_sp = 0;
   a.obj_abs = 0;
   a.obj_org_used = 0;
   a.obj_start = 0;
@@ -3752,20 +4126,42 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
       if (a.img_any && (NULL != relpath || NULL != hexpath))
         {
           objspec os;
+          int nsym = sym_count (a.syms);
+          objsym *exts = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
+                                           * sizeof (objsym));
+          objsym *ints = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
+                                           * sizeof (objsym));
+          objsym *ents = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
+                                           * sizeof (objsym));
+
+          os.nexts = 0;
+          os.nints = 0;
+          os.nents = 0;
+
+          if (NULL != exts && NULL != ints && NULL != ents)
+            collect_obj_syms (a.syms, exts, &os.nexts, ints, &os.nints, ents,
+                              &os.nents);
+
+          os.modname = a.modname;
+          os.exts = exts;
+          os.ints = ints;
+          os.ents = ents;
 
           os.em_byte = a.em_byte;
           os.em_rel = a.em_rel;
+          os.em_tbase = a.em_tbase;
           os.span_a = a.span_a;
           os.span_n = a.span_n;
+          os.span_seg = a.span_seg;
           os.nspans = a.nspans;
           /*
            * .PROG. size = the LC high-water (segment span incl. any trailing
            * reservation).  An explicit .LOC/ORG pins the code absolutely, so
            * the segment then reports size 0, matching the originals.
            */
-          os.prog_size = (a.obj_org_used ? 0u : a.prog_max);
-          os.data_size = 0;
-          os.blnk_size = 0;
+          os.prog_size = (a.obj_org_used ? 0u : a.seg_hw[1]);
+          os.data_size = a.seg_hw[2];
+          os.blnk_size = a.seg_hw[3];
           os.abs_mode = a.obj_abs;
           /*
            * data-record base: .PROG.-relative (1) unless an explicit origin
@@ -3792,6 +4188,15 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
               if (0 != obj_write (hexpath, &os))
                 (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
             }
+
+          if (NULL != exts)
+            FREE (exts);
+
+          if (NULL != ints)
+            FREE (ints);
+
+          if (NULL != ents)
+            FREE (ents);
         }
 
       FREE (a.image);
@@ -3809,11 +4214,17 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   if (NULL != a.em_rel)
     FREE (a.em_rel); /* cppcheck-suppress doubleFree */
 
+  if (NULL != a.em_tbase)
+    FREE (a.em_tbase); /* cppcheck-suppress doubleFree */
+
   if (NULL != a.span_a)
     FREE (a.span_a); /* cppcheck-suppress doubleFree */
 
   if (NULL != a.span_n)
     FREE (a.span_n); /* cppcheck-suppress doubleFree */
+
+  if (NULL != a.span_seg)
+    FREE (a.span_seg); /* cppcheck-suppress doubleFree */
 
   {
     int e = a.errors;

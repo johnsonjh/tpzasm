@@ -388,9 +388,13 @@ sym_intern (symtab *t, const char *name)
 
   s->val.value = 0;
   s->val.reloc = 0;
+  s->val.base = 0;
   s->val.ext = NULL;
   s->defined = 0;
   s->external = 0;
+  s->internal = 0;
+  s->entry = 0;
+  s->decl = 0;
   s->seen = 0;
   s->next = t->bucket[idx];
   t->bucket[idx] = s;

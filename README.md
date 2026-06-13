@@ -46,7 +46,7 @@
 
 ## Status
 
-* **`TPZASM`** is \~**90%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+* **`TPZASM`** is \~**99%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.  It is fully dialect‑faithful and can
   assemble the substantial (\~30,000 SLOC)
   [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) and (\~3,500 SLOC)
@@ -55,6 +55,14 @@
 
   * Remaining known differences are mostly cosmetic issues in the generated
     listing output, and error‑handling behavior has only been lightly verified.
+
+  * **TPZASM** implements the full **multi‑segment, relocatable, linkable**
+    object model: the three program segments (**`.PROG.`**, **`.DATA.`**,
+    **`.BLNK.`**) with `.LOC`/`.RELOC` segment switching and cross‑segment
+    relocation, the predefined segment‑base symbols, external symbols
+    (**`.EXTERN`**, with 16‑ and 8‑bit references), and the entry/internal
+    symbol records (**`.ENTRY`**, **`.INTERN`**, **`.IDENT`**).  All of this is
+    byte‑for‑byte identical to **PSA&nbsp;PASM&nbsp;1.02**.
 
   * **TPZASM** can write the assembled output as a raw binary image, or as a
     **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or an absolute
@@ -69,25 +77,14 @@
 
 ## Future
 
-* The full multi‑segment object model is not yet implemented, but is planned
-  for a future release.
-
-  **TPZASM** currently assembles a single module into the **`.PROG.`** segment
-  (the **`.DATA.`** and **`.BLNK.`** segments are always reported as size `0`).
-  As a consequence, the following keywords are recognized (so they will not
-  raise any error) but are not not yet implemented:
-
-  * `.PRGEND` for *library file generation*, which ends the current module
-    like **`.END`** and then begins a fresh module in the same object file.
-    **TPZASM** treats it as a no‑op, so the source assembles as a single
-    module rather than several.
-
-  * The predefined segment‑base symbols `.PROG.`, `.DATA.`, and `.BLNK.`
-    resolve to each segment's relocatable origin in the original assemblers.
-    `.PROG.` maps cleanly onto the existing relocation model, but `.DATA.`
-    and `.BLNK.` require distinct segment‑relative relocation support that
-    **TPZASM** has not yet implemented, so they are currently left unresolved
-    (rather than relocated incorrectly).
+* Multi‑module *library file generation* (the **`.PRGEND`** pseudo‑op, which
+  ends a module like **`.END`** and then begins a fresh, fully independent
+  module in the same object file) is not yet implemented, but is planned for a
+  future release.  **`.PRGEND`** is recognized (so it raises no error), but is
+  currently treated as a no‑op, so such a source assembles as a single module
+  rather than several.  (Correct support requires assembling each module as an
+  independent two‑pass unit, so that forward references resolve within their own
+  module.)  The single‑module multi‑segment object model is complete.
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have

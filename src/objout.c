@@ -186,82 +186,139 @@ rb_flush (recbuf *r)
  * eb[0..avail-1] (with classes er[]), loading at `addr'; returns the number of
  * emission-log bytes consumed.
  *
- * Within the record, an absolute byte carries one control bit ('0') and a
- * .PROG.-relative 16-bit value carries two ('1' then '0') -- so there is
- * exactly one control bit per *data* byte, and a control byte governs the next
- * eight data bytes.  A 16-bit value may therefore straddle the eight-byte
- * boundary (its `10' code split between two control bytes); the data stream is
- * laid out as [control byte][<=8 data bytes][control byte][<=8 data bytes]...
+ * The relocation control bytes form a prefix-coded BIT stream (read left to
+ * right): '0' = one absolute byte; '10' = a 16-bit value relative to this
+ * record's base (2 data bytes LSB,MSB); '110' = a 16-bit value relative to a
+ * DIFFERENT base (3 data bytes: base#, LSB, MSB); '111' = an 8-bit value
+ * relative to a different (external) base (2 data bytes: base#, value).  Each
+ * control byte holds eight bits; a code's bits may straddle the boundary into
+ * the next control byte.  The data bytes of every code that BEGINS within a
+ * control byte are written immediately after that control byte, so the layout
+ * is [control][data of codes starting here][control][data...].  For the common
+ * 0/10/110 codes (bits == data bytes) this reduces to one bit per data byte.
  */
 
 static int
-emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er, long addr,
-                  int avail, int base)
+emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
+                  const u8 *etb, long addr, int avail, int base)
 {
-  u8 data[REC_CAP + 2] = { 0 };
-  u8 cbit[REC_CAP + 2] = { 0 }; /* control bit accompanying data[i] */
+  u8 bit[REC_CAP * 8 + 16] = { 0 }; /* control-bit stream */
+  u8 data[REC_CAP + 8] = { 0 };     /* data-byte stream   */
+  int istart[REC_CAP + 8] = { 0 };  /* start bit of each item */
+  int idlen[REC_CAP + 8] = { 0 };   /* data bytes of each item */
+  int nbits = 0, ndata = 0, nitem = 0;
   int i = 0; /* emission-log bytes consumed by this record */
-  int ndata = 0; /* data bytes accumulated for this record */
-  int nctrl, c;
+  int nctrl, c, ie, doff;
   recbuf r;
 
   /*
-   * accept items while the count so far (data + control bytes) is below
-   * REC_CAP; the item is then added whole, so a 16-bit value never splits
-   * across a record (and may push the final count to 25 - the originals
-   * emit a reloc16 begun while still under the cap).
+   * accept items while the record byte count (control + data) stays below
+   * REC_CAP; the item is then added whole, so a code never splits across a
+   * record boundary (its data bytes stay together).
    */
   while (i < avail)
     {
       int reloc = (REL_LO == er[i]);
-      int id = (reloc ? 2 : 1);
-      int cnt = ndata + (ndata + 7) / 8; /* count if we stopped right here */
+      int ext8 = (REL_EXT8 == er[i]);
+      int cross = (reloc && (int)etb[i] != base); /* different-base 16-bit */
+      int id = (reloc ? 2 : 1);          /* emission-log bytes consumed */
+      int cnt = (nbits + 7) / 8 + ndata; /* record bytes if we stop here */
 
       if (cnt >= REC_CAP && ndata > 0)
         break;
 
-      data[ndata] = eb[i];
-      cbit[ndata] = (u8)(reloc ? 1 : 0); /* reloc16 low: '1', absolute: '0' */
+      /*
+       * the REC_CAP acceptance test above keeps the buffers well under their
+       * sizes; pin those bounds explicitly (these never trigger) so static
+       * analyzers can prove the bit[]/data[]/istart[]/idlen[] indexing below
+       * stays in range.
+       */
+      if (ndata + 3 > REC_CAP + 8)
+        break;
 
-      if (reloc)
-        {
+      if (nbits + 3 > REC_CAP * 8 + 16)
+        break;
+
+      if (nitem + 1 > REC_CAP + 8)
+        break;
+
+      istart[nitem] = nbits;
+
+      if (ext8)
+        { /* '111': base#, 8-bit value */
+          bit[nbits++] = 1;
+          bit[nbits++] = 1;
+          bit[nbits++] = 1;
+          data[ndata] = etb[i];
+          data[(long)ndata + 1] = eb[i];
+          idlen[nitem] = 2;
+          ndata += 2;
+        }
+      else if (cross)
+        { /* '110': base#, LSB, MSB */
+          bit[nbits++] = 1;
+          bit[nbits++] = 1;
+          bit[nbits++] = 0;
+          data[ndata] = etb[i];
+          data[(long)ndata + 1] = eb[i];
+          data[(long)ndata + 2] = eb[(long)i + 1];
+          idlen[nitem] = 3;
+          ndata += 3;
+        }
+      else if (reloc)
+        { /* '10': LSB, MSB */
+          bit[nbits++] = 1;
+          bit[nbits++] = 0;
+          data[ndata] = eb[i];
           data[(long)ndata + 1] = eb[(long)i + 1];
-          cbit[(long)ndata + 1] = 0; /* reloc16 high byte: trailing '0'     */
+          idlen[nitem] = 2;
+          ndata += 2;
+        }
+      else
+        { /* '0': absolute */
+          bit[nbits++] = 0;
+          data[ndata] = eb[i];
+          idlen[nitem] = 1;
+          ndata += 1;
         }
 
-      ndata += id;
+      nitem++;
       i += id;
     }
 
-  /*
-   * frame the record: ';' count load-addr(BE) reloc-base body.  The
-   * accumulation cap above keeps ndata well under the buffer size; pin that
-   * bound explicitly (never triggers) so static analyzers can prove the
-   * data[]/cbit[] indexing below stays in range.
-   */
-  if (ndata > REC_CAP + 2)
-    ndata = REC_CAP + 2;
-
-  nctrl = (ndata + 7) / 8;
+  nctrl = (nbits + 7) / 8;
   rb_begin (&r, f, ascii, ';');
-  rb_bin (&r, (unsigned)(ndata + nctrl));
+  rb_bin (&r, (unsigned)(nctrl + ndata));
   rb_be16 (&r, (unsigned)addr);
   rb_bin (&r, (unsigned)base); /* relocation base (.PROG. = 1, pinned = 0) */
 
+  ie = 0;
+  doff = 0;
+
   for (c = 0; c < nctrl; c++)
     {
-      int b = c * 8;
       unsigned ctrl = 0;
       int k;
 
-      for (k = 0; k < 8 && b + k < ndata; k++)
-        if (cbit[(long)b + k])
+      for (k = 0; k < 8; k++)
+        if ((c * 8 + k) < nbits && bit[(long)c * 8 + k])
           ctrl |= (0x80u >> k);
 
       rb_bin (&r, ctrl);
 
-      for (k = 0; k < 8 && b + k < ndata; k++)
-        rb_bin (&r, (unsigned)data[(long)b + k]);
+      /* the data of every code that BEGINS in this control byte's window */
+      while (ie < nitem && istart[ie] < (c + 1) * 8)
+        {
+          int d;
+
+          /* doff + d <= ndata <= REC_CAP + 8 by construction; the explicit
+           * bound lets static analyzers prove the data[] read stays in range */
+          for (d = 0; d < idlen[ie] && doff + d < REC_CAP + 8; d++)
+            rb_bin (&r, (unsigned)data[doff + d]);
+
+          doff += idlen[ie];
+          ie++;
+        }
     }
 
   rb_flush (&r);
@@ -312,7 +369,7 @@ obj_write (const char *path, const objspec *s)
   if (!s->xlink)
     {
       rb_begin (&r, f, s->ascii, '!');
-      rb_name (&r, ".MAIN.");
+      rb_name (&r, (NULL != s->modname) ? s->modname : ".MAIN.");
       rb_flush (&r);
     }
 
@@ -333,24 +390,107 @@ obj_write (const char *path, const objspec *s)
     }
 
   /*
-   * '\' segment / relocation-base table: .PROG.=1, .DATA.=2, .BLNK.=3 (the
-   * caller reports size 0 for a pinned/absolute .PROG. segment).  Omitted under
-   * .XLINK, which writes a relocatable core image of `;' records only.
+   * '@' entry-point records (.ENTRY), at most eight 6-char names per record.
+   * Omitted under .XLINK.
+   */
+  if (!s->xlink && s->nents > 0)
+    {
+      int j = 0;
+
+      while (j < s->nents)
+        {
+          int n = ((s->nents - j < 8) ? s->nents - j : 8);
+          int k;
+
+          rb_begin (&r, f, s->ascii, '@');
+          rb_bin (&r, (unsigned)n);
+
+          for (k = 0; k < n; k++)
+            rb_name (&r, s->ents[j + k].name);
+
+          rb_flush (&r);
+          j += n;
+        }
+    }
+
+  /*
+   * '\' segment / relocation-base table: the three predefined segments
+   * (.PROG.=1, .DATA.=2, .BLNK.=3, with their sizes) followed by the external
+   * bases (size 0), at most four entries per record.  Omitted under .XLINK.
    */
   if (!s->xlink)
     {
-      rb_begin (&r, f, s->ascii, '\\');
-      rb_bin (&r, 3);
-      rb_name (&r, ".PROG.");
-      rb_bin (&r, 1);
-      rb_be16 (&r, s->prog_size);
-      rb_name (&r, ".DATA.");
-      rb_bin (&r, 2);
-      rb_be16 (&r, s->data_size);
-      rb_name (&r, ".BLNK.");
-      rb_bin (&r, 3);
-      rb_be16 (&r, s->blnk_size);
-      rb_flush (&r);
+      objsym segs[3];
+      int total, j;
+
+      (void)xstrlcpy (segs[0].name, ".PROG.", sizeof (segs[0].name));
+      segs[0].base = 1;
+      segs[0].value = (u16)s->prog_size;
+      (void)xstrlcpy (segs[1].name, ".DATA.", sizeof (segs[1].name));
+      segs[1].base = 2;
+      segs[1].value = (u16)s->data_size;
+      (void)xstrlcpy (segs[2].name, ".BLNK.", sizeof (segs[2].name));
+      segs[2].base = 3;
+      segs[2].value = (u16)s->blnk_size;
+
+      total = 3 + s->nexts;
+
+      for (j = 0; j < total;)
+        {
+          int n = ((total - j < 4) ? total - j : 4);
+          int k;
+
+          rb_begin (&r, f, s->ascii, '\\');
+          rb_bin (&r, (unsigned)n);
+
+          for (k = 0; k < n; k++)
+            {
+              const objsym *e = ((j + k < 3) ? &segs[j + k]
+                                             : &s->exts[j + k - 3]);
+              rb_name (&r, e->name);
+              rb_bin (&r, (unsigned)e->base);
+              rb_be16 (&r, e->value);
+            }
+
+          rb_flush (&r);
+          j += n;
+        }
+    }
+
+  /*
+   * '#' internal-symbol records (name, base#, value): the entry-point symbols
+   * (.ENTRY) form one group, the plain internal symbols (.INTERN) another;
+   * each group is at most four entries per record.  Omitted under .XLINK.
+   */
+  if (!s->xlink)
+    {
+      int g;
+
+      for (g = 0; g < 2; g++)
+        {
+          const objsym *grp = ((0 == g) ? s->ents : s->ints);
+          int ng = ((0 == g) ? s->nents : s->nints);
+          int j = 0;
+
+          while (j < ng)
+            {
+              int n = ((ng - j < 4) ? ng - j : 4);
+              int k;
+
+              rb_begin (&r, f, s->ascii, '#');
+              rb_bin (&r, (unsigned)n);
+
+              for (k = 0; k < n; k++)
+                {
+                  rb_name (&r, grp[j + k].name);
+                  rb_bin (&r, (unsigned)grp[j + k].base);
+                  rb_be16 (&r, grp[j + k].value);
+                }
+
+              rb_flush (&r);
+              j += n;
+            }
+        }
     }
 
   /*
@@ -368,8 +508,12 @@ obj_write (const char *path, const objspec *s)
       {
         const u8 *eb = s->em_byte + emoff;
         const u8 *er = s->em_rel + emoff;
+        const u8 *et = s->em_tbase + emoff;
         long addr = (long)s->span_a[sp];
         int avail = (int)s->span_n[sp];
+        /* each ';' record loads relative to the span's active base */
+        int rbase = ((NULL != s->span_seg) ? (int)s->span_seg[sp]
+                                           : s->data_base);
 
         while (avail > 0)
           {
@@ -379,11 +523,12 @@ obj_write (const char *path, const objspec *s)
               used = emit_pabs_record (f, s->ascii, eb, addr, avail,
                                        s->data_base);
             else
-              used = emit_prel_record (f, s->ascii, eb, er, addr, avail,
-                                       s->data_base);
+              used = emit_prel_record (f, s->ascii, eb, er, et, addr, avail,
+                                       rbase);
 
             eb += used;
             er += used;
+            et += used;
             addr += used;
             avail -= used;
           }
