@@ -48,10 +48,12 @@ set -eu
 # .INSERT with an ignored drive specifier and the default .ASM extension
 # (dinsert -> isub), and the one-level-only rule: a nested .INSERT is an "F"
 # error and is not performed (insnest -> insnsub, whose .INSERT isub is
-# skipped).
+# skipped), and .PSYM, which appends the "&" global-symbol-table object record
+# (segment bases, externals, then defined symbols in definition order) for the
+# PSA BUG debugger -- ".." locals excluded (psym).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest"
+insnest psym"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

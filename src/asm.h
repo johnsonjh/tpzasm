@@ -85,6 +85,7 @@ typedef struct symbol
   unsigned char udef;     /* referenced but undefined (listing `U' flag)   */
   unsigned char seen;     /* pass # in which last defined as a label       */
   unsigned short decl;    /* .INTERN/.ENTRY declaration order (for records) */
+  unsigned short defseq;  /* definition order (for the `&' .PSYM record), 0=unset */
   struct symbol *next;
 } symbol;
 
@@ -231,6 +232,9 @@ typedef struct
   int nints;
   const objsym *ents;  /* entry points (.ENTRY) for the `@' record         */
   int nents;
+  int psym;            /* 1 = .PSYM: append the `&' symbol-table record(s)  */
+  const objsym *psyms; /* all global symbols for `&' (segs, exts, defs)     */
+  int npsyms;
 } objspec;
 
 /*

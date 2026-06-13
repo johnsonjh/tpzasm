@@ -572,6 +572,36 @@ obj_module (FILE *f, const objspec *s)
   rb_be16 (&r, s->start);
   rb_bin (&r, (s->abs_mode ? 0 : (unsigned)(s->start_reloc ? 1 : 0)));
   rb_flush (&r);
+
+  /*
+   * '&' symbol-table records (.PSYM), appended AFTER the EOF for the PSA BUG
+   * debugger: every global symbol -- the segment bases, the externals, then
+   * the locally-defined symbols -- as name(6)+base#(1)+value(BE16), at most
+   * four per record.  (Default .XPSYM emits none.)
+   */
+  if (s->psym)
+    {
+      int j = 0;
+
+      while (j < s->npsyms)
+        {
+          int n = ((s->npsyms - j < 4) ? s->npsyms - j : 4);
+          int k;
+
+          rb_begin (&r, f, s->ascii, '&');
+          rb_bin (&r, (unsigned)n);
+
+          for (k = 0; k < n; k++)
+            {
+              rb_name (&r, s->psyms[j + k].name);
+              rb_bin (&r, (unsigned)s->psyms[j + k].base);
+              rb_be16 (&r, s->psyms[j + k].value);
+            }
+
+          rb_flush (&r);
+          j += n;
+        }
+    }
 }
 
 /******************************************************************************/

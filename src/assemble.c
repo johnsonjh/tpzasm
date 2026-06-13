@@ -95,6 +95,7 @@ typedef struct
   int loc_sp;
   int next_ebase;  /* next external relocation-base number to assign (>=4) */
   int next_decl;   /* next .INTERN/.ENTRY declaration sequence number      */
+  int next_defseq; /* next symbol definition-order number (for `&' .PSYM)   */
   char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
   int errors;      /* error count of the CURRENT pass (pass-2 = the total) */
   int errs_hdr;    /* prior-pass error total, shown in the PASM page header */
@@ -144,6 +145,7 @@ typedef struct
   int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default) */
   int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0) */
   int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)  */
+  int obj_psym;      /* .PSYM: append the `&' symbol-table record(s)        */
   int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning */
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn       */
   u16 obj_start;     /* start address from `.END expr' (0 if none) */
@@ -2543,6 +2545,15 @@ sym_name_cmp (const void *pa, const void *pb)
  */
 
 static int
+cmp_defseq (const void *pa, const void *pb) /* by first-definition order */
+{
+  int x = (int)(*(symbol *const *)pa)->defseq;
+  int y = (int)(*(symbol *const *)pb)->defseq;
+
+  return ((x > y) - (x < y));
+}
+
+static int
 cmp_decl (const void *pa, const void *pb)
 {
   int x = (int)(*(symbol *const *)pa)->decl;
@@ -2636,6 +2647,97 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
   FREE (es);
   FREE (is);
   FREE (ts);
+}
+
+/******************************************************************************/
+
+/*
+ * Collect ALL global symbols for the `&' .PSYM object record (in the
+ * originals' order): the three segment bases (.PROG./.DATA./.BLNK., carrying
+ * their sizes) first, then the external references in relocation-base order,
+ * then the locally-defined symbols in first-definition order.  Local (`..')
+ * symbols are excluded.  `ps' must hold at least 3 + sym_count(t) entries.
+ */
+
+static void
+collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
+               unsigned blnksz, objsym *ps, int *nps)
+{
+  static const char *const segn[3] = { ".PROG.", ".DATA.", ".BLNK." };
+  unsigned segv[3];
+  int total = sym_count (t);
+  symbol **all, **es, **ds;
+  int n = 0, ne = 0, ndef = 0, i;
+
+  segv[0] = progsz;
+  segv[1] = datasz;
+  segv[2] = blnksz;
+
+  for (i = 0; i < 3; i++) /* segment bases, always first */
+    {
+      (void)xstrlcpy (ps[n].name, segn[i], sizeof (ps[n].name));
+      ps[n].base = i + 1;
+      ps[n].value = (u16)segv[i];
+      n++;
+    }
+
+  *nps = n;
+
+  if (total <= 0)
+    return;
+
+  all = (symbol **)malloc ((size_t)total * sizeof (symbol *));
+  es = (symbol **)malloc ((size_t)total * sizeof (symbol *));
+  ds = (symbol **)malloc ((size_t)total * sizeof (symbol *));
+
+  if (NULL == all || NULL == es || NULL == ds)
+    {
+      if (NULL != all)
+        FREE (all);
+      if (NULL != es)
+        FREE (es);
+      if (NULL != ds)
+        FREE (ds);
+
+      return;
+    }
+
+  sym_collect (t, all);
+
+  for (i = 0; i < total; i++)
+    {
+      if (NULL != strchr (all[i]->name, ':')) /* a `..' local: excluded */
+        continue;
+
+      if (all[i]->external)
+        es[ne++] = all[i];
+      else if (all[i]->defined)
+        ds[ndef++] = all[i];
+    }
+
+  qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl);     /* base order   */
+  qsort (ds, (size_t)ndef, sizeof (symbol *), cmp_defseq); /* def. order   */
+
+  for (i = 0; i < ne; i++)
+    {
+      (void)xstrlcpy (ps[n].name, es[i]->name, sizeof (ps[n].name));
+      ps[n].base = es[i]->val.base;
+      ps[n].value = 0; /* external reference: value 0 */
+      n++;
+    }
+
+  for (i = 0; i < ndef; i++)
+    {
+      (void)xstrlcpy (ps[n].name, ds[i]->name, sizeof (ps[n].name));
+      ps[n].base = ds[i]->val.base;
+      ps[n].value = ds[i]->val.value;
+      n++;
+    }
+
+  *nps = n;
+  FREE (all);
+  FREE (es);
+  FREE (ds);
 }
 
 /******************************************************************************/
@@ -3672,6 +3774,10 @@ do_line (astate *a, const char *line)
           s->val.reloc = a->lc_reloc;
           s->val.base = (a->lc_reloc ? a->base : 0);
           s->val.ext = NULL;
+
+          if (0 == s->defseq) /* record first-definition order for `&' .PSYM */
+            s->defseq = (unsigned short)a->next_defseq++;
+
           s->defined = 1;
           s->seen = (unsigned char)a->pass;
         }
@@ -3840,6 +3946,9 @@ do_line (astate *a, const char *line)
               s->internal = 1;
               s->decl = (unsigned short)a->next_decl++;
             }
+
+          if (0 == s->defseq) /* record first-definition order for `&' .PSYM */
+            s->defseq = (unsigned short)a->next_defseq++;
 
           s->val = v;
           s->defined = 1;                   /* claim the name so a later */
@@ -4194,16 +4303,28 @@ do_line (astate *a, const char *line)
       a->lst_ctlstmt = 1;
       a->lst_loc = -1;
     }
-  else if (opeq (op, ".LSYM", NULL) || opeq (op, ".PSYM", NULL))
-    { /* enable the symbol-table listing (.LSYM local, .PSYM public) */
+  else if (opeq (op, ".LSYM", NULL))
+    { /* enable the symbol-table LISTING */
       a->lst_ctl |= LSTC_SYM;
       a->lst_ctlstmt = 1;
       a->lst_loc = -1;
     }
-  else if (opeq (op, ".XSYM", NULL) || opeq (op, ".XPSYM", NULL))
+  else if (opeq (op, ".XSYM", NULL))
     { /* suppress the symbol-table listing at .END */
       a->lst_ctl &= ~LSTC_SYM;
       a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".PSYM", NULL))
+    { /* punch the global symbol table into the OBJECT (the `&' record), for
+       * the PSA BUG debugger -- an output directive (lists with a blank LC),
+       * distinct from the .LSYM listing control */
+      a->obj_psym = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".XPSYM", NULL))
+    { /* suppress the `&' symbol-table object record (the default) */
+      a->obj_psym = 0;
       a->lst_loc = -1;
     }
   else if (opeq (op, ".LADDR", NULL))
@@ -4601,6 +4722,8 @@ init_pass (astate *a, int pass)
   a->lst_nsave = 0;
   a->mdef_page = 0;
   a->obj_xlink = 0;
+  a->obj_psym = 0; /* default .XPSYM: no `&' symbol-table object record */
+  a->next_defseq = 1;
   a->i8080_mode = 0; /* default .Z80: Z80 extensions allowed without warning */
   a->idx_pfx = 0;
   macro_free_all (a);
@@ -4869,14 +4992,27 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
                                              * sizeof (objsym));
             objsym *ents = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
                                              * sizeof (objsym));
+            /* the `&' .PSYM record also lists the 3 segment bases */
+            objsym *psyms = (objsym *)malloc (((size_t)nsym + 3)
+                                              * sizeof (objsym));
 
             os.nexts = 0;
             os.nints = 0;
             os.nents = 0;
+            os.npsyms = 0;
+            os.psym = 0;
+            os.psyms = psyms;
 
             if (NULL != exts && NULL != ints && NULL != ents)
               collect_obj_syms (a.syms, exts, &os.nexts, ints, &os.nints, ents,
                                 &os.nents);
+
+            if (a.obj_psym && NULL != psyms)
+              {
+                collect_psyms (a.syms, (a.obj_org_used ? 0u : a.seg_hw[1]),
+                               a.seg_hw[2], a.seg_hw[3], psyms, &os.npsyms);
+                os.psym = 1;
+              }
 
             os.modname = a.modname;
             os.exts = exts;
@@ -4928,6 +5064,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
             if (NULL != ents)
               FREE (ents);
+
+            if (NULL != psyms)
+              FREE (psyms);
           }
 
         /*
