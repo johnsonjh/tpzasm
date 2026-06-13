@@ -137,7 +137,8 @@ typedef struct
   int *ext_decl;      /* &next declaration sequence for `SYM#' (or NULL)        */
   value_t *temps;     /* .TEMPS local array for `![sub]' (or NULL)              */
   int ntemps;         /* number of allocated .TEMPS elements                    */
-  int tmp_ok;         /* 1 if `![sub]' is legal here (PASM, inside a macro)      */
+  int tmp_ok;         /* 1 if `![sub]'/`&' are legal here (PASM, in a macro)     */
+  int mac_argc;       /* `&': arg count of the current macro invocation          */
 } eval_env;
 
 /******************************************************************************/

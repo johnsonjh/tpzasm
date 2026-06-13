@@ -293,6 +293,17 @@ ev_primary (ectx *e)
         }
     }
 
+  if ('&' == *e->p && NULL != e->env->temps && e->env->tmp_ok)
+    { /*
+       * `&' (at the start of a primary) is the PSA variable-argument count:
+       * the number of arguments of the current macro invocation.  (As a binary
+       * operator `&' is AND -- handled at the logical level, never here.)
+       */
+      e->p++;
+
+      return mkabs ((u16)e->env->mac_argc);
+    }
+
   if ('!' == *e->p && '[' == e->p[1] && NULL != e->env->temps)
     { /*
        * `![sub]' -- a PSA .TEMPS local temporary.  Legal only inside a macro

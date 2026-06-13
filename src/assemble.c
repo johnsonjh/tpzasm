@@ -151,6 +151,7 @@ typedef struct
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn       */
   value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'    */
   int ntemps;        /* number of .TEMPS elements currently allocated       */
+  int mac_argc;      /* `&': arg count of the macro invocation being expanded */
   u16 obj_start;     /* start address from `.END expr' (0 if none) */
   int obj_start_rel; /* relocation base of the start address */
 
@@ -587,6 +588,7 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.temps = ((DIALECT_PASM == a->dialect) ? a->temps : NULL);
   env.ntemps = a->ntemps;
   env.tmp_ok = (a->macro_depth > 0);
+  env.mac_argc = a->mac_argc; /* `&' = current macro's argument count */
   rc = expr_eval2 (*pp, &env, v, &endp, &err);
 
   if (rc)
@@ -3300,6 +3302,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   char *args[8];
   int nargs = 0, i, j = 0;
   int outer = 0, start = 0;
+  int saved_argc;
   const char *p = skipws (argstr);
 
   if (a->macro_depth > MACRO_NEST_MAX)
@@ -3316,6 +3319,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
     }
 
   a->macro_depth++;
+  saved_argc = a->mac_argc; /* `&' is per-invocation; restore on exit */
 
   if ('[' == *p)
     p = skipws (p + 1); /* optional [arg,arg] bracketed list */
@@ -3417,6 +3421,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         break;
     }
 
+  /* `&' = the macro's argument count: the larger of the declared dummy-param
+   * count and the number of arguments actually passed */
+  a->mac_argc = ((nargs > m->nparams) ? nargs : m->nparams);
+
   /*
    * Macro-expansion listing (pass 2).  The originals fold the body into the
    * call line and flatten nested expansions: only the OUTERMOST macro emits
@@ -3511,6 +3519,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
     }
 
   a->macro_depth--;
+  a->mac_argc = saved_argc; /* restore the enclosing invocation's `&' */
   a->macro_exit = 0; /* the .EXIT (if any) terminated only this expansion */
 
   if (outer)
@@ -4815,6 +4824,7 @@ init_pass (astate *a, int pass)
   a->obj_psym = 0; /* default .XPSYM: no `&' symbol-table object record */
   a->next_defseq = 1;
   a->ntemps = 0; /* no .TEMPS local array allocated yet */
+  a->mac_argc = 0;
   a->i8080_mode = 0; /* default .Z80: Z80 extensions allowed without warning */
   a->idx_pfx = 0;
   macro_free_all (a);
