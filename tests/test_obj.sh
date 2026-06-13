@@ -58,10 +58,12 @@ set -eu
 # line "D" (a "?" just past the symbol) but keeps the symbol's first value, so
 # the emitted object is unchanged (dref), and the single-line inline
 # conditional form ".IFx cond,[stmt][else]", whose taken branch assembles on
-# the directive's own line (cinl).
+# the directive's own line (cinl), and .LADDR, which lists 16-bit values in
+# load (memory) order -- a listing-only mode, so the object is unchanged
+# (laddr; its .LADDR rendering is verified by hand against the originals).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs extop dref cinl"
+insnest psym temps varargs extop dref cinl laddr"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

@@ -2217,10 +2217,18 @@ lst_bytes (const astate *a, char *col, size_t cap)
         }
       else if (2 == a->lst_opw && nop + 1 < a->nbytes)
         {
-          cn += xsnprintf (
-              col + cn, cap - (size_t)cn, " %04X%s",
-              (unsigned)(a->bytes[nop] | (a->bytes[(long)nop + 1] << 8)),
-              seg_flag (a->lst_obase, a->dialect));
+          if (a->lst_ctl & LSTC_LADDR)
+            /* .LADDR: the operand's bytes in load (memory) order, packed onto
+             * the opcode (CALL 784C -> CD4C78), as the originals list them */
+            cn += xsnprintf (
+                col + cn, cap - (size_t)cn, "%04X%s",
+                (unsigned)((a->bytes[nop] << 8) | a->bytes[(long)nop + 1]),
+                seg_flag (a->lst_obase, a->dialect));
+          else /* .XADDR (default): the 16-bit value, spaced off the opcode */
+            cn += xsnprintf (
+                col + cn, cap - (size_t)cn, " %04X%s",
+                (unsigned)(a->bytes[nop] | (a->bytes[(long)nop + 1] << 8)),
+                seg_flag (a->lst_obase, a->dialect));
         }
     }
 
