@@ -293,6 +293,37 @@ ev_primary (ectx *e)
         }
     }
 
+  if ('!' == *e->p && '[' == e->p[1] && NULL != e->env->temps)
+    { /*
+       * `![sub]' -- a PSA .TEMPS local temporary.  Legal only inside a macro
+       * (tmp_ok); the subscript must be an absolute value in [0, ntemps).  An
+       * illegal use or out-of-range subscript is a Subscript (`S') error.
+       */
+      value_t idx;
+      int sub;
+
+      e->p += 2; /* consume "![" */
+      idx = ev_addsub (e);
+      skipws (e);
+
+      if (']' == *e->p)
+        e->p++;
+      else
+        efail (e, "missing ']'");
+
+      sub = (int)idx.value; /* idx.value is a u16, so always >= 0 */
+
+      if (!e->env->tmp_ok || 0 != idx.reloc || NULL != idx.ext
+          || sub >= e->env->ntemps)
+        {
+          efail (e, "subscript");
+
+          return mkabs (0);
+        }
+
+      return e->env->temps[sub];
+    }
+
   if ('\'' == *e->p)
     { /* character constant 'A' / 'AB' */
       u16 val = 0;

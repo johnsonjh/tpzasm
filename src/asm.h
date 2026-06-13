@@ -135,6 +135,9 @@ typedef struct
   unsigned scope;     /* local-symbol scope ('..' labels)        */
   int *ext_next;      /* &next external base# for the `SYM#' modifier (or NULL) */
   int *ext_decl;      /* &next declaration sequence for `SYM#' (or NULL)        */
+  value_t *temps;     /* .TEMPS local array for `![sub]' (or NULL)              */
+  int ntemps;         /* number of allocated .TEMPS elements                    */
+  int tmp_ok;         /* 1 if `![sub]' is legal here (PASM, inside a macro)      */
 } eval_env;
 
 /******************************************************************************/

@@ -32,6 +32,7 @@
 #define MAXCOND 64
 #define MAXALIAS 128
 #define LOC_STK_DEPTH 32 /* .LOC/.RELOC save-stack depth */
+#define MAXTEMPS 256 /* .TEMPS local-array cap (the originals were RAM-bound) */
 #define MACRO_NEST_MAX 256 /* artificial macro-expansion recursion cap: the
                             * originals were bounded only by available RAM; we
                             * impose a high but finite limit so a runaway (e.g.
@@ -148,6 +149,8 @@ typedef struct
   int obj_psym;      /* .PSYM: append the `&' symbol-table record(s)        */
   int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning */
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn       */
+  value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'    */
+  int ntemps;        /* number of .TEMPS elements currently allocated       */
   u16 obj_start;     /* start address from `.END expr' (0 if none) */
   int obj_start_rel; /* relocation base of the start address */
 
@@ -485,6 +488,7 @@ err_letter (const char *msg)
               { "size must be absolute", 'R' },
               { "z80 instruction in 8080 mode", 'Z' },
               { "nested .INSERT", 'F' },
+              { "subscript", 'S' },
               { NULL, 0 } };
   int i;
 
@@ -577,6 +581,12 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.scope = a->scope;
   env.ext_next = &a->next_ebase; /* the `SYM#' modifier auto-declares externs */
   env.ext_decl = &a->next_decl;
+  /* `![sub]' .TEMPS locals are a PASM feature (temps non-NULL => PASM), legal
+   * only inside a macro expansion (tmp_ok); ZASM leaves temps NULL so a `!['
+   * there is just the OR operator hitting a bad primary */
+  env.temps = ((DIALECT_PASM == a->dialect) ? a->temps : NULL);
+  env.ntemps = a->ntemps;
+  env.tmp_ok = (a->macro_depth > 0);
   rc = expr_eval2 (*pp, &env, v, &endp, &err);
 
   if (rc)
@@ -3712,6 +3722,56 @@ do_line (astate *a, const char *line)
       }
   }
 
+  /*
+   * `![sub]=expr' : assign a .TEMPS local temporary (PASM, inside a macro).
+   * The lexer treats a leading `!' as an operator, so intercept the assignment
+   * form here -- only when a `]' is followed by `=' (otherwise fall through).
+   */
+  if (DIALECT_PASM == a->dialect && a->macro_depth > 0 && '!' == *bp
+      && '[' == bp[1])
+    {
+      const char *pk = bp + 2;
+
+      while ('\0' != *pk && ']' != *pk && ';' != *pk)
+        pk++;
+
+      if (']' == *pk && '=' == *skipws (pk + 1))
+        {
+          const char *p = bp + 2;
+          value_t idx, v;
+          int sub = -1;
+
+          a->ppos = line_off (line, bp);
+
+          if (!eval1 (a, &p, &idx) && 0 == idx.reloc && NULL == idx.ext)
+            sub = (int)idx.value;
+
+          p = skipws (p);
+
+          if (']' == *p)
+            p = skipws (p + 1);
+
+          if ('=' == *p) /* `=' or `==' */
+            p++;
+
+          if ('=' == *p)
+            p++;
+
+          if (!eval1 (a, &p, &v) && sub >= 0 && sub < a->ntemps)
+            a->temps[sub] = v;
+          else
+            aerr (a, line, "subscript");
+
+          if (2 == a->pass)
+            {
+              a->lst_loc = -1;
+              print_lst (a, lc0, line);
+            }
+
+          return;
+        }
+    }
+
   lex_line (bp, &L);
 
   /* default `?' position: the operand field (after the op); eval1 advances
@@ -4327,6 +4387,36 @@ do_line (astate *a, const char *line)
       a->obj_psym = 0;
       a->lst_loc = -1;
     }
+  else if (DIALECT_PASM == a->dialect && opeq (op, ".TEMPS", NULL))
+    { /*
+       * allocate the local-temporary array referenced as `![sub]' (PASM only;
+       * ZASM treats .TEMPS as an unknown op).  Each element is initialized to
+       * absolute zero; re-issuing .TEMPS reallocates.
+       */
+      const char *q = L.operands;
+      value_t v;
+
+      if (!eval1 (a, &q, &v))
+        {
+          int n = (int)v.value; /* v.value is a u16, so always >= 0 */
+          int i;
+
+          if (n > MAXTEMPS)
+            n = MAXTEMPS;
+
+          a->ntemps = n;
+
+          for (i = 0; i < n; i++)
+            {
+              a->temps[i].value = 0;
+              a->temps[i].reloc = 0;
+              a->temps[i].base = 0;
+              a->temps[i].ext = NULL;
+            }
+        }
+
+      a->lst_loc = -1;
+    }
   else if (opeq (op, ".LADDR", NULL))
     {
       a->lst_ctl |= LSTC_LADDR;
@@ -4724,6 +4814,7 @@ init_pass (astate *a, int pass)
   a->obj_xlink = 0;
   a->obj_psym = 0; /* default .XPSYM: no `&' symbol-table object record */
   a->next_defseq = 1;
+  a->ntemps = 0; /* no .TEMPS local array allocated yet */
   a->i8080_mode = 0; /* default .Z80: Z80 extensions allowed without warning */
   a->idx_pfx = 0;
   macro_free_all (a);
