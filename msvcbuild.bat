@@ -11,3 +11,10 @@ cl /Ob3 /GS- /Oi /O2 /W4 /wd4996 /Feasm.exe ^
 
 REM === Compile HEXCOM ===
 cl /Ob3 /GS- /Oi /O2 /W4 /wd4996 /Fehexcom.exe src/hexcom.c
+
+:: Local Variables:
+:: mode: bat-mode
+:: fill-column: 80
+:: eval: (setq-local display-fill-column-indicator-column 80)
+:: eval: (display-fill-column-indicator-mode 1)
+:: End:
