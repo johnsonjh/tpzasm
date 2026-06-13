@@ -89,11 +89,10 @@
 ## Future
 
 * A few **listing** details remain before the listing is byte‑for‑byte
-  identical on *every* input: the macro‑expansion display model (the `+`/`]`
-  body markers), **`.LIMAGE`**/**`.XIMAGE`** multi‑line byte images,
-  **`.PAGE`**/**`.EJECT`**/**`.COMMENT`**, a \~1‑line pagination residual on
-  very large files, and a few deep error‑listing cases (the leading pass‑1
-  error‑summary page and the symbol‑table error flags).
+  identical on *every* input: **`.LIMAGE`**/**`.XIMAGE`** multi‑line byte
+  images, the **`.PAGE`**/**`.EJECT`**/**`.COMMENT`** directives, a \~1‑line
+  pagination residual on very large files, and a few deep error‑listing cases
+  (the leading pass‑1 error‑summary page and the symbol‑table error flags).
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
