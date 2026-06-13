@@ -1905,14 +1905,19 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent)
   for (; '\0' != *s; s++)
     {
       if ('\t' == *s)
-        {
+        { /*
+           * tab stops are 8 columns apart measured FROM the source-field
+           * start (`indent'), not from absolute column 0: ZASM's source
+           * column (24) is a multiple of 8 so the two coincide, but PASM's
+           * (25) is not, and its operands sit one column further right.
+           */
           do
             {
               col = lst_wrap (a, col, wrapw, indent);
               (void)fputc (' ', a->lst);
               col++;
             }
-          while (0 != (col % 8));
+          while (0 != ((col - indent) % 8));
         }
       else
         {
