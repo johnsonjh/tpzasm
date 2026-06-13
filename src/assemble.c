@@ -93,7 +93,9 @@ typedef struct
   char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
   int errors;      /* error count of the CURRENT pass (pass-2 = the total) */
   int errs_hdr;    /* prior-pass error total, shown in the PASM page header */
+  int errs_mdef;   /* multiply-defined count (drives the leading report page) */
   int count_only;  /* error-counting pre-pass: tally errs_hdr, list nothing   */
+  int mdef_page;   /* leading-page pass: list only multiply-defined lines     */
   char lst_ec[2];  /* up to two error-code letters for this line's column 1 */
   int lst_nec;     /* number of error codes recorded for this line          */
   int lst_qoff;    /* `?' error-marker offset into the source line, or -1    */
@@ -348,11 +350,13 @@ em_record (astate *a, u8 v)
 static void
 emit (astate *a, u16 v)
 {
+  /* the per-line byte buffer feeds the listing; the leading multiply-defined
+   * report page (mdef_page) needs it too, but emits no object/image */
+  if ((2 == a->pass || a->mdef_page) && a->nbytes < (int)sizeof (a->bytes))
+    a->bytes[a->nbytes++] = (u8)(v & 0xFFu);
+
   if (2 == a->pass)
     {
-      if (a->nbytes < (int)sizeof (a->bytes))
-        a->bytes[a->nbytes++] = (u8)(v & 0xFFu);
-
       if (NULL != a->image)
         {
           a->image[a->lc] = (u8)(v & 0xFFu);
@@ -489,25 +493,32 @@ aerr (astate *a, const char *line, const char *msg)
     { /*
        * the error-counting pre-pass: tally the total the PASM page header
        * needs (it must be known before the body listing, but an undefined
-       * symbol is only detectable once the symbols are all defined).
+       * symbol is only detectable once the symbols are all defined).  Also
+       * count multiply-defined errors, which get a leading report page.
        */
       a->errs_hdr++;
+
+      if (0 == strcmp (msg, "multiply-defined symbol"))
+        a->errs_mdef++;
+
       return;
     }
 
-  if (2 == a->pass)
+  if (2 == a->pass || a->mdef_page)
     {
       char code = ((a->eval_undef) ? 'U' : err_letter (msg));
 
-      (void)fprintf (stderr, "  *** %c %s: %s\n", code, msg, line);
+      if (2 == a->pass) /* stderr + the reported total: the body pass only */
+        {
+          (void)fprintf (stderr, "  *** %c %s: %s\n", code, msg, line);
+          a->errors++;
+        }
 
       if (a->lst_nec < 2) /* the listing shows the first two codes per line */
         a->lst_ec[a->lst_nec++] = code;
 
       if (a->lst_qoff < 0) /* the `?' marks the first error's parse position */
         a->lst_qoff = a->ppos;
-
-      a->errors++; /* the reported total is the pass-2 count (counted once) */
     }
   /* pass 1 just defines symbols; the header total comes from the count pass */
 }
@@ -2235,6 +2246,21 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   if (a->lst_suppress) /* assembling only (e.g. a macro's first body line) */
     return;
 
+  if (a->mdef_page)
+    { /*
+       * the leading multiply-defined report page lists ONLY the offending
+       * statements (the ones whose label redefinition raised an `M').
+       */
+      int k, has_m = 0;
+
+      for (k = 0; k < a->lst_nec; k++)
+        if ('M' == a->lst_ec[k])
+          has_m = 1;
+
+      if (!has_m)
+        return;
+    }
+
   /*
    * listing-control gating: body listing off (.XLIST), or a listing-control
    * statement that does not list itself (default, reset by .LCTL).
@@ -2406,7 +2432,12 @@ lst_header (astate *a)
       else
         (void)fputc ('\n', a->lst);
 
-      (void)fprintf (a->lst, "%-6.6s - %s\n\n\n\n", a->modname, a->title);
+      /* the leading multiply-defined report page omits the ".MAIN. - title"
+       * subtitle (PASM prints a blank line in its place) */
+      if (a->mdef_page)
+        (void)fprintf (a->lst, "\n\n\n\n");
+      else
+        (void)fprintf (a->lst, "%-6.6s - %s\n\n\n\n", a->modname, a->title);
     }
   else
     (void)fprintf (a->lst, "%-64sPAGE %d\n%-6.6s - %s\n\n\n\n",
@@ -4245,7 +4276,7 @@ do_line (astate *a, const char *line)
         }
     }
 
-  if (2 == a->pass)
+  if (2 == a->pass || a->mdef_page)
     print_lst (a, lc0, line);
 }
 
@@ -4442,6 +4473,7 @@ init_pass (astate *a, int pass)
   a->pend_console = NULL;
   a->lst_ctl = LSTC_DEFAULT;
   a->lst_nsave = 0;
+  a->mdef_page = 0;
   a->obj_xlink = 0;
   macro_free_all (a);
   a->defining = NULL;
@@ -4659,10 +4691,30 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
          * and emits no object/image.
          */
         a.errs_hdr = 0;
+        a.errs_mdef = 0;
         init_pass (&a, 3);
         a.count_only = 1;
         process_module (&a, srcpath, modidx);
         a.count_only = 0;
+
+        /*
+         * Both dialects precede the body listing with a leading report page
+         * that lists only the multiply-defined statements (pass-1 faults the
+         * body would otherwise bury).  Run it only when such errors exist, as
+         * its own pass (distinct number 4 so the `seen' redefinition logic
+         * treats it as fresh and does not collide with the body pass); it
+         * lists just the `M' lines and emits no object/image.  The body pass's
+         * own header then begins page 2.  (PASM's leading page omits the
+         * subtitle; ZASM keeps it -- see lst_header.)
+         */
+        if (a.errs_mdef > 0 && NULL != a.lst)
+          {
+            init_pass (&a, 4);
+            a.mdef_page = 1;
+            lst_header (&a);
+            process_module (&a, srcpath, modidx);
+            a.mdef_page = 0;
+          }
 
         /*
          * the page-1 heading prints the module name, but .IDENT is not seen
