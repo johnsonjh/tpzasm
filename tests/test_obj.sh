@@ -39,9 +39,14 @@ set -eu
 # the internal-definition delimiters ::/=:/==:, which declare a symbol internal
 # at its definition, emitting the same '#' record as .INTERN (intern), and the
 # signed-comparison/symbol-test conditionals .IFG/.IFGE/.IFL/.IFLE/.IFDEF/
-# .IFNDEF, whose branch selection determines which bytes are emitted (cond2).
+# .IFNDEF, whose branch selection determines which bytes are emitted (cond2),
+# the macro apostrophe-concatenation operator, which pastes a macro argument
+# onto adjacent text to form a symbol -- JR'A with A=Z builds JRZ (mconcat) --
+# the blank-argument conditionals .IFB/.IFNB (the last two of the 14 IF forms;
+# PASM-only -- ZASM's are buggy) with both branches taken (ifbnb), and a macro
+# defined inside another macro, callable once the outer macro runs (macnest).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
-oprem limage extmod xlink i8080 intern cond2"
+oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

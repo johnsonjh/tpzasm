@@ -32,6 +32,11 @@
 #define MAXCOND 64
 #define MAXALIAS 128
 #define LOC_STK_DEPTH 32 /* .LOC/.RELOC save-stack depth */
+#define MACRO_NEST_MAX 256 /* artificial macro-expansion recursion cap: the
+                            * originals were bounded only by available RAM; we
+                            * impose a high but finite limit so a runaway (e.g.
+                            * an unconditionally self-recursive macro) fails
+                            * cleanly instead of overflowing the C stack */
 
 /*
  * listing-control flag bits (a->lst_ctl); LSTC_DEFAULT
@@ -3166,9 +3171,16 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   int outer = 0, start = 0;
   const char *p = skipws (argstr);
 
-  if (a->macro_depth > 200)
-    { /* runaway recursion guard */
-      a->errors++;
+  if (a->macro_depth > MACRO_NEST_MAX)
+    { /* runaway macro recursion: fail cleanly (see MACRO_NEST_MAX) */
+      if (2 == a->pass)
+        {
+          (void)fprintf (stderr,
+                         "  *** macro recursion too deep (limit %d)\n",
+                         MACRO_NEST_MAX);
+          a->errors++;
+        }
+
       return;
     }
 
@@ -3524,46 +3536,60 @@ do_line (astate *a, const char *line)
   /* leading block-close ']' and else ']' '[' brackets */
   bp = skipws (line);
 
-  while (']' == *bp)
-    {
-      int wt = 0;
+  {
+    int br_list = -1; /* an else `] [' lists under the ENCLOSING state */
 
-      if (a->cdepth > 0)
-        {
-          wt = a->cstack[(long)a->cdepth - 1].if_true;
-          a->cdepth--;
-        }
+    while (']' == *bp)
+      {
+        int wt = 0;
 
-      bp = skipws (bp + 1);
+        if (a->cdepth > 0)
+          {
+            wt = a->cstack[(long)a->cdepth - 1].if_true;
+            a->cdepth--;
+          }
 
-      if ('[' == *bp)
-        {
-          int outer = casm (a);
+        bp = skipws (bp + 1);
 
-          if (a->cdepth < MAXCOND)
-            {
-              a->cstack[a->cdepth].if_true = !wt;
-              a->cstack[a->cdepth].assemble = outer && !wt;
-              a->cdepth++;
-            }
+        if ('[' == *bp)
+          {
+            int outer = casm (a);
 
-          bp = skipws (bp + 1);
-        }
-    }
+            /*
+             * the `] [' (else) line itself lists whenever the conditional's
+             * enclosing scope is assembling -- NOT under the else branch's own
+             * state, which is about to be pushed (so a true-block-then-else
+             * transition still lists the separator).
+             */
+            br_list = outer;
 
-  if ('\0' == *bp || ';' == *bp)
-    { /*
-       * blank or comment-only line: the originals still list it, with a
-       * blank LC column (tabs in the source expand as usual)
-       */
-      if (2 == a->pass && casm (a))
-        {
-          a->lst_loc = -1;
-          print_lst (a, lc0, line);
-        }
+            if (a->cdepth < MAXCOND)
+              {
+                a->cstack[a->cdepth].if_true = !wt;
+                a->cstack[a->cdepth].assemble = outer && !wt;
+                a->cdepth++;
+              }
 
-      return;
-    }
+            bp = skipws (bp + 1);
+          }
+      }
+
+    if ('\0' == *bp || ';' == *bp)
+      { /*
+         * blank or comment-only line: the originals still list it, with a
+         * blank LC column (tabs in the source expand as usual)
+         */
+        int do_list = ((br_list >= 0) ? br_list : casm (a));
+
+        if (2 == a->pass && do_list)
+          {
+            a->lst_loc = -1;
+            print_lst (a, lc0, line);
+          }
+
+        return;
+      }
+  }
 
   lex_line (bp, &L);
 

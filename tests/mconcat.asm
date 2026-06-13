@@ -1,4 +1,4 @@
-; TPZASM: TDL ZASM / PSA PASM compatible assembler - tests/macconcat.asm
+; TPZASM: TDL ZASM / PSA PASM compatible assembler - tests/mconcat.asm
 ; Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 ; SPDX-License-Identifier: MIT-0
 ;
