@@ -55,13 +55,13 @@
 
   * The standalone test corpus is byte‑for‑byte identical to both originals
     in **both** the object output and the **listing**, for **both** dialects.
-    Error handling now reproduces the originals' lettered error codes (a
-    column‑1 letter, the `?` marker at the fault, and the per‑page/trailing
-    error count).  The remaining differences are a few listing details — the
-    macro‑expansion display model, **`.LIMAGE`**/**`.PAGE`**/**`.COMMENT`**,
-    a \~1‑line pagination residual on very large files, and a few deep
-    error‑listing cases (the leading pass‑1 error page, symbol‑table error
-    flags) — still being refined.
+    Error handling reproduces the originals' lettered error codes (a column‑1
+    letter, the `?` marker at the fault, and the per‑page/trailing error
+    count), the leading **multiply‑defined report page**, and the symbol‑table
+    error flags (**`M`** multiply‑defined, **`U`** undefined).  The remaining
+    differences appear only on *deliberately malformed* input: the
+    **`Q`**/**`A`** extra‑operand diagnostics, and a \~1‑line pagination
+    residual (with its running per‑page error count) on very large files.
 
   * **TPZASM** implements the full **multi‑segment, relocatable, linkable**
     object model: the three program segments (**`.PROG.`**, **`.DATA.`**,
@@ -91,8 +91,10 @@
 * A few **listing** edges remain before the listing is byte‑for‑byte identical
   on *every* input: a multi‑word **`.WORD`** under **`.LIMAGE`** in the ZASM
   dialect (the TDL two‑word value‑field overstrike), a \~1‑line pagination
-  residual on very large files, and a few deep error‑listing cases (the leading
-  pass‑1 error‑summary page and the symbol‑table error flags).
+  residual (and the running per‑page error count that tracks it) on very large
+  files, and the **`Q`**/**`A`** extra‑operand diagnostics — all of which arise
+  only on unusual or deliberately malformed input, never in the standalone
+  corpus or the VEDIT‑PLUS / SARGON codebases.
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
