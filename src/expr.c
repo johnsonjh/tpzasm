@@ -224,9 +224,8 @@ scan_number (ectx *e)
 
 static int
 idstart (int c)
-{
-  return isalpha (c) || '_' == c || '?' == c || '@' == c || '.' == c
-         || '%' == c;
+{ /* underscore is NOT a symbol char (it flags a macro subscript reference) */
+  return isalpha (c) || '?' == c || '@' == c || '.' == c || '%' == c;
 }
 
 /******************************************************************************/
@@ -234,8 +233,8 @@ idstart (int c)
 static int
 idchar (int c)
 {
-  return isalnum (c) || '_' == c || '?' == c || '@' == c || '.' == c
-         || '$' == c || '%' == c;
+  return isalnum (c) || '?' == c || '@' == c || '.' == c || '$' == c
+         || '%' == c;
 }
 
 /******************************************************************************/

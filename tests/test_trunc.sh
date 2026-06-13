@@ -10,11 +10,12 @@ set -eu
 
 ################################################################################
 
-# Default: should be truncated to 6 characters in the SYMBOL TABLE
+# Default: a symbol longer than six characters keeps only its first six in the
+# SYMBOL TABLE (LONGENTRY -> LONGEN, LONGINTERN -> LONGIN).
 ./asm -z tests/longname.asm > out.txt 2>&1
 sed -n '/+++++ SYMBOL TABLE +++++/,$p' out.txt > symtab.txt
 
-if grep -q "LONG_LABEL" symtab.txt || grep -q "LONG_MACRO" symtab.txt; then
+if grep -q "LONGENTRY" symtab.txt || grep -q "LONGINTERN" symtab.txt; then
   printf '\n%s\n\n' \
     "FAILURE: Default assembly did not truncate symbols in SYMBOL TABLE."
   cat symtab.txt
@@ -22,7 +23,7 @@ if grep -q "LONG_LABEL" symtab.txt || grep -q "LONG_MACRO" symtab.txt; then
   exit 1
 fi
 
-if ! grep -q "LONG_L" symtab.txt || ! grep -q "LONG_M" symtab.txt; then
+if ! grep -q "LONGEN" symtab.txt || ! grep -q "LONGIN" symtab.txt; then
   printf '\n%s\n\n' \
     "FAILURE: Default assembly did not truncate symbols in SYMBOL TABLE."
   cat symtab.txt
@@ -32,11 +33,11 @@ fi
 
 ################################################################################
 
-# With -L: should NOT be truncated in the SYMBOL TABLE
+# With -L (non-standard): long symbols are kept in full in the SYMBOL TABLE
 ./asm -z -L tests/longname.asm > out.txt 2>&1
 sed -n '/+++++ SYMBOL TABLE +++++/,$p' out.txt > symtab.txt
 
-if ! grep -q "LONG_LABEL" symtab.txt || ! grep -q "LONG_MACRO" symtab.txt; then
+if ! grep -q "LONGENTRY" symtab.txt || ! grep -q "LONGINTERN" symtab.txt; then
   printf '\n%s\n\n' \
     "FAILURE: -L assembly did not preserve long symbols in SYMBOL TABLE."
   cat symtab.txt

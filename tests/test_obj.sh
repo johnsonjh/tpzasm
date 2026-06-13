@@ -25,8 +25,10 @@ set -eu
 # overwritten bytes (sargon), and the Z80 I/O / overflow-alias instructions plus
 # .RAD40, the .SYN family, .EXIT/.IF1/.IF2, and the truncated spellings (newkw),
 # and two fully independent modules separated by .PRGEND -- "library file
-# generation" -- each emitting its own !/+/@/\\/#/; record framing (prgend).
-cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend"
+# generation" -- each emitting its own !/+/@/\\/#/; record framing (prgend),
+# and default 6-character symbol truncation feeding the @/#/\\ name fields and
+# the relocation references (longname).
+cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"
