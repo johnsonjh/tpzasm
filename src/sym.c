@@ -394,6 +394,8 @@ sym_intern (symtab *t, const char *name)
   s->external = 0;
   s->internal = 0;
   s->entry = 0;
+  s->mdef = 0;
+  s->udef = 0;
   s->decl = 0;
   s->seen = 0;
   s->next = t->bucket[idx];

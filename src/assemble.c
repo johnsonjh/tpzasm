@@ -546,8 +546,11 @@ eval1 (astate *a, const char **pp, value_t *v)
   rc = expr_eval2 (*pp, &env, v, &endp, &err);
 
   if (rc)
-    {
-      v->value = 0;
+    { /*
+       * keep the partial value expr_eval2 computed (the originals emit it on a
+       * bad expression, e.g. `1+' lists as 0001), but drop any relocation so a
+       * faulted expression contributes an absolute datum.
+       */
       v->reloc = 0;
       v->base = 0;
       v->ext = NULL;
@@ -2623,8 +2626,9 @@ lst_symtab (astate *a)
 
   sym_collect (a->syms, all);
 
-  for (i = 0; i < navail; i++) /* keep defined or external, non-local symbols */
-    if ((all[i]->defined || all[i]->external)
+  /* keep defined, external, or referenced-undefined non-local symbols */
+  for (i = 0; i < navail; i++)
+    if ((all[i]->defined || all[i]->external || all[i]->udef)
         && NULL == strchr (all[i]->name, ':'))
       all[nuser++] = all[i];
 
@@ -2643,20 +2647,21 @@ lst_symtab (astate *a)
         {
           static char ubuf[12];
           const char *g = seg_flag ((int)all[i]->val.base, a->dialect);
-          char cls = (all[i]->entry
-                          ? 'E'
-                          : (all[i]->internal
-                                 ? 'I'
-                                 : (all[i]->external ? 'X' : ' ')));
+          char tcls = (all[i]->entry
+                           ? 'E'
+                           : (all[i]->internal
+                                  ? 'I'
+                                  : (all[i]->external ? 'X' : ' ')));
+          char ecls = (all[i]->mdef ? 'M' : (all[i]->udef ? 'U' : ' '));
           int gl = 0;
           name = all[i]->name;
           val = all[i]->val.value;
 
           /*
            * the relocation-base flag (', ", *, or :NN) left-justified in four
-           * columns, then the symbol-class flag (E entry, I internal, X
-           * external, else blank) and a trailing space -- six columns total,
-           * matching the predefined-segment rows below
+           * columns, then the symbol-type flag (E entry, I internal, X
+           * external) and the error flag (M multiply-defined, U undefined) --
+           * six columns total, matching the predefined-segment rows below
            */
           while (gl < 4 && '\0' != g[gl])
             {
@@ -2667,8 +2672,8 @@ lst_symtab (astate *a)
           while (gl < 4)
             ubuf[gl++] = ' ';
 
-          ubuf[gl++] = cls;
-          ubuf[gl++] = ' ';
+          ubuf[gl++] = tcls;
+          ubuf[gl++] = ecls;
           ubuf[gl] = '\0';
           flag = ubuf;
         }
@@ -3553,6 +3558,7 @@ do_line (astate *a, const char *line)
            */
           a->ppos = line_off (line, bp) + (int)strlen (L.label);
           aerr (a, line, "multiply-defined symbol");
+          s->mdef = 1; /* flagged `M' in the symbol table */
         }
     }
 

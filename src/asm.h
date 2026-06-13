@@ -81,6 +81,8 @@ typedef struct symbol
   unsigned char external;
   unsigned char internal; /* .INTERN: emit an internal-symbol (`#') record */
   unsigned char entry;    /* .ENTRY: also an entry point (`@' record)      */
+  unsigned char mdef;     /* multiply-defined (listing `M' class flag)     */
+  unsigned char udef;     /* referenced but undefined (listing `U' flag)   */
   unsigned char seen;     /* pass # in which last defined as a label       */
   unsigned short decl;    /* .INTERN/.ENTRY declaration order (for records) */
   struct symbol *next;

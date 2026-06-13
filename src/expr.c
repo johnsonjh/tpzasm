@@ -386,6 +386,28 @@ ev_primary (ectx *e)
           if (e->env->undef0)
             return mkabs (0); /* pass-1 tolerance */
 
+          /*
+           * a genuinely undefined reference: record it in the symbol table so
+           * the listing can show it with the `U' flag, as the originals do.
+           */
+          if (NULL != e->env->syms)
+            {
+              symbol *u;
+
+              if ('.' == name[0] && '.' == name[1])
+                {
+                  char qn[IDBUF + 16];
+                  (void)xsnprintf (qn, sizeof (qn), "%u:%s", e->env->scope,
+                                   name);
+                  u = sym_intern (e->env->syms, qn);
+                }
+              else
+                u = sym_intern (e->env->syms, name);
+
+              if (NULL != u)
+                u->udef = 1;
+            }
+
           efail (e, "undefined symbol");
 
           return mkabs (0);
@@ -761,6 +783,8 @@ expr_eval2 (const char *s, const eval_env *env, value_t *out,
     {
       if (err)
         *err = e.msg;
+
+      *out = v; /* return the partial value -- the originals emit it on error */
 
       return 1;
     }
