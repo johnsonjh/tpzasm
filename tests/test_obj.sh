@@ -30,9 +30,12 @@ set -eu
 # the relocation references (longname), the '@' remainder operator applied to
 # identifier operands -- '@' is an operator, not a symbol char (oprem) -- and
 # the .LIMAGE/.XIMAGE data directives, whose multi-line listing image must not
-# perturb the object output (limage).
+# perturb the object output (limage), the "#" inline external-symbol modifier
+# (SYM# == .EXTERN SYM), which must emit the same external records as an
+# explicit .EXTERN (extmod), and .XLINK, which suppresses every link record
+# (!/@/\\/#) and emits only the ';' data stream + EOF (xlink).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
-oprem limage"
+oprem limage extmod xlink"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

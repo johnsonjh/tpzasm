@@ -564,6 +564,8 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.seg_hw = a->seg_hw; /* live per-segment high-water for .PROG./.DATA. */
   env.undef0 = (1 == a->pass);
   env.scope = a->scope;
+  env.ext_next = &a->next_ebase; /* the `SYM#' modifier auto-declares externs */
+  env.ext_decl = &a->next_decl;
   rc = expr_eval2 (*pp, &env, v, &endp, &err);
 
   if (rc)

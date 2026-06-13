@@ -132,6 +132,8 @@ typedef struct
   const u16 *seg_hw;  /* per-base high-water [1..3], or NULL     */
   int undef0;         /* if set, undefined symbols evaluate to 0 */
   unsigned scope;     /* local-symbol scope ('..' labels)        */
+  int *ext_next;      /* &next external base# for the `SYM#' modifier (or NULL) */
+  int *ext_decl;      /* &next declaration sequence for `SYM#' (or NULL)        */
 } eval_env;
 
 /******************************************************************************/

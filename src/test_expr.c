@@ -209,6 +209,21 @@ main (void)
   check ("100H-1", 10, 255, 0);
   check ("10", 16, 0x10, 0);
 
+  /* TDL/PSA logical operators: ^ XOR, # unary NOT, & AND, ! OR, < > shifts */
+  check ("5^3", 10, 6, 0);     /* exclusive OR                     */
+  check ("#5", 10, 0xFFFA, 0); /* unary NOT (one's complement)     */
+  check ("#0", 10, 0xFFFF, 0);
+  check ("#5+1", 10, 0xFFFB, 0); /* # binds tighter than + : (#5)+1 */
+  check ("1+#0", 10, 0x0000, 0); /* 1 + 0xFFFF, truncated           */
+  check ("5^#0", 10, 0xFFFA, 0); /* 5 XOR 0xFFFF                     */
+  check ("5!2", 10, 7, 0);       /* inclusive OR                     */
+  check ("5&3", 10, 1, 0);       /* AND                              */
+
+  /* ^X radix prefix: the number must begin with a numeral (^H0FF, not ^HFF) */
+  check ("^H0FF", 10, 0x00FF, 0);
+  check ("^B101", 10, 5, 0);
+  check ("^O17", 10, 15, 0);
+
   /* symbols + relocation (manual worked examples) */
   check ("X", 10, 0x100, 1);
   check ("X+Y-Z", 10, 0x000, 1); /* relocatable */

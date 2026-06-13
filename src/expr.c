@@ -260,8 +260,8 @@ ev_primary (ectx *e)
       else if ('B' == c)
         rdx = 2;
 
-      if (rdx)
-        {
+      if (rdx && isdigit ((unsigned char)e->p[2]))
+        { /* a number in the prefixed radix -- must begin with a numeral */
           unsigned long v = 0;
           e->p += 2;
 
@@ -280,6 +280,16 @@ ev_primary (ectx *e)
             }
 
           return mkabs ((u16)v);
+        }
+
+      if (rdx)
+        { /*
+           * a radix prefix not followed by a numeral: the originals require a
+           * number to begin with a digit, so the prefix is consumed and what
+           * follows parses as an ordinary symbol (e.g. `^HF' -> symbol `F',
+           * `^H0FF' is the way to write hex FF).
+           */
+          e->p += 2;
         }
     }
 
@@ -370,6 +380,33 @@ ev_primary (ectx *e)
       else
         s = (e->env->syms ? sym_lookup (e->env->syms, name) : NULL);
 
+      if ('#' == *e->p && '.' != name[0] && NULL != e->env->syms)
+        { /*
+           * the `SYM#' symbol modifier: declare SYM external, exactly as a
+           * preceding `.EXTERN SYM' would (the originals assign an external
+           * base number on first encounter, in declaration order).  Consume
+           * the `#'; the existing external branch below then resolves it.
+           */
+          e->p++;
+
+          if (NULL == s)
+            s = sym_intern (e->env->syms, name);
+
+          if (NULL != s && !s->external && !s->defined
+              && NULL != e->env->ext_next)
+            {
+              s->external = 1;
+              s->val.value = 0;
+              s->val.reloc = 0;
+              s->val.base = (*e->env->ext_next)++;
+              s->val.ext = NULL;
+              s->udef = 0;
+
+              if (NULL != e->env->ext_decl)
+                s->decl = (unsigned short)(*e->env->ext_decl)++;
+            }
+        }
+
       if (NULL != s && s->external)
         { /* external symbol: relative to its assigned external base (>=4) */
           value_t r;
@@ -448,6 +485,22 @@ ev_unary (ectx *e)
       e->p++;
 
       return ev_unary (e);
+    }
+
+  if ('#' == *e->p)
+    { /* logical unary NOT (one's complement); absolute operand only */
+      value_t v;
+      e->p++;
+      v = ev_unary (e);
+
+      if (v.ext || 0 != v.reloc)
+        {
+          efail (e, "relocatable value in division/logical/shift");
+
+          return mkabs (0);
+        }
+
+      return mkabs ((u16)(~v.value));
     }
 
   return ev_primary (e);

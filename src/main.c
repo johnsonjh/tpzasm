@@ -345,6 +345,8 @@ main (int argc, char **argv)
                 env.lc_reloc = 0;
                 env.undef0 = 0;
                 env.scope = 0;
+                env.ext_next = NULL;
+                env.ext_decl = NULL;
 
                 if (expr_eval (argv[++i], &env, &v, &eerr))
                   {
