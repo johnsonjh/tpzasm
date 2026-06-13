@@ -1124,7 +1124,17 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       return 0;
     }
 
-  a->lst_obase = ((2 == a->lst_opw) ? (0 != v.reloc ? v.base : 0) : 0);
+  /*
+   * record the operand's relocation base for the value column.  A 16-bit
+   * operand may relocate to any base.  An 8-bit operand only carries a flag
+   * when it is an EXTERNAL byte (base >= 4): a segment-relative 8-bit value
+   * is illegal, and a relative-jump displacement (JMPR/JRx/DJNZ) is an
+   * absolute offset even when its target symbol is relocatable.
+   */
+  a->lst_obase
+      = ((2 == a->lst_opw && 0 != v.reloc)
+             ? (int)v.base
+             : ((1 == a->lst_opw && v.base >= 4) ? (int)v.base : 0));
 
   return 1;
 }
@@ -1825,8 +1835,13 @@ lst_bytes (const astate *a, char *col, size_t cap)
 
       if (1 == a->lst_opw && nop < a->nbytes)
         {
-          cn += xsnprintf (col + cn, cap - (size_t)cn, "%02X",
-                           (unsigned)a->bytes[nop]);
+          if (a->lst_obase > 0) /* 8-bit external: space + byte + base flag */
+            cn += xsnprintf (col + cn, cap - (size_t)cn, " %02X%s",
+                             (unsigned)a->bytes[nop],
+                             seg_flag (a->lst_obase, a->dialect));
+          else
+            cn += xsnprintf (col + cn, cap - (size_t)cn, "%02X",
+                             (unsigned)a->bytes[nop]);
         }
       else if (2 == a->lst_opw && nop + 1 < a->nbytes)
         {
@@ -2039,7 +2054,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       {
         int p;
 
-        (void)fprintf (a->lst, "   %04X%s   %s", (unsigned)loc, lfl, col);
+        (void)fprintf (a->lst, "   %04X%-4s%s", (unsigned)loc, lfl, col);
 
         for (p = 11 + clen; p < scol; p++)
           (void)fputc (' ', a->lst);
@@ -2049,7 +2064,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         if (loc < 0)
           (void)fprintf (a->lst, "           %-*s%c", bw - 1, col, mark);
         else
-          (void)fprintf (a->lst, "   %04X%s   %-*s%c", (unsigned)loc, lfl,
+          (void)fprintf (a->lst, "   %04X%-4s%-*s%c", (unsigned)loc, lfl,
                          bw - 1, col, mark);
       }
     else
@@ -2057,7 +2072,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         if (loc < 0) /* .END and other blank-LOC lines */
           (void)fprintf (a->lst, "           %-*s", bw, col);
         else
-          (void)fprintf (a->lst, "   %04X%s   %-*s", (unsigned)loc, lfl, bw,
+          (void)fprintf (a->lst, "   %04X%-4s%-*s", (unsigned)loc, lfl, bw,
                          col);
       }
 
@@ -2079,12 +2094,13 @@ lst_header (astate *a)
   (void)fprintf (a->lst, "\n\n\n");
 
   if (DIALECT_PASM == a->dialect)
-    (void)fprintf (a->lst, "%-71sPage %d\n\n.MAIN. - %s\n\n\n\n",
-                   "PSA Macro Assembler [C12011-0102 ]", a->lst_page, a->title);
+    (void)fprintf (a->lst, "%-71sPage %d\n\n%-6.6s - %s\n\n\n\n",
+                   "PSA Macro Assembler [C12011-0102 ]", a->lst_page,
+                   a->modname, a->title);
   else
-    (void)fprintf (a->lst, "%-64sPAGE %d\n.MAIN. - %s\n\n\n\n",
+    (void)fprintf (a->lst, "%-64sPAGE %d\n%-6.6s - %s\n\n\n\n",
                    "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
-                   a->title);
+                   a->modname, a->title);
 
   /* heading line count */
   a->lst_line = ((DIALECT_PASM == a->dialect) ? 9 : 8);
@@ -2261,17 +2277,19 @@ lst_symhead (astate *a)
   if (DIALECT_PASM == a->dialect)
     {
       (void)fprintf (
-          a->lst, "%-71sPage %d\n\n.MAIN. - %s\n+++++ Symbol Table +++++\n\n\n",
-          "PSA Macro Assembler [C12011-0102 ]", a->lst_page, a->title);
+          a->lst,
+          "%-71sPage %d\n\n%-6.6s - %s\n+++++ Symbol Table +++++\n\n\n",
+          "PSA Macro Assembler [C12011-0102 ]", a->lst_page, a->modname,
+          a->title);
       a->lst_line = 9;
     }
   else
     {
       (void)fprintf (a->lst,
-                     "%-64sPAGE %d\n.MAIN. - %s\n"
+                     "%-64sPAGE %d\n%-6.6s - %s\n"
                      "+++++ SYMBOL TABLE +++++\n\n\n",
                      "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
-                     a->title);
+                     a->modname, a->title);
       a->lst_line = 8;
     }
 }
@@ -2301,8 +2319,9 @@ lst_symtab (astate *a)
 
   sym_collect (a->syms, all);
 
-  for (i = 0; i < navail; i++) /* keep defined, non-local symbols */
-    if (all[i]->defined && NULL == strchr (all[i]->name, ':'))
+  for (i = 0; i < navail; i++) /* keep defined or external, non-local symbols */
+    if ((all[i]->defined || all[i]->external)
+        && NULL == strchr (all[i]->name, ':'))
       all[nuser++] = all[i];
 
   qsort (all, (size_t)nuser, sizeof (symbol *), sym_name_cmp);
@@ -2320,21 +2339,32 @@ lst_symtab (astate *a)
         {
           static char ubuf[12];
           const char *g = seg_flag ((int)all[i]->val.base, a->dialect);
+          char cls = (all[i]->entry
+                          ? 'E'
+                          : (all[i]->internal
+                                 ? 'I'
+                                 : (all[i]->external ? 'X' : ' ')));
           int gl = 0;
           name = all[i]->name;
           val = all[i]->val.value;
 
-          /* relocatable symbols carry their base flag, padded to six cols
-           * (the flag is at most three characters: ', ", *, or :NN) */
-          while (gl < 6 && '\0' != g[gl])
+          /*
+           * the relocation-base flag (', ", *, or :NN) left-justified in four
+           * columns, then the symbol-class flag (E entry, I internal, X
+           * external, else blank) and a trailing space -- six columns total,
+           * matching the predefined-segment rows below
+           */
+          while (gl < 4 && '\0' != g[gl])
             {
               ubuf[gl] = g[gl];
               gl++;
             }
 
-          while (gl < 6)
+          while (gl < 4)
             ubuf[gl++] = ' ';
 
+          ubuf[gl++] = cls;
+          ubuf[gl++] = ' ';
           ubuf[gl] = '\0';
           flag = ubuf;
         }
@@ -3596,11 +3626,13 @@ do_line (astate *a, const char *line)
     {
       a->lc_reloc = 0;
       a->obj_abs = 1; /* absolute object output (Intel-hex `:' records) */
+      a->lst_loc = -1; /* output-mode directive: blank LC in the listing */
     }
   else if (opeq (op, ".PREL", NULL))
     {
       a->lc_reloc = 1;
       a->obj_abs = 0;
+      a->lst_loc = -1; /* output-mode directive: blank LC in the listing */
     }
   else if (opeq (op, ".LINK", NULL))
     { /* emit the full link records (the default) */
@@ -4228,7 +4260,17 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         init_pass (&a, 1);
         process_module (&a, srcpath, modidx);
 
-        init_pass (&a, 2);
+        /*
+         * the page-1 heading prints the module name, but .IDENT is not seen
+         * until pass 2 reads the body -- carry the name learned in pass 1
+         * across the pass-2 reset so the first heading shows it
+         */
+        {
+          char modsave[8];
+          (void)xstrlcpy (modsave, a.modname, sizeof (modsave));
+          init_pass (&a, 2);
+          (void)xstrlcpy (a.modname, modsave, sizeof (a.modname));
+        }
         lst_header (&a);
         process_module (&a, srcpath, modidx);
 
