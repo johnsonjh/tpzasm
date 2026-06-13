@@ -4360,6 +4360,11 @@ do_line (astate *a, const char *line)
               console_read (a, s);
             }
 
+          /* like any `=' assignment, the line lists the value (the answer
+           * read, or in pass 2 the value cached from pass 1), not the LC */
+          a->lst_loc = (long)s->val.value;
+          a->lst_lbase = (0 != s->val.reloc ? s->val.base : 0);
+
           if (2 == a->pass)
             print_lst (a, lc0, line);
 
@@ -4868,10 +4873,13 @@ do_line (astate *a, const char *line)
 
       return;
     }
-  else if (opeq (op, ".TITLE", NULL))
+  else if (opeq (op, ".TITLE", NULL) || opeq (op, ".SBTTL", NULL)
+           || opeq (op, ".SUBTTL", NULL))
     { /*
        * capture the page subtitle (in both passes, so pass 2's page-1
-       * heading already has it); the directive is not listed in the body
+       * heading already has it); the directive is not listed in the body.
+       * .SBTTL/.SUBTTL set the subtitle and, like .TITLE, do not self-list
+       * (the originals suppress the directive line too).
        */
       const char *p = skipws (L.operands);
       char quote = (('\'' == *p || '"' == *p) ? *p : '\0');
