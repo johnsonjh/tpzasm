@@ -50,12 +50,14 @@ set -eu
 # error and is not performed (insnest -> insnsub, whose .INSERT isub is
 # skipped), and .PSYM, which appends the "&" global-symbol-table object record
 # (segment bases, externals, then defined symbols in definition order) for the
-# PSA BUG debugger -- ".." locals excluded (psym) -- and .TEMPS local
-# temporaries referenced as ![sub] inside a macro (PASM-only; temps), and the
-# "&" macro argument-count operator (PASM-only; varargs).
+# PSA BUG debugger -- ".." locals excluded (psym) -- .TEMPS local temporaries
+# referenced as ![sub] inside a macro (PASM-only; temps), the "&" macro
+# argument-count operator (PASM-only; varargs), and trailing (extra) operands,
+# which the originals flag Q/AQ/A/AA but still assemble the valid prefix of
+# (extop).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs"
+insnest psym temps varargs extop"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

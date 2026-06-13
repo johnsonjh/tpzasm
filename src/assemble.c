@@ -105,7 +105,7 @@ typedef struct
   int mdef_page;   /* leading-page pass: list only multiply-defined lines     */
   char lst_ec[2];  /* up to two error-code letters for this line's column 1 */
   int lst_nec;     /* number of error codes recorded for this line          */
-  int lst_qoff;    /* `?' error-marker offset into the source line, or -1    */
+  int lst_qoff[2]; /* per-error `?' marker offsets into the line (one each)  */
   const char *cur_line; /* the source line currently being assembled        */
   int ppos;        /* current parse offset into cur_line, for the `?' marker */
   int eval_undef;  /* the last eval failed on an undefined symbol (-> `U')   */
@@ -490,6 +490,7 @@ err_letter (const char *msg)
               { "z80 instruction in 8080 mode", 'Z' },
               { "nested .INSERT", 'F' },
               { "subscript", 'S' },
+              { "extra operand", 'Q' },
               { NULL, 0 } };
   int i;
 
@@ -531,10 +532,12 @@ aerr (astate *a, const char *line, const char *msg)
         }
 
       if (a->lst_nec < 2) /* the listing shows the first two codes per line */
-        a->lst_ec[a->lst_nec++] = code;
-
-      if (a->lst_qoff < 0) /* the `?' marks the first error's parse position */
-        a->lst_qoff = a->ppos;
+        { /* each error places a `?' at its own parse position (two errors at
+           * the same spot therefore render as `??') */
+          a->lst_qoff[a->lst_nec] = a->ppos;
+          a->lst_ec[a->lst_nec] = code;
+          a->lst_nec++;
+        }
     }
   /* pass 1 just defines symbols; the header total comes from the count pass */
 }
@@ -868,6 +871,94 @@ fmt_opw (insn_fmt_t fmt)
 
     default:
       return 0;
+    }
+}
+
+/******************************************************************************/
+
+/* A bare register-name token (for the extra-operand `A' vs `AQ' distinction):
+ * the token is exactly a register mnemonic, not the start of a longer name. */
+static int
+is_reg_token (const char *t)
+{
+  char w[4];
+  int n = 0;
+
+  while (n < 3 && isalpha ((unsigned char)t[n]))
+    {
+      w[n] = (char)toupper ((unsigned char)t[n]);
+      n++;
+    }
+
+  w[n] = '\0';
+
+  if (idchar ((unsigned char)t[n])) /* a longer token: not a bare register */
+    return 0;
+
+  if (1 == n)
+    return (NULL != strchr ("ABCDEHLMXY", w[0]));
+
+  return (0 == strcmp (w, "SP") || 0 == strcmp (w, "PSW"));
+}
+
+/*
+ * Flag a trailing (extra) operand the originals reject (manual Appendix C),
+ * after an instruction's expected operands have parsed cleanly:
+ *   - a no-operand instruction with any operand     -> `Q' at the operand
+ *   - an extra `,operand' after the operand list    -> `Q' before the comma
+ *   - a space-separated trailing register            -> `A' after the token
+ *   - a space-separated trailing number/expression   -> `A'+`Q' (`??') at it
+ * Each error places its own `?', so the two-error cases render `??'.
+ */
+static void
+flag_extra_operand (astate *a, const char *line, const insn *in,
+                    const char *ops, const char *p)
+{
+  const char *t;
+
+  if (a->lst_nec > 0) /* the operand parse already raised an error: leave it */
+    return;
+
+  if (FMT_NONE == (int)in->fmt) /* a no-operand instruction */
+    {
+      t = skipws (ops);
+
+      if ('\0' != *t && ';' != *t)
+        {
+          a->ppos = line_off (line, t);
+          aerr (a, line, "extra operand"); /* Q */
+        }
+
+      return;
+    }
+
+  if (',' == *p) /* an extra `,operand' in the list */
+    {
+      a->ppos = line_off (line, p);
+      aerr (a, line, "extra operand"); /* Q */
+      return;
+    }
+
+  t = skipws (p);
+
+  if ('\0' == *t || ';' == *t)
+    return; /* nothing trailing */
+
+  if (is_reg_token (t)) /* a trailing register: `A', marked after the token */
+    {
+      const char *e = t;
+
+      while (isalpha ((unsigned char)*e))
+        e++;
+
+      a->ppos = line_off (line, e);
+      aerr (a, line, "extra argument"); /* A (default) */
+    }
+  else /* a trailing number/expression: `A'+`Q', both before it (`??') */
+    {
+      a->ppos = line_off (line, t);
+      aerr (a, line, "extra argument"); /* A */
+      aerr (a, line, "extra operand"); /* Q (same position -> `??') */
     }
 }
 
@@ -1270,6 +1361,8 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
         emit (a, (u16)pf);
         emit (a, (u16)(0x09 | (rp << 4)));
+        p = q + n; /* advance past the register so the trailing-operand check
+                    * (flag_extra_operand) does not see it as an extra */
         break;
       }
 
@@ -1315,6 +1408,8 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       a->ppos = line_off (line, p);
       aerr (a, line, "z80 instruction in 8080 mode");
     }
+
+  flag_extra_operand (a, line, in, ops, p);
 
   return 1;
 }
@@ -1400,6 +1495,17 @@ do_data (astate *a, const char *line, const char *p, int width)
 
       if (',' == *p)
         p++;
+      else if ('\0' != *p && ';' != *p)
+        { /*
+           * a space-separated trailing operand (no comma): the originals stop
+           * here and flag it `AA' (two argument errors, so a `??' marker); the
+           * already-emitted items stand.
+           */
+          a->ppos = line_off (line, p);
+          aerr (a, line, "extra argument"); /* `AA': two argument errors at */
+          aerr (a, line, "extra argument"); /* the same spot -> a `??' marker */
+          break;
+        }
 
       if (p == start)
         break; /* safety: no progress */
@@ -2122,18 +2228,21 @@ lst_wrap (astate *a, int col, int wrapw, int indent)
  */
 
 static void
-lst_source (astate *a, const char *s, int col, int wrapw, int indent, int qoff)
+lst_source (astate *a, const char *s, int col, int wrapw, int indent,
+            const int *qoff, int nq)
 {
   int si = 0; /* source character index, for the `?' error marker */
+  int k;
 
   for (; '\0' != *s; s++, si++)
     {
-      if (si == qoff) /* error marker, just before the parse-position char */
-        {
-          col = lst_wrap (a, col, wrapw, indent);
-          (void)fputc ('?', a->lst);
-          col++;
-        }
+      for (k = 0; k < nq; k++) /* a `?' just before each error's position */
+        if (si == qoff[k])
+          {
+            col = lst_wrap (a, col, wrapw, indent);
+            (void)fputc ('?', a->lst);
+            col++;
+          }
 
       if ('\t' == *s)
         { /*
@@ -2174,11 +2283,13 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent, int qoff)
         }
     }
 
-  if (si == qoff) /* error at the end of the statement text */
-    {
-      (void)lst_wrap (a, col, wrapw, indent);
-      (void)fputc ('?', a->lst);
-    }
+  for (k = 0; k < nq; k++) /* error(s) at the end of the statement text */
+    if (si == qoff[k])
+      {
+        col = lst_wrap (a, col, wrapw, indent);
+        (void)fputc ('?', a->lst);
+        col++;
+      }
 
   (void)fputc ('\n', a->lst);
   a->lst_line++; /* count this final physical line */
@@ -2374,8 +2485,6 @@ print_lst (astate *a, u16 lc0, const char *rawline)
    */
 
   {
-    int wrapw = ((DIALECT_PASM == a->dialect) ? 79 : 72);
-    int indent = 11 + bw;
     /* PSA shows one word, no overstrike: the over-strike quirk is TDL-only */
     int over = (0 == mark && 2 == a->lst_kind && a->nbytes >= 4 && loc >= 0
                 && DIALECT_PASM != a->dialect
@@ -2453,9 +2562,21 @@ print_lst (astate *a, u16 lc0, const char *rawline)
           (void)fprintf (a->lst, "%04X%-4s%-*s", (unsigned)loc, lfl, bw, col);
       }
 
-    lst_source (a, src, scol, wrapw, indent,
-                ((a->lst_qoff >= 0) ? a->lst_qoff - line_off (rawline, src)
-                                    : -1));
+    {
+      int wrapw = ((DIALECT_PASM == a->dialect) ? 79 : 72);
+      int indent = 11 + bw;
+      int rq[2];
+      int off = line_off (rawline, src);
+      int i;
+
+      rq[0] = -1;
+      rq[1] = -1;
+
+      for (i = 0; i < a->lst_nec; i++) /* `?' offsets vs the source field */
+        rq[i] = a->lst_qoff[i] - off;
+
+      lst_source (a, src, scol, wrapw, indent, rq, a->lst_nec);
+    }
   }
 }
 
@@ -3524,8 +3645,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       a->lst_loc = -1; /* the lone ']' has no location */
       a->lst_lbase = -1;
       a->lst_obase = 0;
-      a->lst_nec = 0;
-      a->lst_qoff = -1;
+      a->lst_nec = 0; /* clears the per-line error codes + `?' offsets */
       a->mac_src = "]";
       a->mac_plus = 1;
       print_lst (a, a->lc, "]");
@@ -3598,8 +3718,7 @@ do_line (astate *a, const char *line)
   a->lst_lbase = -1; /* default: LC base from lc_reloc/base */
   a->lst_obase = 0;
   a->lst_ctlstmt = 0; /* set by the listing-control directives */
-  a->lst_nec = 0;    /* per-line error-code letters (col 1) */
-  a->lst_qoff = -1;  /* per-line `?' error-marker offset */
+  a->lst_nec = 0;    /* per-line error codes (col 1) + their `?' offsets */
   a->limg_ns = 0;    /* per-line .LIMAGE source splits (set by do_data) */
   a->cur_line = line; /* base for the parse-position offsets */
   a->ppos = 0;
