@@ -490,6 +490,7 @@ err_letter (const char *msg)
               { "size must be absolute", 'R' },
               { "z80 instruction in 8080 mode", 'Z' },
               { "nested .INSERT", 'F' },
+              { "multiply-defined reference", 'D' },
               { "subscript", 'S' },
               { "extra operand", 'Q' },
               { NULL, 0 } };
@@ -582,7 +583,7 @@ static int
 eval1 (astate *a, const char **pp, value_t *v)
 {
   eval_env env;
-  const char *endp, *err;
+  const char *endp, *err, *mdefp;
   int rc;
 
   env.radix = a->radix;
@@ -602,7 +603,7 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.ntemps = a->ntemps;
   env.tmp_ok = (a->macro_depth > 0);
   env.mac_argc = a->mac_argc; /* `&' = current macro's argument count */
-  rc = expr_eval2 (*pp, &env, v, &endp, &err);
+  rc = expr_eval2 (*pp, &env, v, &endp, &err, &mdefp);
 
   if (rc)
     { /*
@@ -622,6 +623,23 @@ eval1 (astate *a, const char **pp, value_t *v)
 
   /* an undefined-symbol fault is the 'U' code, not the generic 'A' */
   a->eval_undef = (rc && NULL != err && NULL != strstr (err, "undefined"));
+
+  /*
+   * a reference to a multiply-defined symbol is the `D' code, with a `?' just
+   * past the symbol (`JMP FOO?', `.WORD FOO?+1').  The first definition's value
+   * is still emitted, so this rides alongside the value rather than failing the
+   * evaluation -- and may stack with another code (e.g. an 8-bit-reloc `R' on
+   * `MVI A,FOO' -> `DR' / `FOO??').  Raise it BEFORE returning so it precedes
+   * any code the caller adds, then restore the parse position for that caller.
+   */
+  if (NULL != mdefp)
+    {
+      int endp_ppos = a->ppos;
+
+      a->ppos = line_off (a->cur_line, mdefp);
+      aerr (a, a->cur_line, "multiply-defined reference");
+      a->ppos = endp_ppos;
+    }
 
   return rc;
 }

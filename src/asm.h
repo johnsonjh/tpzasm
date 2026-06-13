@@ -155,10 +155,12 @@ int expr_eval (const char *s, const eval_env *env, value_t *out,
 /*
  * Evaluate ONE expression; *endp gets the stop position (does
  * not require end-of-string).  For comma-separated operand lists.
+ * *mdefp (when non-NULL) gets the position just past the first reference to a
+ * multiply-defined symbol, or NULL if none -- the caller flags that line `D'.
  */
 
 int expr_eval2 (const char *s, const eval_env *env, value_t *out,
-                const char **endp, const char **err);
+                const char **endp, const char **err, const char **mdefp);
 
 /******************************************************************************/
 

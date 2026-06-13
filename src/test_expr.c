@@ -292,8 +292,8 @@ main (void)
         (void)printf ("FAIL  sym_count/collect (n=%d)\n", n);
         fails++;
       }
-    else if (expr_eval2 ("1+2;", &ENV, &v2, &endp2, &err2) || 3 != v2.value
-             || ';' != *endp2)
+    else if (expr_eval2 ("1+2;", &ENV, &v2, &endp2, &err2, NULL)
+             || 3 != v2.value || ';' != *endp2)
       {
         (void)printf ("FAIL  expr_eval2\n");
         fails++;

@@ -43,6 +43,7 @@ typedef struct
   const char *p;
   int err;
   const char *msg;
+  const char *mdef_p; /* just past a multiply-defined ref (`D'), else NULL */
   const eval_env *env;
 } ectx;
 
@@ -492,6 +493,25 @@ ev_primary (ectx *e)
           return mkabs (0);
         }
 
+      /*
+       * a reference to a multiply-defined symbol: the originals flag the using
+       * line `D' and place a `?' just past the symbol, with any immediately
+       * following whitespace skipped -- so `.WORD FOO+1' renders `FOO?+1' (the
+       * operator follows at once) while `JMP FOO ;c' renders `FOO     ?;c' (the
+       * `?' lands where the next token would, before the comment).  The first
+       * definition's value is still used, so this is not a failure; record only
+       * the first such reference on the expression.
+       */
+      if (s->mdef && NULL == e->mdef_p)
+        {
+          const char *q = e->p;
+
+          while (' ' == *q || '\t' == *q)
+            q++;
+
+          e->mdef_p = q;
+        }
+
       return s->val;
     }
 
@@ -838,7 +858,7 @@ ev_addsub (ectx *e) /* level 7 (entry) */
 
 int
 expr_eval2 (const char *s, const eval_env *env, value_t *out,
-            const char **endp, const char **err)
+            const char **endp, const char **err, const char **mdefp)
 {
   ectx e;
   value_t v;
@@ -862,6 +882,7 @@ expr_eval2 (const char *s, const eval_env *env, value_t *out,
   e.p = s;
   e.err = 0;
   e.msg = "";
+  e.mdef_p = NULL;
   v = ev_addsub (&e);
 
   if (!e.err && NULL == v.ext && 0 != v.reloc && 1 != v.reloc)
@@ -873,6 +894,9 @@ expr_eval2 (const char *s, const eval_env *env, value_t *out,
 
   if (endp)
     *endp = e.p;
+
+  if (mdefp)
+    *mdefp = e.mdef_p;
 
   if (e.err)
     {
@@ -898,7 +922,7 @@ int
 expr_eval (const char *s, const eval_env *env, value_t *out, const char **err)
 {
   const char *endp;
-  int rc = expr_eval2 (s, env, out, &endp, err);
+  int rc = expr_eval2 (s, env, out, &endp, err, NULL);
 
   if (rc)
     return rc;

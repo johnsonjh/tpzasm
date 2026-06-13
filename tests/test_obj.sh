@@ -54,10 +54,12 @@ set -eu
 # referenced as ![sub] inside a macro (PASM-only; temps), the "&" macro
 # argument-count operator (PASM-only; varargs), and trailing (extra) operands,
 # which the originals flag Q/AQ/A/AA but still assemble the valid prefix of
-# (extop).
+# (extop), and a reference to a multiply-defined symbol, which flags the using
+# line "D" (a "?" just past the symbol) but keeps the symbol's first value, so
+# the emitted object is unchanged (dref).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs extop"
+insnest psym temps varargs extop dref"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"
