@@ -56,10 +56,12 @@ set -eu
 # which the originals flag Q/AQ/A/AA but still assemble the valid prefix of
 # (extop), and a reference to a multiply-defined symbol, which flags the using
 # line "D" (a "?" just past the symbol) but keeps the symbol's first value, so
-# the emitted object is unchanged (dref).
+# the emitted object is unchanged (dref), and the single-line inline
+# conditional form ".IFx cond,[stmt][else]", whose taken branch assembles on
+# the directive's own line (cinl).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs extop dref"
+insnest psym temps varargs extop dref cinl"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

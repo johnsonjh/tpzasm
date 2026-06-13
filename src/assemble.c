@@ -1982,6 +1982,34 @@ is_conditional (const char *op)
       || 0 == strcmp (op, ".IF1") || 0 == strcmp (op, ".IF2");
 }
 
+/*
+ * Given S pointing just past a block-opening `[', return the matching `]'
+ * (tracking nested brackets) when it lies on this line -- the single-line
+ * inline conditional form `.IFx cond,[stmt][else]' -- or NULL when the `['
+ * ends the line (the multi-line form, whose body is on the following lines).
+ */
+
+static const char *
+inline_block_end (const char *s)
+{
+  int depth = 1;
+
+  for (; '\0' != *s; s++)
+    {
+      if ('[' == *s)
+        depth++;
+      else if (']' == *s)
+        {
+          depth--;
+
+          if (0 == depth)
+            return s;
+        }
+    }
+
+  return NULL;
+}
+
 /******************************************************************************/
 
 /*
@@ -4088,6 +4116,103 @@ do_line (astate *a, const char *line)
           else if (!eval1 (a, &q, &v))
             t = cond_test (op, &v);
         }
+
+      /*
+       * single-line inline form `.IFx cond,[stmt][else]': the taken branch's
+       * (single) statement is on THIS line, so assemble it inline -- its bytes
+       * list on the directive's own line -- and push NO block frame.  Detect it
+       * by a `,[' at bracket depth 0 whose `[' has a matching `]' on this line;
+       * a `[' that instead ends the line opens the multi-line form handled
+       * below.
+       */
+      {
+        const char *bk = NULL;
+        const char *b1e;
+        const char *s;
+        int d = 0;
+
+        for (s = L.operands; '\0' != *s && ';' != *s; s++)
+          {
+            if ('[' == *s)
+              d++;
+            else if (']' == *s)
+              {
+                if (d > 0)
+                  d--;
+              }
+            else if (',' == *s && 0 == d)
+              {
+                const char *t2 = skipws (s + 1);
+
+                if ('[' == *t2)
+                  {
+                    bk = t2;
+                    break;
+                  }
+              }
+          }
+
+        b1e = ((NULL != bk) ? inline_block_end (bk + 1) : NULL);
+
+        if (NULL != bk && NULL != b1e)
+          { /* INLINE: a matching `]' for the first block lies on this line */
+            const char *p2 = skipws (b1e + 1);
+            const char *b2e
+                = (('[' == *p2) ? inline_block_end (p2 + 1) : NULL);
+            const char *body = NULL, *body_end = NULL;
+
+            if (t) /* taken: the true block's statement */
+              {
+                body = bk + 1;
+                body_end = b1e;
+              }
+            else if (NULL != b2e) /* not taken: the else block, if present */
+              {
+                body = p2 + 1;
+                body_end = b2e;
+              }
+
+            if (outer && NULL != body && body_end > body)
+              { /*
+                 * assemble the single statement, then list THIS directive's
+                 * line carrying its bytes (the recursive line's own listing is
+                 * suppressed; its `?' error offsets are shifted to the block's
+                 * position within this line)
+                 */
+                char bbuf[512];
+                size_t bl = (size_t)line_off (body, body_end);
+
+                if (bl >= sizeof (bbuf))
+                  bl = sizeof (bbuf) - 1;
+
+                (void)memcpy (bbuf, body, bl);
+                bbuf[bl] = '\0';
+
+                a->lst_suppress = 1;
+                do_line (a, bbuf);
+                a->lst_suppress = 0;
+
+                if (2 == a->pass)
+                  {
+                    int boff = line_off (line, body);
+                    int i;
+
+                    for (i = 0; i < a->lst_nec; i++)
+                      a->lst_qoff[i] += boff;
+
+                    a->cur_line = line;
+                    print_lst (a, lc0, line);
+                  }
+              }
+            else if (2 == a->pass)
+              { /* not taken (or empty / skipped): list with a blank LC */
+                a->lst_loc = -1;
+                print_lst (a, lc0, line);
+              }
+
+            return;
+          }
+      }
 
       if (a->cdepth < MAXCOND)
         {
