@@ -482,6 +482,7 @@ err_letter (const char *msg)
               { "8-bit external illegal", 'R' },
               { "size must be absolute", 'R' },
               { "z80 instruction in 8080 mode", 'Z' },
+              { "nested .INSERT", 'F' },
               { NULL, 0 } };
   int i;
 
@@ -2828,6 +2829,24 @@ do_insert (astate *a, const char *field)
     }
   name[n] = '\0';
 
+  /*
+   * an optional DOS/CP-M drive specifier `d:' prefixes the filename; the
+   * originals accept it but resolve the file on the source's own disk, so we
+   * strip it (a future extended-warnings mode could note the ignored drive).
+   */
+  if ('\0' != name[0] && ':' == name[1])
+    {
+      int k = 0;
+
+      while ('\0' != name[k + 2])
+        {
+          name[k] = name[k + 2];
+          k++;
+        }
+
+      name[k] = '\0'; /* the `.'-vs-not (dot) test already excluded the `d:' */
+    }
+
   if (!dot)
     (void)xstrlcat (name, ".asm", sizeof (name));
 
@@ -3857,6 +3876,24 @@ do_line (astate *a, const char *line)
 
   if (opeq (op, ".INSERT", NULL))
     {
+      if (a->ins_depth > 0)
+        { /*
+           * only one level of .INSERT is allowed: a nested .INSERT (one is
+           * already in progress) is an `F' error, and the nested file is NOT
+           * inserted.  The `?' marks the file-name field.
+           */
+          a->ppos = line_off (line, L.operands);
+          aerr (a, line, "nested .INSERT");
+
+          if (2 == a->pass)
+            {
+              a->lst_loc = -1;
+              print_lst (a, lc0, line);
+            }
+
+          return;
+        }
+
       if (2 == a->pass)
         { /*
            * the .INSERT directive lists with a blank LC, and

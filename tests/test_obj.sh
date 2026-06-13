@@ -43,10 +43,15 @@ set -eu
 # the macro apostrophe-concatenation operator, which pastes a macro argument
 # onto adjacent text to form a symbol -- JR'A with A=Z builds JRZ (mconcat) --
 # the blank-argument conditionals .IFB/.IFNB (the last two of the 14 IF forms;
-# PASM-only -- ZASM's are buggy) with both branches taken (ifbnb), and a macro
-# defined inside another macro, callable once the outer macro runs (macnest).
+# PASM-only -- ZASM's are buggy) with both branches taken (ifbnb), a macro
+# defined inside another macro, callable once the outer macro runs (macnest),
+# .INSERT with an ignored drive specifier and the default .ASM extension
+# (dinsert -> isub), and the one-level-only rule: a nested .INSERT is an "F"
+# error and is not performed (insnest -> insnsub, whose .INSERT isub is
+# skipped).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
-oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest"
+oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
+insnest"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"
