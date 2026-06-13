@@ -65,16 +65,20 @@
     radix change), the **`#`** inline external‑symbol modifier (`SYM#` ≡
     `.EXTERN SYM`) and the **`::`**/**`=:`**/**`==:`** internal‑definition
     delimiters (≡ `.INTERN`), the **`.I8080`**/**`.Z80`** mode (Z80‑in‑8080
-    `Z` warning), macro argument concatenation (**`'`**) and nesting, the full
-    conditional family (14 **`.IF`** forms), and **`.INSERT`** (default
-    extension, ignored drive specifier, one‑level‑only with an `F` error).
+    `Z` warning), macro argument concatenation (**`'`**), nesting, the PASM
+    variable‑argument facility (**`.TEMPS`**/`![sub]` local temporaries and the
+    **`&`** argument count), the full conditional family (14 **`.IF`** forms),
+    **`.INSERT`** (default extension, ignored drive specifier, one‑level‑only
+    with an `F` error), the **`.PSYM`** symbol‑table object record (the **`&`**
+    record for the PSA *BUG* debugger), and the **`.XLINK`** relocatable
+    core‑image listing.
 
-  * The remaining differences appear only on *unusual or deliberately
-    malformed* input: the **`Q`**/**`A`** extra‑operand diagnostics, the
-    single‑line inline conditional‑block form, a \~1‑line pagination residual
-    (with its running per‑page error count) on very large files, and the
-    PASM‑only variable‑argument‑macro facility (**`.TEMPS`**/`![sub]` and the
-    **`&`** argument count) and **`.PSYM`** symbol‑table object record.
+  * The only remaining differences appear on *deliberately malformed or
+    wrong‑dialect* input: the per‑format **`Q`**/**`A`**/**`L`** extra‑operand
+    diagnostic letters and `?` markers, the single‑line inline
+    conditional‑block form, and a \~1‑line pagination residual (with its
+    running per‑page error count) on very large files — none of which change
+    the emitted object, which is byte‑for‑byte identical throughout.
 
   * **TPZASM** implements the full **multi‑segment, relocatable, linkable**
     object model: the three program segments (**`.PROG.`**, **`.DATA.`**,
@@ -102,20 +106,16 @@
 ## Future
 
 * A few edges remain before *every* input is byte‑for‑byte identical, none of
-  which arise in the standalone corpus or the VEDIT‑PLUS / SARGON codebases:
+  which arise in the standalone corpus or the VEDIT‑PLUS / SARGON codebases,
+  and none of which change the **emitted object** (only the *listing* of
+  malformed or wrong‑dialect input):
 
-  * The PSA **`.PSYM`**/**`.XPSYM`** symbol‑table object record (the **`&`**
-    record the PSA *BUG* debugger reads), and the PASM‑only
-    variable‑argument‑macro facility — **`.TEMPS`** local temporaries
-    referenced as `![sub]`, and the **`&`** macro‑argument count.
+  * The per‑format **`Q`**/**`A`**/**`L`** extra‑operand diagnostic letters and
+    `?` markers, and the single‑line inline conditional‑block form.
 
-  * **Listing** details: the **`.XLINK`** core‑image listing (its object is
-    byte‑exact; only the page subtitle, the `.XLINK` line itself, and the
-    segment rows of the symbol table differ), a multi‑word **`.WORD`** under
-    **`.LIMAGE`** in the ZASM dialect (the TDL two‑word value‑field
-    overstrike), the **`Q`**/**`A`** extra‑operand diagnostics and the
-    single‑line inline conditional‑block form, and a \~1‑line pagination
-    residual (with its running per‑page error count) on very large files.
+  * A multi‑word **`.WORD`** under **`.LIMAGE`** in the ZASM dialect (the TDL
+    two‑word value‑field overstrike), and a \~1‑line pagination residual (with
+    its running per‑page error count) on very large files.
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
