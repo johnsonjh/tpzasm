@@ -100,9 +100,10 @@ typedef struct
   char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
   int errors;      /* error count of the CURRENT pass (pass-2 = the total) */
   int errs_hdr;    /* prior-pass error total, shown in the PASM page header */
-  int errs_mdef;   /* multiply-defined count (drives the leading report page) */
+  int errs_mdef;   /* multiply-defined (`M') count: drives the leading page   */
+  int errs_finsert; /* nested-.INSERT (`F') count: also drives the leading pg */
   int count_only;  /* error-counting pre-pass: tally errs_hdr, list nothing   */
-  int mdef_page;   /* leading-page pass: list only multiply-defined lines     */
+  int mdef_page;   /* leading-page pass: list only `M'/`F' (report) lines     */
   char lst_ec[2];  /* up to two error-code letters for this line's column 1 */
   int lst_nec;     /* number of error codes recorded for this line          */
   int lst_qoff[2]; /* per-error `?' marker offsets into the line (one each)  */
@@ -515,8 +516,17 @@ aerr (astate *a, const char *line, const char *msg)
        */
       a->errs_hdr++;
 
-      if (0 == strcmp (msg, "multiply-defined symbol"))
-        a->errs_mdef++;
+      /* `M' (multiply-defined) and `F' (nested .INSERT) both get reproduced
+       * on the leading report page; tally each so its pass runs only when
+       * such an error exists */
+      {
+        char ec = err_letter (msg);
+
+        if ('M' == ec)
+          a->errs_mdef++;
+        else if ('F' == ec)
+          a->errs_finsert++;
+      }
 
       return;
     }
@@ -2413,16 +2423,16 @@ print_lst (astate *a, u16 lc0, const char *rawline)
 
   if (a->mdef_page)
     { /*
-       * the leading multiply-defined report page lists ONLY the offending
-       * statements (the ones whose label redefinition raised an `M').
+       * the leading report page lists ONLY the offending statements: a label
+       * redefinition (`M') or a nested .INSERT (`F').
        */
-      int k, has_m = 0;
+      int k, has_lead = 0;
 
       for (k = 0; k < a->lst_nec; k++)
-        if ('M' == a->lst_ec[k])
-          has_m = 1;
+        if ('M' == a->lst_ec[k] || 'F' == a->lst_ec[k])
+          has_lead = 1;
 
-      if (!has_m)
+      if (!has_lead)
         return;
     }
 
@@ -4203,12 +4213,15 @@ do_line (astate *a, const char *line)
         { /*
            * only one level of .INSERT is allowed: a nested .INSERT (one is
            * already in progress) is an `F' error, and the nested file is NOT
-           * inserted.  The `?' marks the file-name field.
+           * inserted.  Both originals also flag the now-stranded file-name
+           * operand `Q' (questionable), so the line carries two codes (`FQ')
+           * and two `?' markers (`??') over the file-name field.
            */
           a->ppos = line_off (line, L.operands);
-          aerr (a, line, "nested .INSERT");
+          aerr (a, line, "nested .INSERT"); /* F */
+          aerr (a, line, "extra operand");  /* Q (same column -> `??') */
 
-          if (2 == a->pass)
+          if (2 == a->pass || a->mdef_page) /* body, or leading report page */
             {
               a->lst_loc = -1;
               print_lst (a, lc0, line);
@@ -5188,6 +5201,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
          */
         a.errs_hdr = 0;
         a.errs_mdef = 0;
+        a.errs_finsert = 0;
         init_pass (&a, 3);
         a.count_only = 1;
         process_module (&a, srcpath, modidx);
@@ -5195,15 +5209,16 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
         /*
          * Both dialects precede the body listing with a leading report page
-         * that lists only the multiply-defined statements (pass-1 faults the
-         * body would otherwise bury).  Run it only when such errors exist, as
-         * its own pass (distinct number 4 so the `seen' redefinition logic
-         * treats it as fresh and does not collide with the body pass); it
-         * lists just the `M' lines and emits no object/image.  The body pass's
-         * own header then begins page 2.  (PASM's leading page omits the
-         * subtitle; ZASM keeps it -- see lst_header.)
+         * that lists only the multiply-defined (`M') and nested-.INSERT (`F')
+         * statements (pass-1 faults the body would otherwise bury).  Run it
+         * only when such errors exist, as its own pass (distinct number 4 so
+         * the `seen' redefinition logic treats it as fresh and does not
+         * collide with the body pass); it lists just those lines and emits no
+         * object/image.  The body pass's own header then begins page 2.
+         * (PASM's leading page omits the subtitle; ZASM keeps it -- see
+         * lst_header.)
          */
-        if (a.errs_mdef > 0 && NULL != a.lst)
+        if ((a.errs_mdef + a.errs_finsert) > 0 && NULL != a.lst)
           {
             init_pass (&a, 4);
             a.mdef_page = 1;
