@@ -88,11 +88,11 @@
 
 ## Future
 
-* A few **listing** details remain before the listing is byte‑for‑byte
-  identical on *every* input: **`.LIMAGE`**/**`.XIMAGE`** multi‑line byte
-  images, the **`.PAGE`**/**`.EJECT`**/**`.COMMENT`** directives, a \~1‑line
-  pagination residual on very large files, and a few deep error‑listing cases
-  (the leading pass‑1 error‑summary page and the symbol‑table error flags).
+* A few **listing** edges remain before the listing is byte‑for‑byte identical
+  on *every* input: a multi‑word **`.WORD`** under **`.LIMAGE`** in the ZASM
+  dialect (the TDL two‑word value‑field overstrike), a \~1‑line pagination
+  residual on very large files, and a few deep error‑listing cases (the leading
+  pass‑1 error‑summary page and the symbol‑table error flags).
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
