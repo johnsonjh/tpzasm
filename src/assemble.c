@@ -2030,9 +2030,25 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent, int qoff)
            * column (24) is a multiple of 8 so the two coincide, but PASM's
            * (25) is not, and its operands sit one column further right.
            */
+          int first = 1;
+
           do
             {
+              int before = col;
+
               col = lst_wrap (a, col, wrapw, indent);
+
+              /*
+               * a tab that crosses the fold MID-expansion is consumed by the
+               * fold (the next char starts at the indent); but a tab that
+               * begins exactly at the fold folds first, then expands a full
+               * tab in on the continuation -- so only break after the first
+               * space has been placed.
+               */
+              if (col != before && !first)
+                break;
+
+              first = 0;
               (void)fputc (' ', a->lst);
               col++;
             }
@@ -2517,12 +2533,18 @@ lst_symtab (astate *a)
       else
         {
           /*
-           * .PROG. (index 2) carries the program-segment size;
-           * the .BLNK./.DATA. rows stay 0000 for this absolute-segment output
+           * .PROG. (index 2) carries the program-segment size; the
+           * .BLNK./.DATA. rows stay 0000 for this absolute-segment output.
+           * An explicit .LOC/ORG pins the code absolutely, so .PROG. then
+           * reports size 0 here too -- matching the object `\\' record.
            */
 
           name = segname[(long)i - nuser];
           val = a->seg_hw[3 - ((long)i - nuser)];
+
+          if (2 == (long)i - nuser && a->obj_org_used) /* pinned .PROG. */
+            val = 0;
+
           flag = segflag[(long)i - nuser];
         }
 
@@ -3101,6 +3123,27 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         }
       else
         do_line (a, ln);
+    }
+
+  /*
+   * .EXIT broke the loop before the last body line, so its trailing ']' was
+   * never appended -- emit the body close on its own '+'-marked line, as the
+   * originals do.
+   */
+  if (outer && a->macro_exit && 2 == a->pass && !(a->lst_ctl & LSTC_SALL))
+    {
+      a->nbytes = 0;
+      a->lst_kind = 0;
+      a->lst_loc = -1; /* the lone ']' has no location */
+      a->lst_lbase = -1;
+      a->lst_obase = 0;
+      a->lst_nec = 0;
+      a->lst_qoff = -1;
+      a->mac_src = "]";
+      a->mac_plus = 1;
+      print_lst (a, a->lc, "]");
+      a->mac_src = NULL;
+      a->mac_plus = 0;
     }
 
   a->macro_depth--;
