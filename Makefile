@@ -118,12 +118,15 @@ test: test_expr asm tests/test_trunc.sh tests/test_obj.sh \
 
 # longtest: everything in 'test' plus the slow, tnylpo-gated checks -- the
 # differential object comparison against the original PSA PASM (tools/vrel.sh
-# over every fixture, including the absolute SARGON) and the SARGON playability
-# run (tests/test_play.sh).  The tnylpo-dependent parts skip cleanly when the
-# CP/M emulator is not installed.
+# over EVERY fixture that has a committed object golden, including the absolute
+# SARGON) and the SARGON playability run (tests/test_play.sh).  The fixture
+# list is derived from tests/golden/*.rel so it never goes stale as fixtures
+# are added.  The tnylpo-dependent parts skip cleanly when the CP/M emulator is
+# not installed.
 longtest: test tests/test_play.sh tools/vrel.sh
 	@if command -v tnylpo > /dev/null 2>&1; then \
-		for f in smoke data insn8080 objword sargon newkw seg blnk ext; do \
+		for f in $$(ls tests/golden/*.rel 2> /dev/null \
+			| sed 's|.*/||; s|\.rel$$||'); do \
 			printf '%s\n' "vrel: $$f"; \
 			./tools/vrel.sh tests/$$f.asm || exit 1; \
 		done; \
