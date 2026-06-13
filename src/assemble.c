@@ -91,7 +91,14 @@ typedef struct
   int next_ebase;  /* next external relocation-base number to assign (>=4) */
   int next_decl;   /* next .INTERN/.ENTRY declaration sequence number      */
   char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
-  int errors;
+  int errors;      /* error count of the CURRENT pass (pass-2 = the total) */
+  int errs_hdr;    /* prior-pass error total, shown in the PASM page header */
+  char lst_ec[2];  /* up to two error-code letters for this line's column 1 */
+  int lst_nec;     /* number of error codes recorded for this line          */
+  int lst_qoff;    /* `?' error-marker offset into the source line, or -1    */
+  const char *cur_line; /* the source line currently being assembled        */
+  int ppos;        /* current parse offset into cur_line, for the `?' marker */
+  int eval_undef;  /* the last eval failed on an undefined symbol (-> `U')   */
   int ended;
   u8 bytes[64];
   int nbytes;
@@ -421,13 +428,80 @@ emit_imm8 (astate *a, const char *line, const value_t *v)
 
 /******************************************************************************/
 
+/*
+ * The originals flag an error with a single letter in listing column 1 (the
+ * first two per statement) -- map each diagnostic to its Appendix-C letter.
+ * Most operand/argument faults are the broad "A" (argument) class; the rest
+ * carry their specific code.
+ */
+
+static char
+err_letter (const char *msg)
+{
+  static const struct
+  {
+    const char *msg;
+    char code;
+  } map[] = { { "unknown operator", 'O' },
+              { "user .ERROR", '*' },
+              { "phase error", 'P' },
+              { "8-bit relocation illegal", 'R' },
+              { "8-bit external out of range", 'R' },
+              { "size must be absolute", 'R' },
+              { NULL, 0 } };
+  int i;
+
+  for (i = 0; NULL != map[i].msg; i++)
+    if (0 == strcmp (msg, map[i].msg))
+      return map[i].code;
+
+  return 'A'; /* "argument error": the broad class for operand faults */
+}
+
+/******************************************************************************/
+
 static void
 aerr (astate *a, const char *line, const char *msg)
 {
   if (2 == a->pass)
-    (void)fprintf (stderr, "  *** %s: %s\n", msg, line);
+    {
+      char code = ((a->eval_undef) ? 'U' : err_letter (msg));
 
-  a->errors++;
+      (void)fprintf (stderr, "  *** %c %s: %s\n", code, msg, line);
+
+      if (a->lst_nec < 2) /* the listing shows the first two codes per line */
+        a->lst_ec[a->lst_nec++] = code;
+
+      if (a->lst_qoff < 0) /* the `?' marks the first error's parse position */
+        a->lst_qoff = a->ppos;
+
+      a->errors++; /* the reported total is the pass-2 count (counted once) */
+    }
+  else
+    a->errs_hdr++; /* pass-1 total: shown in the PASM page header */
+}
+
+/******************************************************************************/
+
+/*
+ * Offset of `p' within the line starting at `base', counted (not subtracted)
+ * and clamped so the result provably fits an int -- the originals' lint
+ * rejects a ptrdiff_t-to-int conversion.  Used for the `?' error-marker column.
+ */
+
+static int
+line_off (const char *base, const char *p)
+{
+  const char *q;
+  int n = 0;
+
+  if (NULL == base || NULL == p)
+    return 0;
+
+  for (q = base; q != p && n < 4096; q++)
+    n++;
+
+  return n;
 }
 
 /******************************************************************************/
@@ -459,6 +533,12 @@ eval1 (astate *a, const char **pp, value_t *v)
     }
 
   *pp = endp;
+
+  /* track the parse position for the `?' error marker (offset into the line) */
+  a->ppos = line_off (a->cur_line, endp);
+
+  /* an undefined-symbol fault is the 'U' code, not the generic 'A' */
+  a->eval_undef = (rc && NULL != err && NULL != strstr (err, "undefined"));
 
   return rc;
 }
@@ -1915,10 +1995,19 @@ lst_wrap (astate *a, int col, int wrapw, int indent)
  */
 
 static void
-lst_source (astate *a, const char *s, int col, int wrapw, int indent)
+lst_source (astate *a, const char *s, int col, int wrapw, int indent, int qoff)
 {
-  for (; '\0' != *s; s++)
+  int si = 0; /* source character index, for the `?' error marker */
+
+  for (; '\0' != *s; s++, si++)
     {
+      if (si == qoff) /* error marker, just before the parse-position char */
+        {
+          col = lst_wrap (a, col, wrapw, indent);
+          (void)fputc ('?', a->lst);
+          col++;
+        }
+
       if ('\t' == *s)
         { /*
            * tab stops are 8 columns apart measured FROM the source-field
@@ -1940,6 +2029,12 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent)
           (void)fputc (*s, a->lst);
           col++;
         }
+    }
+
+  if (si == qoff) /* error at the end of the statement text */
+    {
+      (void)lst_wrap (a, col, wrapw, indent);
+      (void)fputc ('?', a->lst);
     }
 
   (void)fputc ('\n', a->lst);
@@ -2050,11 +2145,29 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         lst_header (a);
       }
 
+    {
+      /*
+       * the error-code letter(s) occupy column 1 (and 2) of the line,
+       * overwriting the leading blanks (three before the LC, eleven on a
+       * blank-LC line); the rest of the line is unchanged
+       */
+      char lead[12];
+      int lw = ((loc < 0) ? 11 : 3);
+      int k;
+
+      /* k < 2 pins the lst_ec[] index for static analyzers (nec is <= 2) */
+      for (k = 0; k < lw; k++)
+        lead[k] = ((k < a->lst_nec && k < 2) ? a->lst_ec[k] : ' ');
+
+      lead[lw] = '\0';
+      (void)fputs (lead, a->lst);
+    }
+
     if (over)
       {
         int p;
 
-        (void)fprintf (a->lst, "   %04X%-4s%s", (unsigned)loc, lfl, col);
+        (void)fprintf (a->lst, "%04X%-4s%s", (unsigned)loc, lfl, col);
 
         for (p = 11 + clen; p < scol; p++)
           (void)fputc (' ', a->lst);
@@ -2062,21 +2175,22 @@ print_lst (astate *a, u16 lc0, const char *rawline)
     else if (mark)
       { /* the marker occupies the final byte-field column */
         if (loc < 0)
-          (void)fprintf (a->lst, "           %-*s%c", bw - 1, col, mark);
+          (void)fprintf (a->lst, "%-*s%c", bw - 1, col, mark);
         else
-          (void)fprintf (a->lst, "   %04X%-4s%-*s%c", (unsigned)loc, lfl,
-                         bw - 1, col, mark);
+          (void)fprintf (a->lst, "%04X%-4s%-*s%c", (unsigned)loc, lfl, bw - 1,
+                         col, mark);
       }
     else
       {
         if (loc < 0) /* .END and other blank-LOC lines */
-          (void)fprintf (a->lst, "           %-*s", bw, col);
+          (void)fprintf (a->lst, "%-*s", bw, col);
         else
-          (void)fprintf (a->lst, "   %04X%-4s%-*s", (unsigned)loc, lfl, bw,
-                         col);
+          (void)fprintf (a->lst, "%04X%-4s%-*s", (unsigned)loc, lfl, bw, col);
       }
 
-    lst_source (a, src, scol, wrapw, indent);
+    lst_source (a, src, scol, wrapw, indent,
+                ((a->lst_qoff >= 0) ? a->lst_qoff - line_off (rawline, src)
+                                    : -1));
   }
 }
 
@@ -2094,9 +2208,20 @@ lst_header (astate *a)
   (void)fprintf (a->lst, "\n\n\n");
 
   if (DIALECT_PASM == a->dialect)
-    (void)fprintf (a->lst, "%-71sPage %d\n\n%-6.6s - %s\n\n\n\n",
-                   "PSA Macro Assembler [C12011-0102 ]", a->lst_page,
-                   a->modname, a->title);
+    {
+      /* PASM puts the error count in the page header (only when nonzero); the
+       * line replaces the blank line that otherwise follows "Page N" */
+      (void)fprintf (a->lst, "%-71sPage %d\n",
+                     "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
+
+      if (a->errs_hdr > 0)
+        (void)fprintf (a->lst, " - %d Errors Were Detected *****\n",
+                       a->errs_hdr);
+      else
+        (void)fputc ('\n', a->lst);
+
+      (void)fprintf (a->lst, "%-6.6s - %s\n\n\n\n", a->modname, a->title);
+    }
   else
     (void)fprintf (a->lst, "%-64sPAGE %d\n%-6.6s - %s\n\n\n\n",
                    "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
@@ -2276,11 +2401,17 @@ lst_symhead (astate *a)
 
   if (DIALECT_PASM == a->dialect)
     {
-      (void)fprintf (
-          a->lst,
-          "%-71sPage %d\n\n%-6.6s - %s\n+++++ Symbol Table +++++\n\n\n",
-          "PSA Macro Assembler [C12011-0102 ]", a->lst_page, a->modname,
-          a->title);
+      (void)fprintf (a->lst, "%-71sPage %d\n",
+                     "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
+
+      if (a->errs_hdr > 0) /* error count in the header, as on the body pages */
+        (void)fprintf (a->lst, " - %d Errors Were Detected *****\n",
+                       a->errs_hdr);
+      else
+        (void)fputc ('\n', a->lst);
+
+      (void)fprintf (a->lst, "%-6.6s - %s\n+++++ Symbol Table +++++\n\n\n",
+                     a->modname, a->title);
       a->lst_line = 9;
     }
   else
@@ -3021,6 +3152,11 @@ do_line (astate *a, const char *line)
   a->lst_lbase = -1; /* default: LC base from lc_reloc/base */
   a->lst_obase = 0;
   a->lst_ctlstmt = 0; /* set by the listing-control directives */
+  a->lst_nec = 0;    /* per-line error-code letters (col 1) */
+  a->lst_qoff = -1;  /* per-line `?' error-marker offset */
+  a->cur_line = line; /* base for the parse-position offsets */
+  a->ppos = 0;
+  a->eval_undef = 0;
 
   if (a->ended)
     return;
@@ -3150,6 +3286,11 @@ do_line (astate *a, const char *line)
     }
 
   lex_line (bp, &L);
+
+  /* default `?' position: the operand field (after the op); eval1 advances
+   * it as it consumes the expression, so an operand error marks where it
+   * stopped */
+  a->ppos = line_off (line, L.operands);
 
   op[0] = '\0';
 
@@ -3847,12 +3988,22 @@ do_line (astate *a, const char *line)
     {
       /*
        * a machine instruction (encode_insn emits it), a listing/output
-       * no-op directive, or -- in pass 2 -- an unknown operator
+       * no-op directive, or an unknown operator
        */
 
-      if (!encode_insn (a, line, op, L.operands) && !is_noop_dir (op)
-          && 2 == a->pass)
-        aerr (a, line, "unknown operator");
+      if (!encode_insn (a, line, op, L.operands) && !is_noop_dir (op))
+        { /*
+           * unknown operator (Operation error): the originals flag 'O' and
+           * emit a four-byte zero placeholder, advancing the LC.  Done in both
+           * passes so the LC stays consistent and the pass-1 count feeds the
+           * PASM page header.
+           */
+          aerr (a, line, "unknown operator");
+          emit (a, 0);
+          emit (a, 0);
+          emit (a, 0);
+          emit (a, 0);
+        }
     }
 
   if (2 == a->pass)
@@ -4364,7 +4515,18 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
       (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
   }
 
-  (void)fprintf (a.lst, "\n%d error(s)\n", a.errors);
+  /*
+   * Both dialects emit a trailing "N Errors Were Detected *****" line when
+   * there are errors (PASM mixed-case, ZASM upper-case; PASM also shows the
+   * count in every page header).  With no errors, keep the clone's own
+   * "%d error(s)" line (the project listing-compare strips it).
+   */
+  if (a.errors <= 0)
+    (void)fprintf (a.lst, "\n%d error(s)\n", a.errors);
+  else if (DIALECT_PASM == dialect)
+    (void)fprintf (a.lst, "%d Errors Were Detected *****\n", a.errors);
+  else
+    (void)fprintf (a.lst, "%d ERRORS WERE DETECTED *****\n", a.errors);
 
   /* with -l to a real file, also report the count on the console */
   if (NULL != lf)
