@@ -1414,15 +1414,18 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
   /*
    * record the operand's relocation base for the value column.  A 16-bit
-   * operand may relocate to any base.  An 8-bit operand only carries a flag
-   * when it is an EXTERNAL byte (base >= 4): a segment-relative 8-bit value
-   * is illegal, and a relative-jump displacement (JMPR/JRx/DJNZ) is an
-   * absolute offset even when its target symbol is relocatable.
+   * operand may relocate to any base.  PSA shows an 8-bit RELOCATABLE operand
+   * spaced off with its base flag too -- a segment byte `3E 00'' / `3E 00"''
+   * (an illegal truncation, also flagged `R') or an external byte `3E 00:NN''
+   * -- whereas TDL packs it (`3E00'').  A relative-jump displacement
+   * (JMPR/JRx/DJNZ, FMT_REL) is an absolute offset even when its target is
+   * relocatable, so it carries no flag (except the pre-existing external edge).
    */
   a->lst_obase
       = ((2 == a->lst_opw && 0 != v.reloc)
              ? (int)v.base
-             : ((1 == a->lst_opw && v.base >= 4 && DIALECT_PASM == a->dialect)
+             : ((1 == a->lst_opw && DIALECT_PASM == a->dialect
+                 && (v.base >= 4 || (0 != v.reloc && FMT_REL != in->fmt)))
                     ? (int)v.base
                     : 0));
 
