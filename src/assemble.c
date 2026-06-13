@@ -2485,13 +2485,16 @@ lst_header (astate *a)
       else
         (void)fputc ('\n', a->lst);
 
-      /* the leading multiply-defined report page omits the ".MAIN. - title"
-       * subtitle (PASM prints a blank line in its place) */
-      if (a->mdef_page)
+      /* the leading multiply-defined report page, and an .XLINK core image,
+       * omit the ".MAIN. - title" subtitle (a blank line in its place) */
+      if (a->mdef_page || a->obj_xlink)
         (void)fprintf (a->lst, "\n\n\n\n");
       else
         (void)fprintf (a->lst, "%-6.6s - %s\n\n\n\n", a->modname, a->title);
     }
+  else if (a->obj_xlink) /* ZASM .XLINK: blank subtitle line */
+    (void)fprintf (a->lst, "%-64sPAGE %d\n\n\n\n\n",
+                   "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page);
   else
     (void)fprintf (a->lst, "%-64sPAGE %d\n%-6.6s - %s\n\n\n\n",
                    "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
@@ -2780,17 +2783,28 @@ lst_symhead (astate *a)
       else
         (void)fputc ('\n', a->lst);
 
-      (void)fprintf (a->lst, "%-6.6s - %s\n+++++ Symbol Table +++++\n\n\n",
-                     a->modname, a->title);
+      /* an .XLINK core image omits the ".MAIN. - title" subtitle */
+      if (a->obj_xlink)
+        (void)fprintf (a->lst, "\n+++++ Symbol Table +++++\n\n\n");
+      else
+        (void)fprintf (a->lst, "%-6.6s - %s\n+++++ Symbol Table +++++\n\n\n",
+                       a->modname, a->title);
+
       a->lst_line = 9;
     }
   else
     {
-      (void)fprintf (a->lst,
-                     "%-64sPAGE %d\n%-6.6s - %s\n"
-                     "+++++ SYMBOL TABLE +++++\n\n\n",
-                     "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
-                     a->modname, a->title);
+      if (a->obj_xlink)
+        (void)fprintf (a->lst, "%-64sPAGE %d\n\n+++++ SYMBOL TABLE +++++\n\n\n",
+                       "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21",
+                       a->lst_page);
+      else
+        (void)fprintf (a->lst,
+                       "%-64sPAGE %d\n%-6.6s - %s\n"
+                       "+++++ SYMBOL TABLE +++++\n\n\n",
+                       "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
+                       a->modname, a->title);
+
       a->lst_line = 8;
     }
 }
@@ -2829,7 +2843,8 @@ lst_symtab (astate *a)
   qsort (all, (size_t)nuser, sizeof (symbol *), sym_name_cmp);
   (void)fputc ('\f', a->lst); /* eject to a fresh page */
   lst_symhead (a);
-  total = nuser + 3;
+  /* an .XLINK core image has no link info: omit the segment-base rows */
+  total = nuser + (a->obj_xlink ? 0 : 3);
   col = 0;
 
   for (i = 0; i < total; i++)
@@ -4327,15 +4342,14 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1; /* output-mode directive: blank LC in the listing */
     }
   else if (opeq (op, ".LINK", NULL))
-    { /* emit the full link records (the default) */
+    { /* emit the full link records (the default); an output directive that
+       * lists with a blank LC (not a listing-control statement) */
       a->obj_xlink = 0;
-      a->lst_ctlstmt = 1;
       a->lst_loc = -1;
     }
   else if (opeq (op, ".XLINK", NULL))
     { /* relocatable core image: suppress the !/\ link records */
       a->obj_xlink = 1;
-      a->lst_ctlstmt = 1;
       a->lst_loc = -1;
     }
   else if (opeq (op, ".I8080", NULL))
@@ -5069,15 +5083,18 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           }
 
         /*
-         * the page-1 heading prints the module name, but .IDENT is not seen
-         * until pass 2 reads the body -- carry the name learned in pass 1
-         * across the pass-2 reset so the first heading shows it
+         * the page-1 heading prints the module name and (for .XLINK) omits the
+         * subtitle, but neither .IDENT nor .XLINK is seen until pass 2 reads
+         * the body -- carry both learned in the prior pass across the pass-2
+         * reset so the first heading is correct
          */
         {
           char modsave[8];
+          int xlsave = a.obj_xlink;
           (void)xstrlcpy (modsave, a.modname, sizeof (modsave));
           init_pass (&a, 2);
           (void)xstrlcpy (a.modname, modsave, sizeof (a.modname));
+          a.obj_xlink = xlsave;
         }
         lst_header (&a);
         process_module (&a, srcpath, modidx);
