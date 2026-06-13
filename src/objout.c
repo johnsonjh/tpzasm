@@ -313,8 +313,8 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
 
           /* doff + d <= ndata <= REC_CAP + 8 by construction; the explicit
            * bound lets static analyzers prove the data[] read stays in range */
-          for (d = 0; d < idlen[ie] && doff + d < REC_CAP + 8; d++)
-            rb_bin (&r, (unsigned)data[doff + d]);
+          for (d = 0; d < idlen[ie] && (long)doff + d < REC_CAP + 8; d++)
+            rb_bin (&r, (unsigned)data[(long)doff + d]);
 
           doff += idlen[ie];
           ie++;
@@ -435,7 +435,7 @@ obj_module (FILE *f, const objspec *s)
           rb_bin (&r, (unsigned)n);
 
           for (k = 0; k < n; k++)
-            rb_name (&r, s->ents[j + k].name);
+            rb_name (&r, s->ents[(long)j + k].name);
 
           rb_flush (&r);
           j += n;
@@ -474,11 +474,11 @@ obj_module (FILE *f, const objspec *s)
 
           for (k = 0; k < n; k++)
             {
-              const objsym *e = ((j + k < 3) ? &segs[j + k]
-                                             : &s->exts[j + k - 3]);
+              const objsym *e = (((long)j + k < 3) ? &segs[(long)j + k]
+                                             : &s->exts[(long)j + k - 3]);
               rb_name (&r, e->name);
               rb_bin (&r, (unsigned)e->base);
-              rb_be16 (&r, e->value);
+              rb_be16 (&r, (unsigned)e->value);
             }
 
           rb_flush (&r);
@@ -511,9 +511,9 @@ obj_module (FILE *f, const objspec *s)
 
               for (k = 0; k < n; k++)
                 {
-                  rb_name (&r, grp[j + k].name);
-                  rb_bin (&r, (unsigned)grp[j + k].base);
-                  rb_be16 (&r, grp[j + k].value);
+                  rb_name (&r, grp[(long)j + k].name);
+                  rb_bin (&r, (unsigned)grp[(long)j + k].base);
+                  rb_be16 (&r, (unsigned)grp[(long)j + k].value);
                 }
 
               rb_flush (&r);
@@ -593,9 +593,9 @@ obj_module (FILE *f, const objspec *s)
 
           for (k = 0; k < n; k++)
             {
-              rb_name (&r, s->psyms[j + k].name);
-              rb_bin (&r, (unsigned)s->psyms[j + k].base);
-              rb_be16 (&r, s->psyms[j + k].value);
+              rb_name (&r, s->psyms[(long)j + k].name);
+              rb_bin (&r, (unsigned)s->psyms[(long)j + k].base);
+              rb_be16 (&r, (unsigned)s->psyms[(long)j + k].value);
             }
 
           rb_flush (&r);

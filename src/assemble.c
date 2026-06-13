@@ -2321,7 +2321,8 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
     {
       long loc = ((long)lc0 + (long)k * cap) & 0xFFFF;
       int b0 = k * cap;
-      int b1 = (((b0 + cap) < a->nbytes) ? (b0 + cap) : a->nbytes);
+      long bend = (long)b0 + cap; /* widen the sum (op +) to a long */
+      int b1 = (int)((bend < a->nbytes) ? bend : a->nbytes);
       int so = ((0 == k) ? 0 : a->limg_split[k - 1]);
       int se = ((k == a->limg_ns) ? srclen : a->limg_split[k]);
       char bf[40];
@@ -3088,9 +3089,9 @@ do_insert (astate *a, const char *field)
     {
       int k = 0;
 
-      while ('\0' != name[k + 2])
+      while ('\0' != name[(long)k + 2])
         {
-          name[k] = name[k + 2];
+          name[k] = name[(long)k + 2];
           k++;
         }
 
@@ -3126,6 +3127,26 @@ dupstr (const char *s)
     (void)memcpy (p, s, n);
 
   return p;
+}
+
+/******************************************************************************/
+
+/* Take ownership of S (a malloc'd macro body line): store it in M's body
+ * array, or free it when M is already at the 64-line cap or S is NULL.
+ * Routing every dupstr() result through this transfer-of-ownership helper
+ * makes the pointer's escape explicit; an older gcc -fanalyzer otherwise
+ * reports a spurious leak where the allocation and the array store share
+ * one statement. */
+static void
+macro_addbody (macrodef *m, char *s)
+{
+  if (NULL == s)
+    return;
+
+  if (m->nbody < 64)
+    m->body[m->nbody++] = s;
+  else
+    FREE (s);
 }
 
 /******************************************************************************/
@@ -3207,12 +3228,7 @@ macro_capture (astate *a, const char *p)
           if (0 == a->def_depth)
             {
               buf[n] = '\0';
-
-              if (m->nbody < 64)
-                {
-                  m->body[m->nbody] = dupstr (buf);
-                  m->nbody++;
-                }
+              macro_addbody (m, dupstr (buf));
 
               m->next = a->macros;
               a->macros = m;
@@ -3230,12 +3246,7 @@ macro_capture (astate *a, const char *p)
     }
 
   buf[n] = '\0';
-
-  if (m->nbody < 64)
-    {
-      m->body[m->nbody] = dupstr (buf);
-      m->nbody++;
-    }
+  macro_addbody (m, dupstr (buf));
 }
 
 /******************************************************************************/
@@ -5246,8 +5257,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
             if (a.obj_psym && NULL != psyms)
               {
-                collect_psyms (a.syms, (a.obj_org_used ? 0u : a.seg_hw[1]),
-                               a.seg_hw[2], a.seg_hw[3], psyms, &os.npsyms);
+                collect_psyms (a.syms,
+                               (a.obj_org_used ? 0u : (unsigned)a.seg_hw[1]),
+                               (unsigned)a.seg_hw[2], (unsigned)a.seg_hw[3],
+                               psyms, &os.npsyms);
                 os.psym = 1;
               }
 
