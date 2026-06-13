@@ -406,6 +406,17 @@ emit_imm8 (astate *a, const char *line, const value_t *v)
     {
       int sv = ((v->value < 0x8000) ? (int)v->value : (int)v->value - 0x10000);
 
+      if (DIALECT_ZASM == a->dialect)
+        { /*
+           * TDL/ZASM has no 8-bit external relocation (Relocation error); the
+           * originals emit the value as an absolute placeholder byte.  PASM
+           * does support it (the `111' control code below).
+           */
+          aerr (a, line, "8-bit external illegal");
+          emit (a, (u16)(v->value & 0xFFu));
+          return;
+        }
+
       if (sv < -128 || sv > 255)
         aerr (a, line, "8-bit external out of range");
 
@@ -445,8 +456,10 @@ err_letter (const char *msg)
   } map[] = { { "unknown operator", 'O' },
               { "user .ERROR", '*' },
               { "phase error", 'P' },
+              { "multiply-defined symbol", 'M' },
               { "8-bit relocation illegal", 'R' },
               { "8-bit external out of range", 'R' },
+              { "8-bit external illegal", 'R' },
               { "size must be absolute", 'R' },
               { NULL, 0 } };
   int i;
@@ -1214,7 +1227,9 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
   a->lst_obase
       = ((2 == a->lst_opw && 0 != v.reloc)
              ? (int)v.base
-             : ((1 == a->lst_opw && v.base >= 4) ? (int)v.base : 0));
+             : ((1 == a->lst_opw && v.base >= 4 && DIALECT_PASM == a->dialect)
+                    ? (int)v.base
+                    : 0));
 
   return 1;
 }
@@ -3343,6 +3358,15 @@ do_line (astate *a, const char *line)
           s->val.ext = NULL;
           s->defined = 1;
           s->seen = (unsigned char)a->pass;
+        }
+      else if (s->defined)
+        { /*
+           * the label is already defined in this pass: a Multiply-defined
+           * symbol error (the first value is kept).  The `?' marks the label,
+           * so point it just past the label name.
+           */
+          a->ppos = line_off (line, bp) + (int)strlen (L.label);
+          aerr (a, line, "multiply-defined symbol");
         }
     }
 
