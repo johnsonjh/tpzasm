@@ -200,6 +200,14 @@ typedef struct
   u8 wreloc[32]; /* per-.WORD-value relocation base (0 abs, 1/2/3/ext) */
 
   /*
+   * .LIMAGE multi-line byte image: source-line offsets at which the source
+   * splits across physical lines (recorded as data is parsed; the source runs
+   * one value ahead of the 6-byte / per-word image it sits beside)
+   */
+  int limg_split[68];
+  int limg_ns;
+
+  /*
    * macro-expansion listing: the originals fold the body into
    * the call line and flag continued statements with '+'
    */
@@ -1238,10 +1246,30 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
 /* ---- pseudo-ops ---------------------------------------------------- */
 
+/*
+ * .LIMAGE bookkeeping: when the byte image of a data statement crosses a
+ * `cap'-byte line boundary, record the source offset just past the value that
+ * pushed it over (so the listed source runs one value ahead of its bytes).
+ * `p' is the current parse pointer into `line'; cap is 6 for bytes/strings or
+ * the per-line word capacity for .WORD.
+ */
+
+static void
+limg_rec (astate *a, const char *line, const char *p, int cap)
+{
+  if (2 == a->pass && (a->lst_ctl & LSTC_LIMAGE))
+    while (a->nbytes > (a->limg_ns + 1) * cap
+           && a->limg_ns < (int)(sizeof (a->limg_split) / sizeof (int)))
+      a->limg_split[a->limg_ns++] = line_off (line, p);
+}
+
+/******************************************************************************/
+
 static void
 do_data (astate *a, const char *line, const char *p, int width)
 {
   a->lst_kind = ((2 == width) ? 2 : 1); /* listing: words vs bytes */
+  a->limg_ns = 0;
   for (;;)
     { /* items are  {[r]}n , {[r]}n , ... */
       value_t v;
@@ -1286,6 +1314,10 @@ do_data (astate *a, const char *line, const char *p, int width)
           else
             emit_imm8 (a, line, &v);
         }
+
+      /* .LIMAGE: record where the source splits across the byte image */
+      limg_rec (a, line, p,
+                ((2 == width) ? ((DIALECT_PASM == a->dialect) ? 2 : 4) : 6));
 
       p = skipws (p);
 
@@ -1343,6 +1375,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
   u16 last_lc = 0;
 
   a->lst_kind = 1; /* listing: byte stream */
+  a->limg_ns = 0;
 
   for (;;)
     {
@@ -1365,6 +1398,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
               emit (a, (u16)(unsigned char)*p);
               started = 1;
               p++;
+              limg_rec (a, line, p, 6); /* .LIMAGE: split per six bytes */
             }
 
           if (*p == d)
@@ -1392,6 +1426,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
           emit_imm8 (a, line, &v);
           started = 1;
           p = q;
+          limg_rec (a, line, p, 6);
         }
       else
         { /* bare byte expression */
@@ -1403,6 +1438,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
           last_lc = a->lc;
           emit_imm8 (a, line, &v);
           started = 1;
+          limg_rec (a, line, p, 6);
         }
 
       p = skipws (p);
@@ -2073,6 +2109,104 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent, int qoff)
 
 /******************************************************************************/
 
+/*
+ * .LIMAGE multi-line byte image: list EVERY byte of a data statement, six per
+ * line (one word per line for .WORD under PASM), splitting the source across
+ * the lines with a `\' continuation marker.  The split offsets were recorded
+ * while the data was parsed; the source runs one value ahead of its bytes.
+ */
+
+static void
+lst_limage (astate *a, u16 lc0, const char *rawline)
+{
+  int bw = ((DIALECT_PASM == a->dialect) ? 14 : 13);
+  int word = (2 == a->lst_kind);
+  int cap = (word ? ((DIALECT_PASM == a->dialect) ? 2 : 4) : 6);
+  int nlines = a->limg_ns + 1;
+  int srclen = (int)strlen (rawline);
+  int lbase
+      = ((a->lst_lbase >= 0) ? a->lst_lbase : (a->lc_reloc ? a->base : 0));
+  const char *lfl = ((lbase > 0) ? seg_flag (lbase, a->dialect) : " ");
+  int k;
+
+  for (k = 0; k < nlines; k++)
+    {
+      long loc = ((long)lc0 + (long)k * cap) & 0xFFFF;
+      int b0 = k * cap;
+      int b1 = (((b0 + cap) < a->nbytes) ? (b0 + cap) : a->nbytes);
+      int so = ((0 == k) ? 0 : a->limg_split[k - 1]);
+      int se = ((k == a->limg_ns) ? srclen : a->limg_split[k]);
+      char bf[40];
+      int bn = 0, i, col, indent;
+
+      if (a->lst_line >= LST_PAGE) /* page full */
+        {
+          (void)fputc ('\f', a->lst);
+          lst_header (a);
+        }
+
+      /* the byte (or word) image for this physical line */
+      if (word)
+        {
+          for (i = b0; i < b1 && (i + 1) < a->nbytes
+                       && (i + 1) < (int)sizeof (a->bytes);
+               i += 2)
+            {
+              int wi = i / 2;
+              int wf = ((wi < (int)sizeof (a->wreloc)) ? a->wreloc[wi] : 0);
+              unsigned wv
+                  = (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8));
+              bn += xsnprintf (bf + bn, sizeof (bf) - (size_t)bn, "%s%04X%s",
+                               ((i > b0) ? "   " : ""), wv,
+                               ((wf > 0) ? seg_flag (wf, a->dialect) : ""));
+            }
+        }
+      else
+        {
+          for (i = b0; i < b1 && i < (int)sizeof (a->bytes); i++)
+            bn += xsnprintf (bf + bn, sizeof (bf) - (size_t)bn, "%02X",
+                             (unsigned)a->bytes[i]);
+        }
+
+      bf[bn] = '\0';
+      (void)fprintf (a->lst, "   %04X%-4s%-*s", (unsigned)loc, lfl, bw, bf);
+      col = 11 + bw;
+      indent = 11 + bw;
+
+      if (k > 0) /* continuation lines lead with a `\' */
+        {
+          (void)fputc ('\\', a->lst);
+          col++;
+        }
+
+      for (i = so; i < se; i++) /* the source chunk, tabs expanded */
+        {
+          if ('\t' == rawline[i])
+            {
+              do
+                {
+                  (void)fputc (' ', a->lst);
+                  col++;
+                }
+              while (0 != ((col - indent) % 8));
+            }
+          else
+            {
+              (void)fputc (rawline[i], a->lst);
+              col++;
+            }
+        }
+
+      if (k < nlines - 1) /* every line but the last ends with a `\' */
+        (void)fputc ('\\', a->lst);
+
+      (void)fputc ('\n', a->lst);
+      a->lst_line++;
+    }
+}
+
+/******************************************************************************/
+
 static void
 print_lst (astate *a, u16 lc0, const char *rawline)
 {
@@ -2121,6 +2255,15 @@ print_lst (astate *a, u16 lc0, const char *rawline)
     mark = '@';
   else if (a->mac_plus || (a->mac_active && NULL == a->mac_src))
     mark = '+';
+
+  /* .LIMAGE: a data statement whose image spilled past one line is rendered
+   * as a multi-line byte image with the source split across the lines */
+  if ((a->lst_ctl & LSTC_LIMAGE) && a->limg_ns > 0 && 0 == mark
+      && (1 == a->lst_kind || 2 == a->lst_kind))
+    {
+      lst_limage (a, lc0, rawline);
+      return;
+    }
 
   col[0] = '\0';
 
@@ -3211,6 +3354,7 @@ do_line (astate *a, const char *line)
   a->lst_ctlstmt = 0; /* set by the listing-control directives */
   a->lst_nec = 0;    /* per-line error-code letters (col 1) */
   a->lst_qoff = -1;  /* per-line `?' error-marker offset */
+  a->limg_ns = 0;    /* per-line .LIMAGE source splits (set by do_data) */
   a->cur_line = line; /* base for the parse-position offsets */
   a->ppos = 0;
   a->eval_undef = 0;

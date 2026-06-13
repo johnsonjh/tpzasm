@@ -27,10 +27,12 @@ set -eu
 # and two fully independent modules separated by .PRGEND -- "library file
 # generation" -- each emitting its own !/+/@/\\/#/; record framing (prgend),
 # and default 6-character symbol truncation feeding the @/#/\\ name fields and
-# the relocation references (longname), and the '@' remainder operator applied
-# to identifier operands -- '@' is an operator, not a symbol char (oprem).
+# the relocation references (longname), the '@' remainder operator applied to
+# identifier operands -- '@' is an operator, not a symbol char (oprem) -- and
+# the .LIMAGE/.XIMAGE data directives, whose multi-line listing image must not
+# perturb the object output (limage).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
-oprem"
+oprem limage"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"
