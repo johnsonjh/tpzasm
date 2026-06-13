@@ -93,6 +93,7 @@ typedef struct
   char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
   int errors;      /* error count of the CURRENT pass (pass-2 = the total) */
   int errs_hdr;    /* prior-pass error total, shown in the PASM page header */
+  int count_only;  /* error-counting pre-pass: tally errs_hdr, list nothing   */
   char lst_ec[2];  /* up to two error-code letters for this line's column 1 */
   int lst_nec;     /* number of error codes recorded for this line          */
   int lst_qoff;    /* `?' error-marker offset into the source line, or -1    */
@@ -484,6 +485,16 @@ err_letter (const char *msg)
 static void
 aerr (astate *a, const char *line, const char *msg)
 {
+  if (a->count_only)
+    { /*
+       * the error-counting pre-pass: tally the total the PASM page header
+       * needs (it must be known before the body listing, but an undefined
+       * symbol is only detectable once the symbols are all defined).
+       */
+      a->errs_hdr++;
+      return;
+    }
+
   if (2 == a->pass)
     {
       char code = ((a->eval_undef) ? 'U' : err_letter (msg));
@@ -498,8 +509,7 @@ aerr (astate *a, const char *line, const char *msg)
 
       a->errors++; /* the reported total is the pass-2 count (counted once) */
     }
-  else
-    a->errs_hdr++; /* pass-1 total: shown in the PASM page header */
+  /* pass 1 just defines symbols; the header total comes from the count pass */
 }
 
 /******************************************************************************/
@@ -4639,6 +4649,20 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
         init_pass (&a, 1);
         process_module (&a, srcpath, modidx);
+
+        /*
+         * error-counting pre-pass (a third pass, distinct number so the
+         * label-redefinition `seen' logic still treats it as a fresh pass):
+         * with the symbols all defined, this detects every error -- including
+         * undefined references, which pass 1 tolerates -- so the PASM page
+         * header can show the total before the body listing.  It lists nothing
+         * and emits no object/image.
+         */
+        a.errs_hdr = 0;
+        init_pass (&a, 3);
+        a.count_only = 1;
+        process_module (&a, srcpath, modidx);
+        a.count_only = 0;
 
         /*
          * the page-1 heading prints the module name, but .IDENT is not seen
