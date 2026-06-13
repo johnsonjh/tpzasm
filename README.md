@@ -53,16 +53,27 @@
   [SARGON](tests/sargon.asm) codebases, producing byte‑for‑byte identical
   output to the reference TDL/PSA assemblers.
 
-  * Remaining known differences are mostly cosmetic issues in the generated
-    listing output, and error‑handling behavior has only been lightly verified.
+  * The standalone test corpus is byte‑for‑byte identical to both originals
+    in **both** the object output and the **listing**, for **both** dialects.
+    Error handling now reproduces the originals' lettered error codes (a
+    column‑1 letter, the `?` marker at the fault, and the per‑page/trailing
+    error count).  The remaining differences are a few listing details — the
+    macro‑expansion display model, **`.LIMAGE`**/**`.PAGE`**/**`.COMMENT`**,
+    a \~1‑line pagination residual on very large files, and a few deep
+    error‑listing cases (the leading pass‑1 error page, symbol‑table error
+    flags) — still being refined.
 
   * **TPZASM** implements the full **multi‑segment, relocatable, linkable**
     object model: the three program segments (**`.PROG.`**, **`.DATA.`**,
     **`.BLNK.`**) with `.LOC`/`.RELOC` segment switching and cross‑segment
     relocation, the predefined segment‑base symbols, external symbols
     (**`.EXTERN`**, with 16‑ and 8‑bit references), and the entry/internal
-    symbol records (**`.ENTRY`**, **`.INTERN`**, **`.IDENT`**).  All of this is
-    byte‑for‑byte identical to **PSA&nbsp;PASM&nbsp;1.02**.
+    symbol records (**`.ENTRY`**, **`.INTERN`**, **`.IDENT`**).  It also
+    implements multi‑module *library file generation* (**`.PRGEND`**): each
+    module is assembled as its own independent two‑pass unit and emits its own
+    object record framing.  All of this is byte‑for‑byte identical to
+    **PSA&nbsp;PASM&nbsp;1.02** (and, less the program‑id record, to
+    **TDL&nbsp;ZASM&nbsp;2.21**).
 
   * **TPZASM** can write the assembled output as a raw binary image, or as a
     **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or an absolute
@@ -77,14 +88,12 @@
 
 ## Future
 
-* Multi‑module *library file generation* (the **`.PRGEND`** pseudo‑op, which
-  ends a module like **`.END`** and then begins a fresh, fully independent
-  module in the same object file) is not yet implemented, but is planned for a
-  future release.  **`.PRGEND`** is recognized (so it raises no error), but is
-  currently treated as a no‑op, so such a source assembles as a single module
-  rather than several.  (Correct support requires assembling each module as an
-  independent two‑pass unit, so that forward references resolve within their own
-  module.)  The single‑module multi‑segment object model is complete.
+* A few **listing** details remain before the listing is byte‑for‑byte
+  identical on *every* input: the macro‑expansion display model (the `+`/`]`
+  body markers), **`.LIMAGE`**/**`.XIMAGE`** multi‑line byte images,
+  **`.PAGE`**/**`.EJECT`**/**`.COMMENT`**, a \~1‑line pagination residual on
+  very large files, and a few deep error‑listing cases (the leading pass‑1
+  error‑summary page and the symbol‑table error flags).
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
@@ -102,7 +111,11 @@
   symbol bugs) may be offered in a future release, but the well‑behaved
   **1.02** output currently remains the reference.
 
-* Enhanced error reporting and diagnostics may be added to future versions.
+* An optional *extended error checking* mode may be added: echoing errors to
+  the console even when the listing is written to a file, and emitting new,
+  clone‑only diagnostics the originals never gave (for example, warning when a
+  symbol longer than six characters is silently truncated).  It would be off by
+  default so the standard output stays byte‑identical to the originals.
 
 ## Notes
 
