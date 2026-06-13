@@ -219,9 +219,8 @@ skipws (const char *p)
 
 static int
 idchar (int c)
-{ /* underscore is NOT a symbol char (it flags a macro subscript reference) */
-  return isalnum (c) || '?' == c || '@' == c || '.' == c || '$' == c
-         || '%' == c;
+{ /* symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it */
+  return isalnum (c) || '.' == c || '$' == c || '%' == c;
 }
 
 /******************************************************************************/
@@ -1525,8 +1524,7 @@ parse_opname (const char *p, char *out)
 
   p = skipws (p);
 
-  while (isalnum ((unsigned char)*p) || '.' == *p || '?' == *p || '@' == *p
-         || '$' == *p || '%' == *p)
+  while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p || '%' == *p)
     {
       if (n < NAMEBUF - 1)
         out[n++] = (char)toupper ((unsigned char)*p);
@@ -2091,7 +2089,7 @@ lst_header (astate *a)
 
 /*
  * Collation rank for the symbol-table sort: the originals order digits, then
- * letters, then the remaining name characters ('.', '?', '@', '$', ...) -- so
+ * letters, then the remaining Radix-40 name characters ('$', '%', '.') -- so
  * e.g. P.PEP sorts AFTER PVALUE, not before P1 as plain ASCII would have it.
  */
 
@@ -2558,8 +2556,7 @@ do_define (astate *a, const char *operands)
   m->nbody = 0;
   m->next = NULL;
 
-  while (isalnum ((unsigned char)*p) || '?' == *p || '@' == *p || '.' == *p
-         || '$' == *p || '%' == *p)
+  while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p || '%' == *p)
     {
       if (n < NAMEBUF - 1)
         m->name[n++] = (char)toupper ((unsigned char)*p);
@@ -2581,8 +2578,8 @@ do_define (astate *a, const char *operands)
           const char *st = p;
           p = skipws (p);
 
-          while (isalnum ((unsigned char)*p) || '?' == *p || '@' == *p
-                 || '.' == *p || '$' == *p || '%' == *p)
+          while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p
+                 || '%' == *p)
             {
               if (pi < NAMEBUF - 1)
                 pn[pi++] = *p;
@@ -2643,8 +2640,8 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
           char pk[NAMEBUF];
           int pn = 0, k, isp = 0;
 
-          while ((isalnum ((unsigned char)*q) || '?' == *q || '@' == *q
-                  || '.' == *q || '$' == *q || '%' == *q)
+          while ((isalnum ((unsigned char)*q) || '.' == *q || '$' == *q
+                  || '%' == *q)
                  && pn < NAMEBUF - 1)
             pk[pn++] = *q++;
 
@@ -2674,14 +2671,13 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
           if ('\'' == *in && oi < 500)
             out[oi++] = *in++;
         }
-      else if (isalpha ((unsigned char)*in) || '?' == *in || '@' == *in
-               || '.' == *in || '%' == *in)
+      else if (isalpha ((unsigned char)*in) || '.' == *in || '%' == *in)
         {
           char tok[NAMEBUF];
           int tn = 0, j, pi = -1;
 
-          while ((isalnum ((unsigned char)*in) || '?' == *in || '@' == *in
-                  || '.' == *in || '$' == *in || '%' == *in)
+          while ((isalnum ((unsigned char)*in) || '.' == *in || '$' == *in
+                  || '%' == *in)
                  && tn < NAMEBUF - 1)
             tok[tn++] = *in++;
 

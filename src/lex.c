@@ -36,8 +36,9 @@
 
 static int
 idstart (int c)
-{ /* underscore is NOT a symbol char (it flags a macro subscript reference) */
-  return isalpha (c) || '?' == c || '@' == c || '.' == c || '%' == c;
+{ /* symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it
+     -- '_' flags a macro subscript reference, '@' is the remainder operator */
+  return isalpha (c) || '.' == c || '%' == c;
 }
 
 /******************************************************************************/
@@ -45,8 +46,7 @@ idstart (int c)
 static int
 idchar (int c)
 {
-  return isalnum (c) || '?' == c || '@' == c || '.' == c || '$' == c
-         || '%' == c;
+  return isalnum (c) || '.' == c || '$' == c || '%' == c;
 }
 
 /******************************************************************************/
