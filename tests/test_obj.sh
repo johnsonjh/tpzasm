@@ -23,8 +23,10 @@ set -eu
 # full 8080 instruction sweep (insn8080), an absolute (.PABS) program that
 # revisits earlier addresses via .LOC, exercising emission-order records and
 # overwritten bytes (sargon), and the Z80 I/O / overflow-alias instructions plus
-# .RAD40, the .SYN family, .EXIT/.IF1/.IF2, and the truncated spellings (newkw).
-cases="smoke data insn8080 objword sargon newkw seg blnk ext"
+# .RAD40, the .SYN family, .EXIT/.IF1/.IF2, and the truncated spellings (newkw),
+# and two fully independent modules separated by .PRGEND -- "library file
+# generation" -- each emitting its own !/+/@/\\/#/; record framing (prgend).
+cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"

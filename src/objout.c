@@ -356,14 +356,43 @@ emit_pabs_record (FILE *f, int ascii, const u8 *eb, long addr, int avail,
 
 /******************************************************************************/
 
-int
-obj_write (const char *path, const objspec *s)
-{
-  FILE *f = fopen (path, "wb");
-  recbuf r;
+/*
+ * Open an object stream for writing (raw binary, the records carry their own
+ * ASCII/binary framing via objspec.ascii).  Returns NULL on a file error.
+ */
 
-  if (NULL == f)
-    return 1;
+FILE *
+obj_open (const char *path)
+{
+  return fopen (path, "wb");
+}
+
+/******************************************************************************/
+
+/*
+ * Close an object stream.  Returns 0 on success, non-zero on a file error.
+ */
+
+int
+obj_close (FILE *f)
+{
+  return (0 != fclose (f)) ? 1 : 0;
+}
+
+/******************************************************************************/
+
+/*
+ * Append one module's complete record framing (`!' `+' `@' `\' `#', the data
+ * records, and the end-of-file record) to an open object stream.  A single
+ * object file holds one such module per .END, or several independent modules
+ * separated by .PRGEND ("library file generation"); each module emits its own
+ * full framing, so this is called once per module.
+ */
+
+void
+obj_module (FILE *f, const objspec *s)
+{
+  recbuf r;
 
   /* '!' module identification record (omitted under .XLINK) */
   if (!s->xlink)
@@ -543,11 +572,6 @@ obj_write (const char *path, const objspec *s)
   rb_be16 (&r, s->start);
   rb_bin (&r, (s->abs_mode ? 0 : (unsigned)(s->start_reloc ? 1 : 0)));
   rb_flush (&r);
-
-  if (0 != fclose (f))
-    return 1;
-
-  return 0;
 }
 
 /******************************************************************************/

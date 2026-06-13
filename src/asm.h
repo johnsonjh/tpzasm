@@ -29,6 +29,7 @@
 /******************************************************************************/
 
 # include <stddef.h> /* size_t, NULL */
+# include <stdio.h>  /* FILE          */
 
 /******************************************************************************/
 
@@ -228,11 +229,16 @@ typedef struct
 } objspec;
 
 /*
- * Write the TDL Object Module (or Intel-hex absolute module) for `spec' to
- * `path'.  Returns 0 on success, non-zero on a file error.
+ * Stream the TDL Object Module (or Intel-hex absolute module) for one or more
+ * modules: obj_open the path, obj_module each module's record framing, then
+ * obj_close.  A single .END source is one module; .PRGEND ("library file
+ * generation") separates several independent modules in one object file.
+ * obj_open returns NULL on a file error; obj_close returns non-zero on one.
  */
 
-int obj_write (const char *path, const objspec *s);
+FILE *obj_open (const char *path);
+void obj_module (FILE *f, const objspec *s);
+int obj_close (FILE *f);
 
 /******************************************************************************/
 

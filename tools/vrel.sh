@@ -14,7 +14,7 @@ asmcommon=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 # shellcheck disable=SC1091
 . "${asmcommon}/.common.sh"
 export FIND_COMMAND_FATAL=1
-find_command basename cp dirname env mkdir python3 sed timeout tnylpo tr \
+find_command awk basename cp dirname env mkdir python3 sed timeout tnylpo tr \
   || exit 1
 
 ref=${ASM_REF:-${asmcommon}}
@@ -58,9 +58,12 @@ rm -f "${work}/${base}.rel" "${work}/${base}.hex"
 copy_obj "${work}/oracle.rel"
 
 # ASCII oracle: prepend .PHEX and reassemble (ASCII object, same extension).
+# .PRGEND resets the per-module output mode, so re-assert .PHEX after each
+# module boundary to keep every module ASCII (a no-op for single-module files).
 {
   printf '\t.PHEX\r\n'
-  sed 's/$/\r/' "${src}"
+  awk '{printf "%s\r\n",$0} toupper($0)~/\.PRGEN/{printf "\t.PHEX\r\n"}' \
+    "${src}"
   printf '\032'
 } \
   > "${work}/${base}.asm"

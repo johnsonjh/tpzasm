@@ -1483,13 +1483,12 @@ do_rad40 (astate *a, const char *line, const char *p)
  * listing / output-format directives that emit no bytes (handled for
  * now as no-ops; .PABS/.PREL below do affect the relocation mode).
  *
- * NOTE: .PRGEND (= .PRGEN) is recognized here only.  It is "library file
- * generation": it should end the current module like .END and then begin a
- * fresh, independent module in the same object file.  Correct support needs
- * each module assembled as its own two-pass unit (so forward references resolve
- * within their module), which this whole-file two-pass driver does not yet do,
- * so for now a source with .PRGEND assembles as one module instead of several
- * (see the README "Future" section).
+ * NOTE: .PRGEND (= .PRGEN) is NOT here: it is "library file generation",
+ * ending the current module like .END and then beginning a fresh, fully
+ * independent module in the same object file.  do_line handles it as a module
+ * terminator (like .END); the driver assembles each module as its own two-pass
+ * unit so forward references resolve within their module and emits one object
+ * record framing per module.
  */
 
 static int
@@ -1499,7 +1498,7 @@ is_noop_dir (const char *op)
       = { ".PHEX",   ".PBIN",    ".PAGE",   ".EJECT",  ".TITLE",  ".SBTTL",
           ".SUBTTL", ".REQUEST", ".NAME",   ".COMMENT", ".I8080", ".Z80",
           "PUBLIC",  ".PUBLIC",  ".PRNTX",  ".PRINTX", "COMMON",  ".COMMON",
-          ".PRGEND", NULL };
+          NULL };
   int i;
 
   for (i = 0; NULL != list[i]; i++)
@@ -3749,8 +3748,14 @@ do_line (astate *a, const char *line)
       a->title[n] = '\0';
       return; /* suppressed from the body listing */
     }
-  else if (opeq (op, ".END", "END"))
+  else if (opeq (op, ".END", "END") || opeq (op, ".PRGEND", NULL))
     {
+      /*
+       * .END terminates the file; .PRGEND ("library file generation")
+       * terminates the current module and the driver then assembles the next
+       * one independently into the same object file.  Both end the current
+       * module, blank the LOC column, and accept an optional start address.
+       */
       const char *p = skipws (L.operands);
 
       a->ended = 1;
@@ -3850,6 +3855,174 @@ process_file (astate *a, const char *path)
     }
 
   (void)fclose (f);
+}
+
+/******************************************************************************/
+
+/*
+ * Extract the canonical (uppercased, six-char-prefix-resolved) operator of a
+ * source line into `op' (NAMEBUF bytes), skipping an optional `label:'.  Used
+ * to find .PRGEND / .END module boundaries without dispatching the line.  The
+ * .OPSYN alias chain is intentionally not applied here: a module boundary is
+ * recognized by its canonical spelling, the form library sources use.
+ */
+
+static void
+line_op (const char *line, char *op)
+{
+  line_t L;
+  int k;
+
+  lex_line (line, &L);
+  op[0] = '\0';
+
+  if ('\0' == L.op[0])
+    return;
+
+  for (k = 0; k < NAMEBUF - 1 && '\0' != L.op[k]; k++)
+    op[k] = (char)toupper ((unsigned char)L.op[k]);
+
+  op[k] = '\0';
+  canon_dir (op);
+}
+
+/******************************************************************************/
+
+/* True if `line' is a .PRGEND (= .PRGEN) module-boundary directive. */
+
+static int
+line_is_prgend (const char *line)
+{
+  char op[NAMEBUF];
+
+  line_op (line, op);
+
+  return 0 == strcmp (op, ".PRGEND");
+}
+
+/******************************************************************************/
+
+/*
+ * Count the independent modules in a source file: one more than the number of
+ * .PRGEND boundaries, stopping at the .END file terminator.  A file with no
+ * .PRGEND is a single module (returns 1).
+ */
+
+static int
+count_modules (const char *path)
+{
+  FILE *f = fopen (path, "r");
+  char buf[1024], op[NAMEBUF];
+  int n = 1;
+
+  if (NULL == f)
+    return 1;
+
+  while (NULL != fgets (buf, (int)sizeof (buf), f))
+    {
+      line_op (buf, op);
+
+      if (0 == strcmp (op, ".PRGEND"))
+        n++;
+      else if (0 == strcmp (op, ".END") || 0 == strcmp (op, "END"))
+        break;
+    }
+
+  (void)fclose (f);
+
+  return n;
+}
+
+/******************************************************************************/
+
+/*
+ * Assemble one module of a (possibly multi-module) source: read the whole
+ * file but dispatch only the lines of module `modidx', skipping earlier
+ * modules by counting their .PRGEND boundaries.  do_line ends the target
+ * module at its own .PRGEND/.END (setting `ended'), which also stops the read.
+ */
+
+static void
+process_module (astate *a, const char *path, int modidx)
+{
+  FILE *f = fopen (path, "r");
+  char buf[1024];
+  int curmod = 0;
+
+  if (NULL == f)
+    {
+      (void)fprintf (stderr, "cannot open '%s'\n", path);
+      a->errors++;
+      return;
+    }
+
+  while (NULL != fgets (buf, (int)sizeof (buf), f) && !a->ended)
+    {
+      size_t n = strlen (buf);
+
+      while (n > 0 && ('\n' == buf[n - 1] || '\r' == buf[n - 1]))
+        {
+          buf[--n] = '\0';
+        }
+
+      if (curmod == modidx)
+        do_line (a, buf);
+      else if (line_is_prgend (buf))
+        curmod++; /* a skipped module's boundary: advance toward the target */
+    }
+
+  (void)fclose (f);
+}
+
+/******************************************************************************/
+
+/*
+ * Reset the pass-local assembler state at the start of a pass.  The symbol
+ * table, the accumulated error count, the listing pagination, and the image
+ * extent are preserved by the caller (they span the whole assembly); a new
+ * module additionally starts from a fresh symbol table.  Calling this for
+ * pass 1 of the first module is a no-op-equivalent reset (macros are already
+ * empty).
+ */
+
+static void
+init_pass (astate *a, int pass)
+{
+  a->pass = pass;
+  a->radix = RADIX_DEFAULT;
+  a->lc = 0;
+  a->lc_reloc = 1;
+  a->base = 1; /* implicit start: .LOC 0 of .PROG. */
+  a->next_ebase = 4;
+  a->next_decl = 1;
+  (void)xstrlcpy (a->modname, ".MAIN.", sizeof (a->modname));
+  a->seg_hw[0] = a->seg_hw[1] = a->seg_hw[2] = a->seg_hw[3] = 0;
+  a->loc_sp = 0;
+  a->obj_abs = 0; /* default .PREL */
+  a->obj_org_used = 0;
+  a->obj_start = 0;
+  a->obj_start_rel = 0;
+  a->em_n = 0; /* the emission log/spans are recorded in pass 2 only */
+  a->em_pending = 0;
+  a->nspans = 0;
+  a->emit_prev = -1;
+  a->img_any = 0;
+  a->ended = 0;
+  a->nalias = 0;
+  a->cdepth = 0;
+  a->in_prompt = 0;
+  a->genctr = 0;
+  a->macro_depth = 0;
+  a->macro_exit = 0;
+  a->scope = 0;
+  a->pending = 0;
+  a->pend_console = NULL;
+  a->lst_ctl = LSTC_DEFAULT;
+  a->lst_nsave = 0;
+  a->obj_xlink = 0;
+  macro_free_all (a);
+  a->defining = NULL;
+  a->def_started = 0;
 }
 
 /******************************************************************************/
@@ -4010,82 +4183,135 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         }
     }
 
-  a.img_any = 0;
   a.img_min = 0;
   a.img_max = 0;
-  a.obj_abs = 0; /* default .PREL */
-  a.obj_org_used = 0;
-  a.obj_start = 0;
-  a.obj_start_rel = 0;
-
-  a.pass = 1;
-  a.radix = RADIX_DEFAULT;
-  a.lc = 0;
-  a.lc_reloc = 1;
-  a.base = 1; /* implicit start: .LOC 0 of .PROG. */
-  a.next_ebase = 4;
-  a.next_decl = 1;
-  (void)xstrlcpy (a.modname, ".MAIN.", sizeof (a.modname));
-  a.seg_hw[0] = a.seg_hw[1] = a.seg_hw[2] = a.seg_hw[3] = 0;
-  a.loc_sp = 0;
   a.errors = 0;
-  a.ended = 0;
-  a.nalias = 0;
-  a.cdepth = 0;
-  a.macros = NULL;
-  a.defining = NULL;
-  a.def_started = 0;
-  a.in_prompt = 0;
-  a.genctr = 0;
-  a.macro_depth = 0;
-  a.macro_exit = 0;
-  a.scope = 0;
-  a.pending = 0;
-  a.pend_console = NULL;
-  a.lst_ctl = LSTC_DEFAULT;
-  a.lst_nsave = 0;
-  a.obj_xlink = 0;
 
-  process_file (&a, srcpath);
+  /*
+   * Assemble each independent module as its own two-pass unit so forward
+   * references resolve within their module, streaming each module's object
+   * record framing into the shared object file(s).  Modules are separated by
+   * .PRGEND ("library file generation"); a file with no .PRGEND is a single
+   * module, byte-identical to the original single-pass-pair driver.
+   */
+  {
+    int nmod = count_modules (srcpath);
+    int modidx;
+    FILE *relf = NULL;
+    FILE *hexf = NULL;
 
-  a.pass = 2;
-  a.radix = RADIX_DEFAULT;
-  a.lc = 0;
-  a.lc_reloc = 1;
-  a.base = 1; /* implicit start: .LOC 0 of .PROG. */
-  a.next_ebase = 4;
-  a.next_decl = 1;
-  (void)xstrlcpy (a.modname, ".MAIN.", sizeof (a.modname));
-  a.seg_hw[0] = a.seg_hw[1] = a.seg_hw[2] = a.seg_hw[3] = 0;
-  a.loc_sp = 0;
-  a.obj_abs = 0;
-  a.obj_org_used = 0;
-  a.obj_start = 0;
-  a.obj_start_rel = 0;
-  a.em_n = 0; /* the emission log/spans are recorded in pass 2 only */
-  a.em_pending = 0;
-  a.nspans = 0;
-  a.emit_prev = -1;
-  a.ended = 0;
-  a.nalias = 0;
-  a.cdepth = 0;
-  a.in_prompt = 0;
-  a.img_any = 0;
-  a.genctr = 0;
-  a.macro_depth = 0;
-  a.macro_exit = 0;
-  a.scope = 0;
-  a.pending = 0;
-  a.pend_console = NULL;
-  a.lst_ctl = LSTC_DEFAULT;
-  a.lst_nsave = 0;
-  a.obj_xlink = 0;
-  macro_free_all (&a);
-  a.defining = NULL;
-  a.def_started = 0;
-  lst_header (&a);
+    if (NULL != relpath)
+      {
+        relf = obj_open (relpath);
 
-  process_file (&a, srcpath);
+        if (NULL == relf)
+          (void)fprintf (stderr, "cannot write '%s'\n", relpath);
+      }
+
+    if (NULL != hexpath)
+      {
+        hexf = obj_open (hexpath);
+
+        if (NULL == hexf)
+          (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
+      }
+
+    for (modidx = 0; modidx < nmod; modidx++)
+      {
+        if (modidx > 0)
+          { /* a fresh module: discard the previous module's symbol table */
+            sym_free (a.syms);
+            a.syms = sym_new ();
+          }
+
+        init_pass (&a, 1);
+        process_module (&a, srcpath, modidx);
+
+        init_pass (&a, 2);
+        lst_header (&a);
+        process_module (&a, srcpath, modidx);
+
+        /* this module's object records (-R binary REL, -X ASCII REL) */
+        if (a.img_any && (NULL != relf || NULL != hexf))
+          {
+            objspec os;
+            int nsym = sym_count (a.syms);
+            objsym *exts = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
+                                             * sizeof (objsym));
+            objsym *ints = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
+                                             * sizeof (objsym));
+            objsym *ents = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
+                                             * sizeof (objsym));
+
+            os.nexts = 0;
+            os.nints = 0;
+            os.nents = 0;
+
+            if (NULL != exts && NULL != ints && NULL != ents)
+              collect_obj_syms (a.syms, exts, &os.nexts, ints, &os.nints, ents,
+                                &os.nents);
+
+            os.modname = a.modname;
+            os.exts = exts;
+            os.ints = ints;
+            os.ents = ents;
+            os.em_byte = a.em_byte;
+            os.em_rel = a.em_rel;
+            os.em_tbase = a.em_tbase;
+            os.span_a = a.span_a;
+            os.span_n = a.span_n;
+            os.span_seg = a.span_seg;
+            os.nspans = a.nspans;
+            /*
+             * .PROG. size = the LC high-water (segment span incl. any trailing
+             * reservation).  An explicit .LOC/ORG pins the code absolutely, so
+             * the segment then reports size 0, matching the originals.
+             */
+            os.prog_size = (a.obj_org_used ? 0u : a.seg_hw[1]);
+            os.data_size = a.seg_hw[2];
+            os.blnk_size = a.seg_hw[3];
+            os.abs_mode = a.obj_abs;
+            /*
+             * data-record base: .PROG.-relative (1) unless an explicit origin
+             * pinned the code absolutely (0)
+             */
+            os.data_base = (a.obj_org_used ? 0 : 1);
+            os.start = a.obj_start;
+            os.start_reloc = a.obj_start_rel;
+            os.emit_progid = (DIALECT_PASM == dialect);
+            os.xlink = a.obj_xlink;
+
+            if (NULL != relf)
+              {
+                os.ascii = 0;
+                obj_module (relf, &os);
+              }
+
+            if (NULL != hexf)
+              {
+                os.ascii = 1;
+                obj_module (hexf, &os);
+              }
+
+            if (NULL != exts)
+              FREE (exts);
+
+            if (NULL != ints)
+              FREE (ints);
+
+            if (NULL != ents)
+              FREE (ents);
+          }
+      }
+
+    /* relf/hexf are non-NULL only when relpath/hexpath are; check the paths
+     * explicitly anyway so the error message's deref is provably guarded */
+    if (NULL != relpath && NULL != relf && 0 != obj_close (relf))
+      (void)fprintf (stderr, "cannot write '%s'\n", relpath);
+
+    if (NULL != hexpath && NULL != hexf && 0 != obj_close (hexf))
+      (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
+  }
 
   if (a.lst_ctl & LSTC_SYM) /* .XSYM/.XPSYM suppress the symbol-table listing */
     lst_symtab (&a);
@@ -4096,6 +4322,11 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   if (NULL != lf)
     (void)fprintf (stderr, "%d error(s)\n", a.errors);
 
+  /*
+   * -o absolute image: the object records were already streamed per module
+   * above; the in-memory image holds the last module assembled (for the common
+   * single-module file, that is the whole program).
+   */
   if (NULL != a.image)
     {
       if (a.img_any && NULL != outpath)
@@ -4120,83 +4351,6 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
               (void)fclose (of);
             }
-        }
-
-      /* object output (-R binary REL, -X ASCII REL); both reuse one emitter */
-      if (a.img_any && (NULL != relpath || NULL != hexpath))
-        {
-          objspec os;
-          int nsym = sym_count (a.syms);
-          objsym *exts = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
-                                           * sizeof (objsym));
-          objsym *ints = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
-                                           * sizeof (objsym));
-          objsym *ents = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
-                                           * sizeof (objsym));
-
-          os.nexts = 0;
-          os.nints = 0;
-          os.nents = 0;
-
-          if (NULL != exts && NULL != ints && NULL != ents)
-            collect_obj_syms (a.syms, exts, &os.nexts, ints, &os.nints, ents,
-                              &os.nents);
-
-          os.modname = a.modname;
-          os.exts = exts;
-          os.ints = ints;
-          os.ents = ents;
-
-          os.em_byte = a.em_byte;
-          os.em_rel = a.em_rel;
-          os.em_tbase = a.em_tbase;
-          os.span_a = a.span_a;
-          os.span_n = a.span_n;
-          os.span_seg = a.span_seg;
-          os.nspans = a.nspans;
-          /*
-           * .PROG. size = the LC high-water (segment span incl. any trailing
-           * reservation).  An explicit .LOC/ORG pins the code absolutely, so
-           * the segment then reports size 0, matching the originals.
-           */
-          os.prog_size = (a.obj_org_used ? 0u : a.seg_hw[1]);
-          os.data_size = a.seg_hw[2];
-          os.blnk_size = a.seg_hw[3];
-          os.abs_mode = a.obj_abs;
-          /*
-           * data-record base: .PROG.-relative (1) unless an explicit origin
-           * pinned the code absolutely (0)
-           */
-          os.data_base = (a.obj_org_used ? 0 : 1);
-          os.start = a.obj_start;
-          os.start_reloc = a.obj_start_rel;
-          os.emit_progid = (DIALECT_PASM == dialect);
-          os.xlink = a.obj_xlink;
-
-          if (NULL != relpath)
-            {
-              os.ascii = 0;
-
-              if (0 != obj_write (relpath, &os))
-                (void)fprintf (stderr, "cannot write '%s'\n", relpath);
-            }
-
-          if (NULL != hexpath)
-            {
-              os.ascii = 1;
-
-              if (0 != obj_write (hexpath, &os))
-                (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
-            }
-
-          if (NULL != exts)
-            FREE (exts);
-
-          if (NULL != ints)
-            FREE (ints);
-
-          if (NULL != ents)
-            FREE (ents);
         }
 
       FREE (a.image);
