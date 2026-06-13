@@ -4345,6 +4345,14 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             if (NULL != ents)
               FREE (ents);
           }
+
+        /*
+         * each module lists its own symbol table at its end, on a fresh page
+         * (.XSYM/.XPSYM suppress it); for a single-module file this is the
+         * one closing table, unchanged from before
+         */
+        if (a.lst_ctl & LSTC_SYM)
+          lst_symtab (&a);
       }
 
     /* relf/hexf are non-NULL only when relpath/hexpath are; check the paths
@@ -4355,9 +4363,6 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
     if (NULL != hexpath && NULL != hexf && 0 != obj_close (hexf))
       (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
   }
-
-  if (a.lst_ctl & LSTC_SYM) /* .XSYM/.XPSYM suppress the symbol-table listing */
-    lst_symtab (&a);
 
   (void)fprintf (a.lst, "\n%d error(s)\n", a.errors);
 
