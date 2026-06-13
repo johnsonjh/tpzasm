@@ -91,6 +91,7 @@ lex_line (const char *line, line_t *out)
   out->op[0] = '\0';
   out->operands = p;
   out->assign = 0;
+  out->internal = 0;
 
   if ('\0' == *p || ';' == *p)
     return;
@@ -102,9 +103,17 @@ lex_line (const char *line, line_t *out)
       const char *r = skipws (q);
 
       if (':' == *r)
-        { /* label: */
+        { /* label:  (or `label::' -- the internal-definition delimiter) */
           (void)xstrlcpy (out->label, tok1, sizeof (out->label));
-          r = skipws (r + 1);
+          r++;
+
+          if (':' == *r)
+            { /* `::' declares the label internal (== .INTERN label) */
+              out->internal = 1;
+              r++;
+            }
+
+          r = skipws (r);
 
           if (idstart ((unsigned char)*r))
             r = parse_id (r, out->op);
@@ -115,7 +124,7 @@ lex_line (const char *line, line_t *out)
         }
 
       if ('=' == *r)
-        { /* symbol = / == expr */
+        { /* symbol = / == expr  (a trailing `:' makes the symbol internal) */
           (void)xstrlcpy (out->label, tok1, sizeof (out->label));
           (void)xstrlcpy (out->op, "=", sizeof (out->op));
           out->assign = 1;
@@ -123,6 +132,12 @@ lex_line (const char *line, line_t *out)
 
           if ('=' == *r)
             r++; /* '==' entry/global assignment */
+
+          if (':' == *r)
+            { /* `=:' / `==:' declares the symbol internal (== .INTERN sym) */
+              out->internal = 1;
+              r++;
+            }
 
           out->operands = skipws (r);
 

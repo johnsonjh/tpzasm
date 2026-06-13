@@ -230,6 +230,45 @@ insn_find (const char *upname)
 /******************************************************************************/
 
 /*
+ * Whether a mnemonic is a Z80 extension (not part of the 8080 set), so the
+ * assembler can flag the `Z' warning when it is used under .I8080.  Every Z80
+ * opcode here uses one of the Z80-only encoding formats, except EXX and EXAF
+ * which share the 8080's no-operand form but are Z80 instructions.  (Index-
+ * register OPERANDS on an otherwise-8080 mnemonic -- e.g. PUSH X -- are Z80
+ * too, but that is detected from the operand, in encode_insn, not here.)
+ */
+
+int
+insn_is_z80 (const insn *in)
+{
+  if (NULL == in)
+    return 0;
+
+  switch ((int)in->fmt) /* (int) cast: switch on the value, not the enum type */
+    {
+    case FMT_REL:
+    case FMT_ED16:
+    case FMT_EDHL:
+    case FMT_ED0:
+    case FMT_EDDST:
+    case FMT_CBR:
+    case FMT_CBB:
+    case FMT_IXP:
+    case FMT_IXADD:
+    case FMT_IXADDR:
+      return 1;
+
+    case FMT_NONE:
+      return (0xD9 == in->opcode || 0x08 == in->opcode); /* EXX, EXAF */
+
+    default:
+      return 0;
+    }
+}
+
+/******************************************************************************/
+
+/*
  * Local Variables:
  * mode: c
  * indent-tabs-mode: nil

@@ -32,10 +32,16 @@ set -eu
 # the .LIMAGE/.XIMAGE data directives, whose multi-line listing image must not
 # perturb the object output (limage), the "#" inline external-symbol modifier
 # (SYM# == .EXTERN SYM), which must emit the same external records as an
-# explicit .EXTERN (extmod), and .XLINK, which suppresses every link record
-# (!/@/\\/#) and emits only the ';' data stream + EOF (xlink).
+# explicit .EXTERN (extmod), .XLINK, which suppresses every link record
+# (!/@/\\/#) and emits only the ';' data stream + EOF (xlink), and the .I8080
+# mode, under which a Z80 instruction is still assembled (the "Z" warning does
+# not change the emitted bytes) -- .Z80 re-enables the extensions (i8080) --
+# the internal-definition delimiters ::/=:/==:, which declare a symbol internal
+# at its definition, emitting the same '#' record as .INTERN (intern), and the
+# signed-comparison/symbol-test conditionals .IFG/.IFGE/.IFL/.IFLE/.IFDEF/
+# .IFNDEF, whose branch selection determines which bytes are emitted (cond2).
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
-oprem limage extmod xlink"
+oprem limage extmod xlink i8080 intern cond2"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"
@@ -48,7 +54,11 @@ for c in ${cases}; do
   for flag_ext in "-R:rel" "-X:hex"; do
     flag=${flag_ext%:*}
     ext=${flag_ext#*:}
-    "${asm}" -p "${flag}" "${tmp}" "${here}/tests/${c}.asm" > /dev/null 2>&1
+    # A fixture may deliberately assemble with diagnostics (e.g. i8080's "Z"
+    # warnings), so the assembler can exit non-zero; we compare the object
+    # bytes regardless, so do not let `set -e' abort on that exit status.
+    "${asm}" -p "${flag}" "${tmp}" "${here}/tests/${c}.asm" > /dev/null 2>&1 \
+      || true
 
     if [ ! -f "${gold}/${c}.${ext}" ]; then
       printf '%s\n' "FAILURE: missing golden tests/golden/${c}.${ext}"

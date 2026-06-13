@@ -167,6 +167,7 @@ typedef struct
   char op[NAMEBUF];     /* mnemonic / pseudo-op, or ""          */
   const char *operands; /* operand text (into the line), or " " */
   int assign;           /* 1: `label` = operands (= / EQU)      */
+  int internal;         /* 1: defined with a `::'/`=:'/`==:' internal delimiter */
 } line_t;
 
 void lex_line (const char *line, line_t *out);
@@ -286,6 +287,7 @@ typedef struct
 /******************************************************************************/
 
 const insn *insn_find (const char *upname); /* upname must be uppercase */
+int insn_is_z80 (const insn *in); /* 1 if a Z80 extension (for the .I8080 `Z') */
 
 /******************************************************************************/
 

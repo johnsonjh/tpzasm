@@ -139,6 +139,8 @@ typedef struct
   int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default) */
   int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0) */
   int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)  */
+  int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning */
+  int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn       */
   u16 obj_start;     /* start address from `.END expr' (0 if none) */
   int obj_start_rel; /* relocation base of the start address */
 
@@ -474,6 +476,7 @@ err_letter (const char *msg)
               { "8-bit external out of range", 'R' },
               { "8-bit external illegal", 'R' },
               { "size must be absolute", 'R' },
+              { "z80 instruction in 8080 mode", 'Z' },
               { NULL, 0 } };
   int i;
 
@@ -651,7 +654,7 @@ parse_reg8 (const char **pp)
 
 /* B D H SP/PSW->0..3; X/Y->IX/IY */
 static int
-parse_rp (const char **pp, int psw, int *pfx)
+parse_rp (astate *a, const char **pp, int psw, int *pfx)
 {
   const char *p = skipws (*pp);
   char t[8];
@@ -693,6 +696,9 @@ parse_rp (const char **pp, int psw, int *pfx)
 
   if (code >= 0)
     *pp = p + n;
+
+  if (0 != *pfx) /* an IX/IY register pair: an index-prefix instruction */
+    a->idx_pfx = 1;
 
   return code;
 }
@@ -800,6 +806,8 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp)
   else
     return -1;
 
+  a->idx_pfx = 1; /* index (IX/IY) addressing: an index-prefix instruction */
+
   p = skipws (p + 1);
 
   if (')' != *p)
@@ -855,6 +863,18 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
   if (NULL == in)
     return 0;
+
+  a->idx_pfx = 0; /* set if an IX/IY operand emits a DD/FD prefix this insn */
+
+  if (a->i8080_mode && insn_is_z80 (in))
+    { /*
+       * .I8080 mode: a Z80-extension mnemonic raises the `Z' warning (the
+       * instruction is still assembled).  The `?' marks the operand field --
+       * the start of the operands, or the end of the line when there are none.
+       */
+      a->ppos = line_off (line, ops);
+      aerr (a, line, "z80 instruction in 8080 mode");
+    }
 
   a->lst_opw = fmt_opw (in->fmt); /* for the value-form listing byte column */
   v.reloc = 0; /* default if no 16-bit operand is evaluated */
@@ -973,7 +993,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_RP:
       {
-        int pfx, rp = parse_rp (&p, 0, &pfx);
+        int pfx, rp = parse_rp (a, &p, 0, &pfx);
 
         if (rp < 0)
           {
@@ -991,7 +1011,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_PUSHPOP:
       {
-        int pfx, rp = parse_rp (&p, 1, &pfx);
+        int pfx, rp = parse_rp (a, &p, 1, &pfx);
         if (rp < 0)
           {
             aerr (a, line, "B/D/H/PSW expected");
@@ -1008,7 +1028,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_RP2:
       {
-        int pfx, rp = parse_rp (&p, 0, &pfx);
+        int pfx, rp = parse_rp (a, &p, 0, &pfx);
         if (rp < 0 || rp > 1 || pfx)
           {
             aerr (a, line, "LDAX/STAX need B or D");
@@ -1023,7 +1043,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_LXI:
       {
-        int pfx, rp = parse_rp (&p, 0, &pfx);
+        int pfx, rp = parse_rp (a, &p, 0, &pfx);
         if (rp < 0 || !comma (&p))
           {
             aerr (a, line, "LXI rp,data16");
@@ -1103,7 +1123,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_EDHL:
       {
-        int pfx, rp = parse_rp (&p, 0, &pfx);
+        int pfx, rp = parse_rp (a, &p, 0, &pfx);
         if (rp < 0 || pfx)
           {
             aerr (a, line, "register pair expected");
@@ -1264,6 +1284,17 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
              : ((1 == a->lst_opw && v.base >= 4 && DIALECT_PASM == a->dialect)
                     ? (int)v.base
                     : 0));
+
+  if (a->i8080_mode && a->idx_pfx && !insn_is_z80 (in))
+    { /*
+       * an index-register OPERAND (IX/IY) on an otherwise-8080 mnemonic --
+       * e.g. PUSH X -- is a Z80 instruction too.  (When the mnemonic itself
+       * is a Z80 extension we already warned at the top.)  The `?' here marks
+       * the end of the parsed operand.
+       */
+      a->ppos = line_off (line, p);
+      aerr (a, line, "z80 instruction in 8080 mode");
+    }
 
   return 1;
 }
@@ -1662,7 +1693,7 @@ is_noop_dir (const char *op)
 {
   static const char *list[]
       = { ".PHEX",   ".PBIN",    ".TITLE",   ".SBTTL", ".SUBTTL", ".REQUEST",
-          ".NAME",   ".I8080",   ".Z80",     "PUBLIC", ".PUBLIC", ".PRNTX",
+          ".NAME",   "PUBLIC",   ".PUBLIC",  ".PRNTX",
           ".PRINTX", "COMMON",   ".COMMON",  NULL };
   int i;
 
@@ -3576,6 +3607,12 @@ do_line (astate *a, const char *line)
 
       s = sym_intern (a->syms, dn);
 
+      if (L.internal && !s->internal)
+        { /* `label::' -- declare it internal, like a preceding .INTERN */
+          s->internal = 1;
+          s->decl = (unsigned short)a->next_decl++;
+        }
+
       /*
        * TDL/PSA silently keep the FIRST definition of a redefined symbol;
        * only the first time it is seen in a pass do we (re)define it.
@@ -3678,6 +3715,13 @@ do_line (astate *a, const char *line)
         { /* '\' console-input operator */
           symbol *s = sym_intern (a->syms, L.label);
           int reading = (1 == a->pass || !s->defined);
+
+          if (L.internal && !s->internal)
+            { /* `sym=:\'/`sym==:\' -- declare it internal, like .INTERN */
+              s->internal = 1;
+              s->decl = (unsigned short)a->next_decl++;
+            }
+
           q = skipws (q + 1); /* the prompt string follows */
 
           if ('\'' == *q)
@@ -3745,6 +3789,13 @@ do_line (astate *a, const char *line)
 
         {
           symbol *s = sym_intern (a->syms, L.label);
+
+          if (L.internal && !s->internal)
+            { /* `sym=:'/`sym==:' -- declare it internal, like .INTERN */
+              s->internal = 1;
+              s->decl = (unsigned short)a->next_decl++;
+            }
+
           s->val = v;
           s->defined = 1;                   /* claim the name so a later */
           s->seen = (unsigned char)a->pass; /* label keeps this value    */
@@ -4044,6 +4095,16 @@ do_line (astate *a, const char *line)
     { /* relocatable core image: suppress the !/\ link records */
       a->obj_xlink = 1;
       a->lst_ctlstmt = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".I8080", NULL))
+    { /* restrict to the 8080 set: a Z80 instruction now raises a `Z' warning */
+      a->i8080_mode = 1;
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".Z80", NULL))
+    { /* allow the Z80 extensions again (the default) */
+      a->i8080_mode = 0;
       a->lst_loc = -1;
     }
   else if (opeq (op, ".LIST", NULL))
@@ -4477,6 +4538,8 @@ init_pass (astate *a, int pass)
   a->lst_nsave = 0;
   a->mdef_page = 0;
   a->obj_xlink = 0;
+  a->i8080_mode = 0; /* default .Z80: Z80 extensions allowed without warning */
+  a->idx_pfx = 0;
   macro_free_all (a);
   a->defining = NULL;
   a->def_started = 0;
