@@ -1599,10 +1599,9 @@ static int
 is_noop_dir (const char *op)
 {
   static const char *list[]
-      = { ".PHEX",   ".PBIN",    ".PAGE",   ".EJECT",  ".TITLE",  ".SBTTL",
-          ".SUBTTL", ".REQUEST", ".NAME",   ".COMMENT", ".I8080", ".Z80",
-          "PUBLIC",  ".PUBLIC",  ".PRNTX",  ".PRINTX", "COMMON",  ".COMMON",
-          NULL };
+      = { ".PHEX",   ".PBIN",    ".TITLE",   ".SBTTL", ".SUBTTL", ".REQUEST",
+          ".NAME",   ".I8080",   ".Z80",     "PUBLIC", ".PUBLIC", ".PRNTX",
+          ".PRINTX", "COMMON",   ".COMMON",  NULL };
   int i;
 
   for (i = 0; NULL != list[i]; i++)
@@ -3987,6 +3986,19 @@ do_line (astate *a, const char *line)
         n--; /* trim trailing blanks (unquoted form) */
 
       a->title[n] = '\0';
+      return; /* suppressed from the body listing */
+    }
+  else if (opeq (op, ".PAGE", NULL))
+    { /*
+       * skip to the top of the next listing page; the directive itself is not
+       * listed (.EJECT is NOT a synonym -- the originals reject it).
+       */
+      if (2 == a->pass)
+        {
+          (void)fputc ('\f', a->lst);
+          lst_header (a);
+        }
+
       return; /* suppressed from the body listing */
     }
   else if (opeq (op, ".END", "END") || opeq (op, ".PRGEND", NULL))
