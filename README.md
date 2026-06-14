@@ -50,7 +50,7 @@
   and **PSA&nbsp;PASM&nbsp;1.02**.
 
   * It is a fully faithful reimplementation that can assemble many substantial
-  historical codebases, including the the \~2,500 SLOC
+  historical codebases, including the \~2,500 SLOC
   [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
   the \~2,200 SLOC [Burke&nbsp;Disassembler](tests/dis.asm),
   the \~30,000 SLOC [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and
