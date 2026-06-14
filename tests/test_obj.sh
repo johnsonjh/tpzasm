@@ -60,10 +60,14 @@ set -eu
 # conditional form ".IFx cond,[stmt][else]", whose taken branch assembles on
 # the directive's own line (cinl), and .LADDR, which lists 16-bit values in
 # load (memory) order -- a listing-only mode, so the object is unchanged
-# (laddr; its .LADDR rendering is verified by hand against the originals).
+# (laddr; its .LADDR rendering is verified by hand against the originals).  The
+# trailing group (cond imain macro macro2 str z80 z80b z80c) were originally
+# added as standalone LISTING fixtures (compared by hand against the originals);
+# their emitted object is byte-exact too, so they are guarded here as well.
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs extop dref cinl laddr"
+insnest psym temps varargs extop dref cinl laddr \
+cond imain macro macro2 str z80 z80b z80c"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 asm="${here}/asm"
