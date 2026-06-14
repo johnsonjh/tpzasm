@@ -157,7 +157,7 @@ static const char *osinfo(void)
 /******************************************************************************/
 
 static void
-usage (const char *prog, dialect_t dialect)
+usage (const char *prog, dialect_t dialect, int version)
 {
   (void)fprintf (stderr,
                  "TPZASM - TDL ZASM / PSA PASM compatible assembler %s\n"
@@ -185,33 +185,31 @@ usage (const char *prog, dialect_t dialect)
 #endif
   ASM_URL);
 
-  (void)fprintf (stderr,
-                 "\n"
-                 "  Usage: %s [options] <source[.asm]>\n\n"
-                 "    --zasm, -z         Emulate TDL ZASM 2.21 behavior%s\n"
-                 "    --pasm, -p         Emulate PSA PASM 1.02 behavior%s\n"
-                 "    --out,  -o <file>  Write the assembled binary image"
-                 " to file\n"
-                 "    --pad,  -P         Pad output to full CP/M record"
-                 " boundary\n"
-                 "    --list, -l <file>  Write the listing to file"
-                 " (default: stderr)\n",
-                 prog,
-                 (DIALECT_ZASM == dialect ? " (default)" : ""),
-                 (DIALECT_PASM == dialect ? " (default)" : ""));
+  if (0 == version)
+    {
+      (void)fprintf (stderr,
+      "\n"
+      "  Usage: %s [options] <source[.asm]>\n\n"
+      "    -z, --zasm         Emulate TDL ZASM 2.21 behavior%s\n"
+      "    -p, --pasm         Emulate PSA PASM 1.02 behavior%s\n"
+      "    -o, --out <file>   Write the assembled binary image to file\n"
+      "    -P, --pad          Pad output to full CP/M record boundary\n"
+      "    -l, --list <file>  Write the listing to file"
+      " [default: stderr]\n",
+      prog,
+      (DIALECT_ZASM == dialect ? " [default]" : ""),
+      (DIALECT_PASM == dialect ? " [default]" : ""));
 
-  (void)fprintf (stderr,
-                 "    --pbin, -R <file>  Write the object module as binary"
-                 " TDL REL\n"
-                 "    --phex, -X <file>  Write the object module as ASCII-hex"
-                 " REL\n"
-                 "    --long, -L         Allow long (>6 character) symbol"
-                 " names\n"
-                 "    --read, -r <file>  Answer assembly-time prompts from"
-                 " file\n"
-                 "    --expr, -e <expr>  Evaluate single expression and exit\n"
-                 "    --help, -h         Show this help text and exit\n"
-                 "\n");
+      (void)fprintf (stderr,
+      "    -R, --pbin <file>  Write the object module as binary TDL REL\n"
+      "    -X, --phex <file>  Write the object module as ASCII-hex REL\n"
+      "    -L, --long         Allow long (>6 character) symbol names\n"
+      "    -r, --read <file>  Answer assembly-time prompts from file\n"
+      "    -e, --expr <expr>  Evaluate single expression and exit\n"
+      "    -v, --version      Show version information and exit\n"
+      "    -h, --help         Show this help text and exit\n"
+      "\n");
+    }
 }
 
 /******************************************************************************/
@@ -245,10 +243,11 @@ main (int argc, char **argv)
             const char *name;
             char ch;
           } longs[]
-              = { { "zasm", 'z' }, { "pasm", 'p' }, { "out", 'o' },
-                  { "pad", 'P' },  { "list", 'l' }, { "pbin", 'R' },
-                  { "phex", 'X' }, { "long", 'L' }, { "read", 'r' },
-                  { "expr", 'e' }, { "help", 'h' } };
+              = { { "zasm", 'z' }, { "pasm", 'p' }, {     "out", 'o' },
+                  {  "pad", 'P' }, { "list", 'l' }, {    "pbin", 'R' },
+                  { "phex", 'X' }, { "long", 'L' }, {    "read", 'r' },
+                  { "expr", 'e' }, { "help", 'h' }, { "version", 'v' },
+                };
           int li;
 
           for (li = 0; li < (int)(sizeof (longs) / sizeof (longs[0])); ++li)
@@ -261,7 +260,7 @@ main (int argc, char **argv)
           if ('\0' == opt)
             {
               (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
-              usage (prog, dialect);
+              usage (prog, dialect, 0);
 
               return 2;
             }
@@ -289,8 +288,13 @@ main (int argc, char **argv)
               pad = 1;
               break;
 
+            case 'v':
+              usage (prog, dialect, 1);
+
+              return 0;
+
             case 'h':
-              usage (prog, dialect);
+              usage (prog, dialect, 0);
 
               return 0;
 
@@ -404,7 +408,7 @@ main (int argc, char **argv)
 
             default:
               (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
-              usage (prog, dialect);
+              usage (prog, dialect, 0);
 
               return 2;
             }
@@ -415,7 +419,7 @@ main (int argc, char **argv)
 
   if (NULL == src)
     {
-      usage (prog, dialect);
+      usage (prog, dialect, 0);
 
       return 2;
     }
