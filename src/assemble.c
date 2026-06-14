@@ -5147,18 +5147,25 @@ do_line (astate *a, const char *line)
        * no-op directive, or an unknown operator
        */
 
-      if (!encode_insn (a, line, op, L.operands) && !is_noop_dir (op))
-        { /*
-           * unknown operator (Operation error): the originals flag 'O' and
-           * emit a four-byte zero placeholder, advancing the LC.  Done in both
-           * passes so the LC stays consistent and the pass-1 count feeds the
-           * PASM page header.
-           */
-          aerr (a, line, "unknown operator");
-          emit (a, 0);
-          emit (a, 0);
-          emit (a, 0);
-          emit (a, 0);
+      if (!encode_insn (a, line, op, L.operands))
+        {
+          if (is_noop_dir (op))
+            a->lst_loc = -1; /* a listing/output no-op directive (e.g. .PRNTX)
+                              * emits nothing: blank its LOC column, as the
+                              * originals do, instead of showing the live LC */
+          else
+            { /*
+               * unknown operator (Operation error): the originals flag 'O' and
+               * emit a four-byte zero placeholder, advancing the LC.  Done in
+               * both passes so the LC stays consistent and the pass-1 count
+               * feeds the PASM page header.
+               */
+              aerr (a, line, "unknown operator");
+              emit (a, 0);
+              emit (a, 0);
+              emit (a, 0);
+              emit (a, 0);
+            }
         }
     }
 
