@@ -136,6 +136,14 @@ typedef struct
   int pend_else_wt;
   int pend_else_outer;
 
+  /*
+   * Conditional block(s) closed by a trailing `]' on the PREVIOUS line -- a
+   * multi-line `.ife COND,[' whose body ends `stmt]' on a later line.  The
+   * close must take effect AFTER that body line (its statement still belongs
+   * to the block), so it is recorded here and applied at the next line.
+   */
+  int pend_rbracket;
+
   /* macros */
   macrodef *macros;
   macrodef *defining;
@@ -990,7 +998,7 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
     {
       t = skipws (ops);
 
-      if ('\0' != *t && ';' != *t)
+      if ('\0' != *t && ';' != *t && ']' != *t)
         {
           a->ppos = line_off (line, t);
           aerr (a, line, "extra operand"); /* Q */
@@ -1008,8 +1016,8 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
 
   t = skipws (p);
 
-  if ('\0' == *t || ';' == *t)
-    return; /* nothing trailing */
+  if ('\0' == *t || ';' == *t || ']' == *t)
+    return; /* nothing trailing (']' closes a conditional block) */
 
   if (is_reg_token (t)) /* a trailing register: `A', marked after the token */
     {
@@ -1565,17 +1573,20 @@ do_data (astate *a, const char *line, const char *p, int width)
 
       if (',' == *p)
         p++;
-      else if ('\0' != *p && ';' != *p)
+      else if ('\0' != *p && ';' != *p && ']' != *p)
         { /*
            * a space-separated trailing operand (no comma): the originals stop
            * here and flag it `AA' (two argument errors, so a `??' marker); the
-           * already-emitted items stand.
+           * already-emitted items stand.  A ']' is a conditional block close,
+           * not an operand, so it ends the list cleanly.
            */
           a->ppos = line_off (line, p);
           aerr (a, line, "extra argument"); /* `AA': two argument errors at */
           aerr (a, line, "extra argument"); /* the same spot -> a `??' marker */
           break;
         }
+      else if (']' == *p)
+        break; /* conditional block close: end of the data list */
 
       if (p == start)
         break; /* safety: no progress */
@@ -2013,6 +2024,75 @@ casm (const astate *a)
       return 0;
 
   return 1;
+}
+
+/*
+ * Count the conditional block(s) a statement line closes: ']' tokens with no
+ * matching '[' earlier on the line.  A multi-line `.ife COND,[' opens a block
+ * whose body ends `stmt]' on a later line; that trailing ']' must pop the
+ * frame.  The originals track the brackets lexically across the WHOLE line --
+ * a ']' after a `;' comment still closes (the sources put it there) -- so the
+ * scan does NOT stop at a comment; only a ']' inside a ' or " string (and
+ * balanced `[expr]'/`[string]' brackets) does not count.
+ */
+
+/*
+ * True when s begins with a string-emitting data directive (.ASCII / .ASCIZ /
+ * .ASCIS and the .DC / DCS aliases).  Used for the zasm.com inline-string
+ * `]'-absorb quirk below: only those directives parse a STRING (a `.byte 'AB''
+ * is a char CONSTANT and is not affected).
+ */
+
+static int
+is_string_dir (const char *s)
+{
+  char op[NAMEBUF];
+  int n = 0;
+
+  s = skipws (s);
+
+  while (n < NAMEBUF - 1 && '\0' != *s && ' ' != *s && '\t' != *s)
+    {
+      op[n++] = (char)toupper ((unsigned char)*s);
+      s++;
+    }
+
+  op[n] = '\0';
+
+  return 0 == strcmp (op, ".ASCII") || 0 == strcmp (op, ".ASCIZ")
+      || 0 == strcmp (op, ".ASCIS") || 0 == strcmp (op, ".DC")
+      || 0 == strcmp (op, "DCS");
+}
+
+static int
+count_block_closes (const char *s)
+{
+  int depth = 0, closes = 0;
+
+  for (; '\0' != *s; s++)
+    {
+      if ('\'' == *s || '"' == *s)
+        { /* skip a quoted string whole */
+          char q = *s++;
+
+          while ('\0' != *s && q != *s)
+            s++;
+
+          if ('\0' == *s)
+            break;
+        }
+      else if ('[' == *s)
+        depth++;
+      else if (']' == *s)
+        {
+          if (depth > 0)
+            depth--;
+          else
+            closes++;
+        }
+    }
+
+  return closes;
 }
 
 /******************************************************************************/
@@ -4193,6 +4273,20 @@ do_line (astate *a, const char *line)
 
   lc0 = a->lc;
 
+  /*
+   * Apply conditional block close(s) deferred from the previous line's
+   * trailing `]' (a multi-line `.ife COND,[' ... `stmt]' body).  Done here,
+   * before this line consults the assembling state, so the close takes effect
+   * after the body line that owned it.
+   */
+  while (a->pend_rbracket > 0)
+    {
+      if (a->cdepth > 0)
+        a->cdepth--;
+
+      a->pend_rbracket--;
+    }
+
   /* '.' in operands resolves to the statement start */
   a->lc_stmt = a->lc;
 
@@ -4287,6 +4381,14 @@ do_line (astate *a, const char *line)
         return;
       }
   }
+
+  /*
+   * A statement that ends a multi-line `.ife COND,[' body carries the block's
+   * trailing `]' (`stmt]'); record the close(s) so the frame pops AFTER this
+   * line.  An inline `.ife COND,[stmt]' and a `[expr]' operand are balanced and
+   * count zero.
+   */
+  a->pend_rbracket = count_block_closes (bp);
 
   /*
    * `![sub]=expr' : assign a .TEMPS local temporary (PASM, inside a macro).
@@ -4530,6 +4632,25 @@ do_line (astate *a, const char *line)
                 (void)memcpy (bbuf, body, bl);
                 bbuf[bl] = '\0';
 
+                /*
+                 * zasm.com quirk: an .ascii/.ascis/.asciz STRING whose closing
+                 * quote sits immediately before the inline block's `]' loses
+                 * its last character (the `]' "absorbs" it).  Real TDL sources
+                 * rely on this -- they pad such a string with an extra trailing
+                 * char so the ZASM build gets the intended text (e.g. bios's
+                 * `.ascii [cr][lf]'CP/M  ']' assembles "CP/M " before the
+                 * version number).  Reproduce it in -z mode so the clone emits
+                 * the same bytes the originals shipped.  (.byte/.word treat a
+                 * quoted token as a char CONSTANT, not a string -- unaffected.)
+                 */
+                if (DIALECT_PASM != a->dialect && bl >= 2
+                    && ('\'' == bbuf[bl - 1] || '"' == bbuf[bl - 1])
+                    && bbuf[bl - 1] != bbuf[bl - 2] && is_string_dir (bbuf))
+                  {
+                    bbuf[bl - 2] = bbuf[bl - 1]; /* slide the close quote in */
+                    bbuf[bl - 1] = '\0';
+                  }
+
                 a->lst_suppress = 1;
                 do_line (a, bbuf);
                 a->lst_suppress = 0;
@@ -4557,6 +4678,61 @@ do_line (astate *a, const char *line)
                 a->pend_else = 1;
                 a->pend_else_wt = t;
                 a->pend_else_outer = outer;
+              }
+
+            return;
+          }
+        else if (NULL != bk)
+          { /*
+             * MULTI-LINE open whose FIRST statement shares the `.ife' line:
+             * `.IFx cond,[stmt' with no matching `]' here (the body continues
+             * on later lines, ending `stmt]').  Push the frame, then assemble
+             * that leading statement inside it -- it lists ON this directive
+             * line, carrying its bytes when the block is taken (as for the
+             * single-line inline form); a bare `.IFx cond,[' has none.
+             */
+            const char *lead = skipws (bk + 1);
+
+            if (a->cdepth < MAXCOND)
+              {
+                a->cstack[a->cdepth].if_true = t;
+                a->cstack[a->cdepth].assemble = outer && t;
+                a->cstack[a->cdepth].is_else = 0;
+                a->cdepth++;
+              }
+
+            if (outer && t && '\0' != *lead && ';' != *lead)
+              {
+                char bbuf[512];
+                size_t bl = strlen (lead);
+
+                if (bl >= sizeof (bbuf))
+                  bl = sizeof (bbuf) - 1;
+
+                (void)memcpy (bbuf, lead, bl);
+                bbuf[bl] = '\0';
+
+                a->lst_suppress = 1;
+                do_line (a, bbuf);
+                a->lst_suppress = 0;
+
+                if (2 == a->pass)
+                  {
+                    int boff = line_off (line, lead);
+                    int i;
+
+                    for (i = 0; i < a->lst_nec; i++)
+                      a->lst_qoff[i] += boff;
+
+                    a->cur_line = line;
+                    print_lst (a, lc0, line);
+                  }
+              }
+            else if (2 == a->pass)
+              { /* skipped, or a bare open: blank LC (label LC if labeled) */
+                a->lst_loc = (('\0' != L.label[0]) ? (long)lc0 : -1);
+                a->lst_lbase = -1;
+                print_lst (a, lc0, line);
               }
 
             return;
@@ -4688,7 +4864,20 @@ do_line (astate *a, const char *line)
           }
 
         {
-          symbol *s = sym_intern (a->syms, L.label);
+          /* a `..local' assignment is scope-local, like a `..local:' label --
+           * scope-qualify the name so an expression reference (which qualifies
+           * the same way) resolves it within the scope */
+          const char *dn = L.label;
+          char qn[NAMEBUF + 16];
+          symbol *s;
+
+          if ('.' == L.label[0] && '.' == L.label[1])
+            {
+              (void)xsnprintf (qn, sizeof (qn), "%u:%s", a->scope, L.label);
+              dn = qn;
+            }
+
+          s = sym_intern (a->syms, dn);
 
           if (L.internal && !s->internal)
             { /* `sym=:'/`sym==:' -- declare it internal, like .INTERN */
@@ -5032,7 +5221,10 @@ do_line (astate *a, const char *line)
     }
   else if (opeq (op, ".PABS", NULL))
     {
-      a->lc_reloc = 0;
+      /* .PABS selects absolute OBJECT output but does NOT itself make the
+       * location counter absolute: the LC stays relocatable (.PROG.) until a
+       * `.LOC <abs>' sets an absolute origin, exactly as the originals do (so a
+       * `.RELOC' before any `.LOC' lists `0000'', not `0000'). */
       a->obj_abs = 1; /* absolute object output (Intel-hex `:' records) */
       a->lst_loc = -1; /* output-mode directive: blank LC in the listing */
     }
@@ -5288,6 +5480,19 @@ do_line (astate *a, const char *line)
        */
       if (2 == a->pass)
         {
+          /*
+           * ZASM runs the page-full check for EVERY line, not only listed
+           * ones, so a `.PAGE' that lands on an already-full page is first
+           * preceded by the natural break that completes it -- a heading-only
+           * (otherwise empty) transient page -- and only THEN ejects again.
+           * PASM does not insert that page, so this is ZASM-only.
+           */
+          if (DIALECT_PASM != a->dialect && a->lst_line >= a->lst_pagelen)
+            {
+              (void)fputc ('\f', a->lst);
+              lst_header (a);
+            }
+
           (void)fputc ('\f', a->lst);
           a->lst_pending = 1;
         }
@@ -5584,6 +5789,7 @@ init_pass (astate *a, int pass)
   a->nalias = 0;
   a->cdepth = 0;
   a->pend_else = 0;
+  a->pend_rbracket = 0;
   a->in_prompt = 0;
   a->prompt_quote = 0;
   a->in_remark = 0;

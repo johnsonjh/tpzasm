@@ -79,7 +79,8 @@ set -eu
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple dis maclc sall clabel \
-page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes"
+page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
+relmode bios"
 
 # Some real-world fixtures read assembly-time '\' console values; their answers
 # (the system options that select the assembled configuration) live in a
@@ -89,6 +90,20 @@ page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes"
 # constants, .BYTE/.WORD/.ASCII/.ASCIZ/.ASCIS, plus .IFB '' == .IFB "") need no
 # answers; ittl (ITS100/TIP linker), atu4 and mtu4 (Alloy cipher/mag-tape
 # utilities) each take their port-group and overlap options from <case>.ans.
+# cond3 is a conditional-block / local-symbol audit: a multi-line `.ife COND,['
+# whose body closes `stmt]' on a later line (the close may sit after a comment),
+# a block whose FIRST statement shares the `.ife' line, a skipped multi-line
+# block that must not swallow the next block, a `$'-leading symbol ($ is an
+# ordinary Radix-40 char, not the location counter), a `..local' EQUATE used in
+# an expression (scope-qualified like a `..local:' label), a trailing block-
+# close `]' that is not flagged as an extra operand, and the zasm.com quirk
+# whereby an .ascii string whose close quote abuts an inline `]' loses its last
+# char (ZASM only; PASM keeps it) -- byte-exact both dialects.  relmode covers
+# .PABS keeping the LC RELOCATABLE until a `.LOC' (so `.RELOC' lists `0000'',
+# the .PROG. base, not `0000') -- .PABS selects only the absolute object format.
+# bios is the real-world DMS/3, DMS/4 CP/M BIOS (~9300 lines) that drove all of
+# the above conditional/local/`$'/`.ascii'/`.PABS' fixes (SELECT=1/HARDboot=0 in
+# bios.ans); it is byte-exact in OBJECT and LISTING against BOTH originals.
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1

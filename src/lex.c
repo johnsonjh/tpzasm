@@ -37,8 +37,10 @@
 static int
 idstart (int c)
 { /* symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it
-     -- '_' flags a macro subscript reference, '@' is the remainder operator */
-  return isalpha (c) || '.' == c || '%' == c;
+     -- '_' flags a macro subscript reference, '@' is the remainder operator.
+     A symbol may START with any of these but a digit (a leading digit is a
+     number); '$' is an ordinary symbol char, not the location counter ('.') */
+  return isalpha (c) || '$' == c || '.' == c || '%' == c;
 }
 
 /******************************************************************************/

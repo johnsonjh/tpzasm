@@ -125,6 +125,21 @@ trim_trailing_whitespace = false
 
 ################################################################################
 
+# The real-world DMS/3, DMS/4 HiNet / CP/M BIOS (Alloy / DMS, ~9300 lines) kept
+# verbatim as a differential-test fixture.  It mixes tab and space indentation,
+# has some comment/table lines past 88 columns, and the listing reproduces the
+# source text exactly, so leave the indent style and line length unchecked and
+# do not trim its trailing whitespace.
+[tests/bios.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = unset
+insert_final_newline = true
+max_line_length = unset
+trim_trailing_whitespace = false
+
+################################################################################
+
 [*akefile*]
 charset = utf-8
 end_of_line = lf
