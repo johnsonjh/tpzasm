@@ -2533,10 +2533,12 @@ print_lst (astate *a, u16 lc0, const char *rawline)
 
   /*
    * listing-control gating: body listing off (.XLIST), or a listing-control
-   * statement that does not list itself (default, reset by .LCTL).
+   * statement that does not list itself (default, reset by .LCTL).  An errored
+   * statement is always listed, though, even under .XLIST -- the originals
+   * never hide a diagnostic.
    */
 
-  if (!(a->lst_ctl & LSTC_LIST))
+  if (!(a->lst_ctl & LSTC_LIST) && 0 == a->lst_nec)
     return;
 
   if (a->lst_ctlstmt && !(a->lst_ctl & LSTC_CTL))
@@ -3902,6 +3904,14 @@ do_line (astate *a, const char *line)
       else if (NULL != a->pend_console)
         (void)fputc ('\n', stderr);
 
+      /* the originals list each continuation line of the prompt verbatim
+       * (blank LC), as the source it is */
+      if (2 == a->pass)
+        {
+          a->lst_loc = -1;
+          print_lst (a, a->lc, line);
+        }
+
       return;
     }
 
@@ -3949,8 +3959,6 @@ do_line (astate *a, const char *line)
   bp = skipws (line);
 
   {
-    int br_list = -1; /* an else `] [' lists under the ENCLOSING state */
-
     while (']' == *bp)
       {
         int wt = 0;
@@ -3963,17 +3971,9 @@ do_line (astate *a, const char *line)
 
         bp = skipws (bp + 1);
 
-        if ('[' == *bp)
+        if ('[' == *bp) /* `] [' (else): pop the IF frame, push the ELSE */
           {
             int outer = casm (a);
-
-            /*
-             * the `] [' (else) line itself lists whenever the conditional's
-             * enclosing scope is assembling -- NOT under the else branch's own
-             * state, which is about to be pushed (so a true-block-then-else
-             * transition still lists the separator).
-             */
-            br_list = outer;
 
             if (a->cdepth < MAXCOND)
               {
@@ -3988,12 +3988,12 @@ do_line (astate *a, const char *line)
 
     if ('\0' == *bp || ';' == *bp)
       { /*
-         * blank or comment-only line: the originals still list it, with a
-         * blank LC column (tabs in the source expand as usual)
+         * blank or comment-only line (a `]'/`] [' bracket close, a comment, or
+         * a blank): the originals list it with a blank LC column, even inside a
+         * skipped conditional (tabs expand as usual); print_lst applies any
+         * .XLIST / macro-body suppression.
          */
-        int do_list = ((br_list >= 0) ? br_list : casm (a));
-
-        if (2 == a->pass && do_list)
+        if (2 == a->pass)
           {
             a->lst_loc = -1;
             print_lst (a, lc0, line);
