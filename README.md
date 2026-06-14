@@ -10,7 +10,7 @@
   **PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
   Zilog&nbsp;**Z80**, and other equivalent processors.
 
-* An enhanced clone of `HEXCOM`, the DRI
+* An enhanced clone of **`HEXCOM`** (version 3.00), the DRI
   [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
   tool, is also included.
 
