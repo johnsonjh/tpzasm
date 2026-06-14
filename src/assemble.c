@@ -61,6 +61,7 @@ typedef struct
 {
   int assemble;
   int if_true;
+  int is_else; /* 1 if an else block (which cannot itself take another else) */
 } cframe;
 
 /******************************************************************************/
@@ -123,6 +124,17 @@ typedef struct
   /* conditional ([...]) stack */
   cframe cstack[MAXCOND];
   int cdepth;
+  /*
+   * A conditional whose block just closed with a dangling `]' may still take an
+   * else `[' that follows across only comment/blank lines (the multi-line
+   * `] ... [' else form).  pend_else marks that window open; pend_else_wt is
+   * the closed block's if_true (the else takes its inverse) and pend_else_outer
+   * the enclosing assemble state at the close.  Any non-comment line that is
+   * not the else `[' closes the window.
+   */
+  int pend_else;
+  int pend_else_wt;
+  int pend_else_outer;
 
   /* macros */
   macrodef *macros;
@@ -3959,16 +3971,47 @@ do_line (astate *a, const char *line)
   bp = skipws (line);
 
   {
+    int dang = 0;    /* the last ']' was a dangling true-block close          */
+    int dang_wt = 0; /* its if_true (the else, if any, takes the inverse)     */
+
+    /*
+     * A conditional whose true block closed on an earlier line (pend_else)
+     * takes an else `[' here when this line opens with one (the multi-line
+     * `] ... [' else form, comment/blank lines allowed between).  Any other
+     * non-comment line closes the window without an else.
+     */
+    if (a->pend_else)
+      {
+        if ('[' == *bp)
+          {
+            if (a->cdepth < MAXCOND)
+              {
+                a->cstack[a->cdepth].if_true = !a->pend_else_wt;
+                a->cstack[a->cdepth].assemble
+                    = a->pend_else_outer && !a->pend_else_wt;
+                a->cstack[a->cdepth].is_else = 1;
+                a->cdepth++;
+              }
+
+            a->pend_else = 0;
+            bp = skipws (bp + 1);
+          }
+        else if ('\0' != *bp && ';' != *bp)
+          a->pend_else = 0;
+      }
+
     while (']' == *bp)
       {
-        int wt = 0;
+        int wt = 0, was_else = 0;
 
         if (a->cdepth > 0)
           {
             wt = a->cstack[(long)a->cdepth - 1].if_true;
+            was_else = a->cstack[(long)a->cdepth - 1].is_else;
             a->cdepth--;
           }
 
+        dang = 0;
         bp = skipws (bp + 1);
 
         if ('[' == *bp) /* `] [' (else): pop the IF frame, push the ELSE */
@@ -3979,11 +4022,24 @@ do_line (astate *a, const char *line)
               {
                 a->cstack[a->cdepth].if_true = !wt;
                 a->cstack[a->cdepth].assemble = outer && !wt;
+                a->cstack[a->cdepth].is_else = 1;
                 a->cdepth++;
               }
 
             bp = skipws (bp + 1);
           }
+        else if (!was_else)
+          { /* a dangling true-block close: an else `[' may still follow */
+            dang = 1;
+            dang_wt = wt;
+          }
+      }
+
+    if (dang && ('\0' == *bp || ';' == *bp))
+      { /* open the else window: a later `[' (across comments) is the else */
+        a->pend_else = 1;
+        a->pend_else_wt = dang_wt;
+        a->pend_else_outer = casm (a);
       }
 
     if ('\0' == *bp || ';' == *bp)
@@ -4209,6 +4265,14 @@ do_line (astate *a, const char *line)
             const char *b2e
                 = (('[' == *p2) ? inline_block_end (p2 + 1) : NULL);
             const char *body = NULL, *body_end = NULL;
+            /*
+             * No inline else and the line ends after the true block: a
+             * multi-line else `[' may still follow (across comment/blank
+             * lines), as for the multi-line conditional form.  The else window
+             * is armed AFTER assembling the true-block statement below -- the
+             * recursive do_line() for that statement would otherwise clear it.
+             */
+            int arm_else = (NULL == b2e && ('\0' == *p2 || ';' == *p2));
 
             if (t) /* taken: the true block's statement */
               {
@@ -4259,6 +4323,13 @@ do_line (astate *a, const char *line)
                 print_lst (a, lc0, line);
               }
 
+            if (arm_else)
+              { /* a later bare `[' is this conditional's else (inverse of t) */
+                a->pend_else = 1;
+                a->pend_else_wt = t;
+                a->pend_else_outer = outer;
+              }
+
             return;
           }
       }
@@ -4267,6 +4338,7 @@ do_line (astate *a, const char *line)
         {
           a->cstack[a->cdepth].if_true = t;
           a->cstack[a->cdepth].assemble = outer && t;
+          a->cstack[a->cdepth].is_else = 0;
           a->cdepth++;
         }
 
@@ -4928,7 +5000,7 @@ do_line (astate *a, const char *line)
       const char *p = skipws (L.operands);
 
       a->ended = 1;
-      a->lst_loc = -1; /* listing blanks the LOC column */
+      a->lst_loc = -1; /* no start address: listing blanks the LOC column */
 
       if ('\0' != *p && ';' != *p) /* `.END expr' sets the module start addr */
         {
@@ -4940,6 +5012,10 @@ do_line (astate *a, const char *line)
             {
               a->obj_start = v.value;
               a->obj_start_rel = (0 != v.reloc);
+              /* the originals list `.END expr' with the start value in the LOC
+               * column (with its relocation flag), like an `=' assignment */
+              a->lst_loc = (long)v.value;
+              a->lst_lbase = (0 != v.reloc ? v.base : 0);
             }
         }
     }
@@ -5189,6 +5265,7 @@ init_pass (astate *a, int pass)
   a->ended = 0;
   a->nalias = 0;
   a->cdepth = 0;
+  a->pend_else = 0;
   a->in_prompt = 0;
   a->genctr = 0;
   a->macro_depth = 0;
