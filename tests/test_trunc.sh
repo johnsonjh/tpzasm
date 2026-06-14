@@ -10,6 +10,15 @@ set -eu
 
 ################################################################################
 
+export CPE1704TKS=1
+here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+# shellcheck disable=SC1091
+. "${here}/.common.sh"
+export FIND_COMMAND_FATAL=1
+find_command cat grep rm sed
+
+################################################################################
+
 # Default: a symbol longer than six characters keeps only its first six in the
 # SYMBOL TABLE (LONGENTRY -> LONGEN, LONGINTERN -> LONGIN).
 ./asm -z tests/longname.asm > out.txt 2>&1

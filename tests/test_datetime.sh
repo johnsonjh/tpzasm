@@ -19,6 +19,12 @@
 set -eu
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+export CPE1704TKS=1
+# shellcheck disable=SC1091
+. "${here}/.common.sh"
+export FIND_COMMAND_FATAL=1
+find_command awk dirname rm sed tr
+
 asm="${here}/asm"
 src="${here}/tests/datetime.asm"
 tmp="${here}/dt_test.tmp"

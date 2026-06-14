@@ -80,6 +80,12 @@ insnest psym temps varargs extop dref cinl laddr zapple dis maclc \
 cond imain macro macro2 str z80 z80b z80c"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+export CPE1704TKS=1
+# shellcheck disable=SC1091
+. "${here}/.common.sh"
+export FIND_COMMAND_FATAL=1
+find_command cmp dirname rm
+
 asm="${here}/asm"
 gold="${here}/tests/golden"
 

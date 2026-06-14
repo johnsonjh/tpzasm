@@ -37,6 +37,9 @@ if ! command -v tnylpo > /dev/null 2>&1; then
   exit 0
 fi
 
+export FIND_COMMAND_FATAL=1
+find_command cmp diff dirname mkdir rm sed timeout tnylpo tr
+
 asm="${here}/asm"
 src="${here}/tests/sargon.asm"
 gold="${here}/tests/golden/sargon.play"
