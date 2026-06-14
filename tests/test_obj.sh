@@ -60,13 +60,21 @@ set -eu
 # conditional form ".IFx cond,[stmt][else]", whose taken branch assembles on
 # the directive's own line (cinl), and .LADDR, which lists 16-bit values in
 # load (memory) order -- a listing-only mode, so the object is unchanged
-# (laddr; its .LADDR rendering is verified by hand against the originals).  The
+# (laddr; its .LADDR rendering is verified by hand against the originals), and
+# the real-world TDL ZAPPLE 2-K monitor (c) 1976 -- a large .PREL/.XLINK source
+# exercising mnemonic-as-value operands (MVI A,JMP == MVI A,0C3H), double-quoted
+# character constants (CPI "'"), the multi-line "] ... [" else form, and a
+# relocation-control-byte straddle across many consecutive relocatable JMP
+# vectors (zapple; object byte-exact to BOTH zasm.com -z and pasm.com -p), and
+# the real-world TDL Z80 disassembler (c) 1979 -- an absolute (.PABS) program
+# using .LADDR/.LALL, mid-source .RADIX 16/10, double-quoted .TITLE/.SBTTL, and
+# many .LOC-addressed tables (dis; object byte-exact to BOTH originals).  The
 # trailing group (cond imain macro macro2 str z80 z80b z80c) were originally
 # added as standalone LISTING fixtures (compared by hand against the originals);
 # their emitted object is byte-exact too, so they are guarded here as well.
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs extop dref cinl laddr \
+insnest psym temps varargs extop dref cinl laddr zapple dis \
 cond imain macro macro2 str z80 z80b z80c"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
