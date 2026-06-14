@@ -14,6 +14,9 @@ tests/golden/*.rel binary
 tests/golden/*.hex binary
 tests/golden/*.play binary
 
+# Don't count tests/** towards GitHub Linguist
+tests/** linguist-vendored
+
 ################################################################################
 # vim: set ft=gitattributes ts=2 sw=2 tw=0 et :
 ################################################################################
