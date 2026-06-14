@@ -47,38 +47,38 @@
 
 ## Status
 
-* **`TPZASM`** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
-  and **PSA&nbsp;PASM&nbsp;1.02**.
+**`TPZASM`** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+and **PSA&nbsp;PASM&nbsp;1.02**.
 
-  * It is a fully faithful reimplementation of *both* assemblers (including
-    their bugs) and can assemble many substantial historic codebases (which
-    also serve as test cases), including:
+* It is a fully faithful reimplementation of *both* assemblers (including
+  their bugs) and can assemble many substantial historic codebases (which
+  also serve as test cases), including:
 
-    | Codebase                                                                                    |               Size |
-    |:--------------------------------------------------------------------------------------------|-------------------:|
-    | [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                         |  \~2,500&nbsp;SLOC |
-    | [Burke&nbsp;Disassembler](tests/dis.asm)                                                    |  \~2,200&nbsp;SLOC |
-    | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm) |  \~2,800&nbsp;SLOC |
-    | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                            | \~30,000&nbsp;SLOC |
-    | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                | \~10,000&nbsp;SLOC |
-    | [SARGON](tests/sargon.asm)                                                                  |  \~3,500&nbsp;SLOC |
+  | Codebase                                                                                    |               Size |
+  |:--------------------------------------------------------------------------------------------|-------------------:|
+  | [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                         |  \~2,500&nbsp;SLOC |
+  | [Burke&nbsp;Disassembler](tests/dis.asm)                                                    |  \~2,200&nbsp;SLOC |
+  | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm) |  \~2,800&nbsp;SLOC |
+  | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                            | \~30,000&nbsp;SLOC |
+  | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                | \~10,000&nbsp;SLOC |
+  | [SARGON](tests/sargon.asm)                                                                  |  \~3,500&nbsp;SLOC |
 
-    In every case, **TPZASM** produces identical listings as well as
-    byte‑for‑byte identical object output when compared to the reference
-    TDL/PSA assemblers.  The only differences are when processing
-    *deliberately malformed* or specially crafted inputs (that cause the
-    reference assemblers to abort or crash).
+* In every case, **TPZASM** produces identical listings as well as
+  byte‑for‑byte identical object output when compared to the reference
+  TDL/PSA assemblers.  The only differences are when processing
+  *deliberately malformed* or specially crafted inputs (that cause the
+  reference assemblers to abort or crash).
 
-  * **TPZASM** can write the assembled output as a raw binary image, or as a
-    **TDL&nbsp;Object&nbsp;Module** in relocatable `.PREL` or absolute
-    Intel‑HEX module `.PABS` formats, serialized either as raw binary
-    (using the `-R` flag, *i.e.*, `.PBIN`) or as ASCII‑hex text (using the `-X`
-    flag, *i.e.*, `.PHEX`), all of which is byte‑for‑byte identical to the
-    object output of the reference software.
+* **TPZASM** can write the assembled output as a raw binary image, or as a
+  **TDL&nbsp;Object&nbsp;Module** in relocatable `.PREL` or absolute
+  Intel‑HEX module `.PABS` formats, serialized either as raw binary
+  (using the `-R` flag, *i.e.*, `.PBIN`) or as ASCII‑hex text (using the `-X`
+  flag, *i.e.*, `.PHEX`), all of which is byte‑for‑byte identical to the
+  object output of the reference software.
 
-* **`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
-  output to the original reference tool, with matching messages and identical
-  error‑handling semantics, plus user‑configurable control of output padding.
+**`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
+output to the original reference tool, with matching messages and identical
+error‑handling semantics, plus user‑configurable control of output padding.
 
 ## Future
 
