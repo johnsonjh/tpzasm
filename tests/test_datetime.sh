@@ -74,7 +74,7 @@ if [ "${got}" != "${want}" ]; then
 fi
 
 # --- 3. local-clock fallback (no SOURCE_DATE_EPOCH): well-formed fields ------
-unset SOURCE_DATE_EPOCH || true
+unset SOURCE_DATE_EPOCH || :
 "${asm}" -p -X "${tmp}" "${src}" > /dev/null 2>&1
 got=$(extract "${tmp}")
 

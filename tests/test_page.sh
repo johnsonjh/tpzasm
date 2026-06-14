@@ -69,7 +69,7 @@ gen()
 interval()
 {
   flag="${1}"
-  "${asm}" "${flag}" -l "${work}/p.prn" "${work}/p.asm" > /dev/null 2>&1 || true
+  "${asm}" "${flag}" -l "${work}/p.prn" "${work}/p.asm" > /dev/null 2>&1 || :
   awk 'BEGIN { p = 0; seen = 0 }
     /\f/ {
       if (1 == seen) { print NR - p; exit }
@@ -82,7 +82,7 @@ interval()
 ffcount()
 {
   flag="${1}"
-  "${asm}" "${flag}" -l "${work}/p.prn" "${work}/p.asm" > /dev/null 2>&1 || true
+  "${asm}" "${flag}" -l "${work}/p.prn" "${work}/p.asm" > /dev/null 2>&1 || :
   awk 'BEGIN { c = 0 } /\f/ { c = c + 1 } END { print c }' "${work}/p.prn"
 }
 
