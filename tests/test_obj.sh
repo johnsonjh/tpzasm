@@ -68,13 +68,15 @@ set -eu
 # vectors (zapple; object byte-exact to BOTH zasm.com -z and pasm.com -p), and
 # the real-world TDL Z80 disassembler (c) 1979 -- an absolute (.PABS) program
 # using .LADDR/.LALL, mid-source .RADIX 16/10, double-quoted .TITLE/.SBTTL, and
-# many .LOC-addressed tables (dis; object byte-exact to BOTH originals).  The
+# many .LOC-addressed tables (dis; object byte-exact to BOTH originals), and the
+# empty-body[0] macro call-line-LC cases (maclc; object byte-exact -- its
+# listing is the subject of tests/test_listing.sh).  The
 # trailing group (cond imain macro macro2 str z80 z80b z80c) were originally
 # added as standalone LISTING fixtures (compared by hand against the originals);
 # their emitted object is byte-exact too, so they are guarded here as well.
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs extop dref cinl laddr zapple dis \
+insnest psym temps varargs extop dref cinl laddr zapple dis maclc \
 cond imain macro macro2 str z80 z80b z80c"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)

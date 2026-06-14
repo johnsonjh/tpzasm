@@ -123,7 +123,7 @@ test: test_expr asm tests/test_trunc.sh tests/test_obj.sh \
 # list is derived from tests/golden/*.rel so it never goes stale as fixtures
 # are added.  The tnylpo-dependent parts skip cleanly when the CP/M emulator is
 # not installed.
-longtest: test tests/test_play.sh tools/vrel.sh
+longtest: test tests/test_play.sh tests/test_listing.sh tools/vrel.sh
 	@if command -v tnylpo > /dev/null 2>&1; then \
 		for f in $$(ls tests/golden/*.rel 2> /dev/null \
 			| sed 's|.*/||; s|\.rel$$||'); do \
@@ -135,6 +135,7 @@ longtest: test tests/test_play.sh tools/vrel.sh
 			"SKIP: tnylpo not found; skipping vrel differential."; \
 	fi
 	@./tests/test_play.sh
+	@./tests/test_listing.sh
 
 ################################################################################
 

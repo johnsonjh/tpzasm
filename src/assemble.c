@@ -3584,7 +3584,7 @@ paren_depth_of (const char *s)
 
 static void
 expand_macro (astate *a, const macrodef *m, const char *argstr,
-              const char *callline)
+              const char *callline, int labeled)
 {
   char argbuf[1024];
   char *args[8];
@@ -3751,6 +3751,19 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
                          ((1 == m->nbody) ? "]" : ""));
       else
         (void)xsnprintf (src, sizeof (src), "%s[", callline);
+
+      /*
+       * A LABELED call line carries the label's address (= lc0) even when
+       * body[0] emits nothing -- the originals list the label with its LC, as
+       * for any labeled line.  (An UNLABELED empty-body[0] call line stays
+       * blank: lst_loc == -1 here; an emitting body[0] already shows lc0 via
+       * lst_loc == -2.)  Deriving lst_lbase reproduces the relocation flag.
+       */
+      if (labeled && -1 == a->lst_loc)
+        {
+          a->lst_loc = (long)lc0;
+          a->lst_lbase = -1;
+        }
 
       a->mac_src = src;
       a->mac_plus = 0;
@@ -3956,7 +3969,7 @@ do_line (astate *a, const char *line)
           a->pending = 0;
 
           if (NULL != pm) /* multi-line arg: no single call line to fold */
-            expand_macro (a, pm, a->pend_args, NULL);
+            expand_macro (a, pm, a->pend_args, NULL, 0);
         }
 
       return;
@@ -5051,7 +5064,8 @@ do_line (astate *a, const char *line)
           return;
         }
 
-      expand_macro (a, mac, L.operands, line); /* folds the call line itself */
+      /* folds the call line itself; a label makes it carry the start LC */
+      expand_macro (a, mac, L.operands, line, ('\0' != L.label[0]));
 
       return;
     }
