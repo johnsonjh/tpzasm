@@ -224,6 +224,8 @@ typedef struct
   long lst_loc; /* LOC-column value: -1 blank, -2 use lc0 */
   long lst_line; /* listing line counter, for pagination */
   int lst_page; /* current listing page number */
+  int lst_pagelen; /* lines per page (PASM `.PAGE width,length' 2nd arg); the
+                    * width->wrap (1st arg) is not yet implemented */
   int lst_lbase; /* LC relocation base: -1 derive from lc_reloc/base, else # */
   int lst_obase; /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext) */
   u8 wreloc[32]; /* per-.WORD-value relocation base (0 abs, 1/2/3/ext) */
@@ -2291,7 +2293,7 @@ lst_wrap (astate *a, int col, int wrapw, int indent)
       (void)fputc ('\n', a->lst);
       a->lst_line++;
 
-      if (a->lst_line >= LST_PAGE)
+      if (a->lst_line >= a->lst_pagelen)
         {
           (void)fputc ('\f', a->lst);
           lst_header (a);
@@ -2420,7 +2422,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
        * line, so it never reaches two words and never overstrikes. */
       int over = (word && DIALECT_PASM != a->dialect && (b1 - b0) >= 4);
 
-      if (a->lst_line >= LST_PAGE) /* page full */
+      if (a->lst_line >= a->lst_pagelen) /* page full */
         {
           (void)fputc ('\f', a->lst);
           lst_header (a);
@@ -2658,7 +2660,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
      * physical row (continuation rows paginate inside lst_source)
      */
 
-    if (a->lst_line >= LST_PAGE)
+    if (a->lst_line >= a->lst_pagelen)
       {
         (void)fputc ('\f', a->lst);
         lst_header (a);
@@ -3178,7 +3180,7 @@ lst_symtab (astate *a)
           col = 0;
           a->lst_line++;
 
-          if (a->lst_line >= LST_PAGE && i < total - 1)
+          if (a->lst_line >= a->lst_pagelen && i < total - 1)
             { /* table continues on a new page */
               (void)fputc ('\f', a->lst);
               lst_symhead (a);
@@ -5064,9 +5066,64 @@ do_line (astate *a, const char *line)
       return; /* suppressed from the body listing */
     }
   else if (opeq (op, ".PAGE", NULL))
-    { /*
-       * skip to the top of the next listing page; the directive itself is not
-       * listed (.EJECT is NOT a synonym -- the originals reject it).
+    {
+      const char *pg = skipws (L.operands);
+
+      if ('\0' != *pg && ';' != *pg)
+        { /*
+           * `.PAGE' with an operand differs by dialect.  ZASM takes NO operand:
+           * it flags the operand `Q' (the line lists with the `Q' code + a `?'
+           * at the operand), then ejects as for a bare `.PAGE'.  PASM instead
+           * reads the operand as the page geometry, `.PAGE width[,length]':
+           * the SECOND operand sets the lines-per-page (pagination) and the
+           * line is suppressed WITHOUT ejecting.  The first operand (page
+           * WIDTH -> column wrap) is not yet honored.
+           */
+          if (DIALECT_PASM == a->dialect)
+            {
+              const char *cm = pg;
+
+              while ('\0' != *cm && ';' != *cm && ',' != *cm)
+                cm++;
+
+              if (',' == *cm && 2 == a->pass)
+                { /* the lines-per-page is the operand after the comma */
+                  value_t v;
+                  const char *q = skipws (cm + 1);
+
+                  /* the operand is the TOTAL page length; the form-feed fires
+                   * after that many lines less the 3-line bottom margin -- the
+                   * same convention as the default LST_PAGE (a 66-line page
+                   * less 3).  Require it to exceed the margin. */
+                  if (!eval1 (a, &q, &v) && 0 == v.reloc && NULL == v.ext
+                      && v.value > 3)
+                    a->lst_pagelen = (int)v.value - 3;
+                }
+
+              return; /* geometry directive: suppressed, no eject */
+            }
+
+          a->ppos = line_off (line, pg);
+          aerr (a, line, "extra operand"); /* `Q': questionable operand */
+          /* a labeled `.PAGE <arg>' shows the label's address (= lc0), like any
+           * labeled line; an unlabeled one lists with a blank LOC column */
+          a->lst_loc = (('\0' != L.label[0]) ? (long)lc0 : -1);
+          a->lst_lbase = -1;
+
+          if (2 == a->pass)
+            {
+              print_lst (a, lc0, line); /* list the `Q'+`?' line first ... */
+              (void)fputc ('\f', a->lst); /* ... then eject like a bare .PAGE */
+              lst_header (a);
+            }
+
+          return;
+        }
+
+      /*
+       * bare `.PAGE': skip to the top of the next listing page; the directive
+       * itself is not listed (.EJECT is NOT a synonym -- the originals reject
+       * it).
        */
       if (2 == a->pass)
         {
@@ -5431,6 +5488,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.long_symbols = long_symbols;
   a.lst_page = 0;
   a.lst_line = 0;
+  a.lst_pagelen = LST_PAGE; /* PASM `.PAGE w,L' overrides this */
 
   /*
    * Map the console pseudo-devices to the real streams, so an explicit

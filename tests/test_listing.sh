@@ -28,6 +28,10 @@
 #   sall     - .SALL macro-collapse: the call line carries the first emitting
 #              statement's LC + value-form (incl. a nested macro).
 #   clabel   - a labeled conditional (`LBL: .IFx ...') shows the label's LC.
+#   page     - .PAGE: a bare eject (both dialects), a ZASM `Q' error on an
+#              operand, and PASM's suppressed page-geometry directive.  (The
+#              page LENGTH is normalized away here -- tests/test_page.sh covers
+#              the lines-per-page behavior on the raw listing.)
 #
 # Skips cleanly (success) when tnylpo is not installed, like make longtest.
 
@@ -50,7 +54,7 @@ find_command awk basename cp diff env mkdir rm sed timeout tnylpo tr \
 ref=${ASM_REF:-${here}}
 asm="${ref}/asm"
 
-fixtures="macro macro2 mconcat macnest maclc sall clabel"
+fixtures="macro macro2 mconcat macnest maclc sall clabel page"
 
 # Normalize a raw listing to the project-standard parity form on stdout: drop
 # CR/form-feed, page headers, the error-count line and the console error tally,

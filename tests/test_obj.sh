@@ -70,15 +70,16 @@ set -eu
 # using .LADDR/.LALL, mid-source .RADIX 16/10, double-quoted .TITLE/.SBTTL, and
 # many .LOC-addressed tables (dis; object byte-exact to BOTH originals), and the
 # empty-body[0] macro call-line-LC cases (maclc), the .SALL macro-collapse cases
-# (sall) and the labeled-conditional LC cases (clabel) -- object byte-exact;
-# their LISTINGS are the subject of tests/test_listing.sh.  The
+# (sall), the labeled-conditional LC cases (clabel) and the .PAGE eject /
+# ZASM-Q-on-operand cases (page) -- object byte-exact; their LISTINGS are the
+# subject of tests/test_listing.sh.  The
 # trailing group (cond imain macro macro2 str z80 z80b z80c) were originally
 # added as standalone LISTING fixtures (compared by hand against the originals);
 # their emitted object is byte-exact too, so they are guarded here as well.
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple dis maclc sall clabel \
-cond imain macro macro2 str z80 z80b z80c"
+page cond imain macro macro2 str z80 z80b z80c"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1
