@@ -192,10 +192,12 @@ rb_flush (recbuf *r)
  * DIFFERENT base (3 data bytes: base#, LSB, MSB); '111' = an 8-bit value
  * relative to a different (external) base (2 data bytes: base#, value).  Each
  * control byte holds eight bits; a code's bits may straddle the boundary into
- * the next control byte.  The data bytes of every code that BEGINS within a
- * control byte are written immediately after that control byte, so the layout
- * is [control][data of codes starting here][control][data...].  For the common
- * 0/10/110 codes (bits == data bytes) this reduces to one bit per data byte.
+ * the next control byte.  For the common 0/10/110 codes there is one data byte
+ * per control bit, and a data byte is written after the control byte whose
+ * eight-bit window holds its owning bit -- so a code whose bits straddle a
+ * boundary has its data bytes split across the two control bytes (a `10' word
+ * in bits 7/8 lays its LSB after this control byte, its MSB after the next).
+ * The layout is [control][data owned by this control byte's bits][control]...
  */
 
 static int
@@ -205,10 +207,10 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
   u8 bit[REC_CAP * 8 + 16] = { 0 }; /* control-bit stream */
   u8 data[REC_CAP + 8] = { 0 };     /* data-byte stream   */
   int istart[REC_CAP + 8] = { 0 };  /* start bit of each item */
-  int idlen[REC_CAP + 8] = { 0 };   /* data bytes of each item */
+  int dbit[REC_CAP + 8] = { 0 };    /* control bit that owns each data byte */
   int nbits = 0, ndata = 0, nitem = 0;
   int i = 0; /* emission-log bytes consumed by this record */
-  int nctrl, c, ie, doff;
+  int nctrl, c, doff;
   recbuf r;
 
   /*
@@ -230,7 +232,7 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
       /*
        * the REC_CAP acceptance test above keeps the buffers well under their
        * sizes; pin those bounds explicitly (these never trigger) so static
-       * analyzers can prove the bit[]/data[]/istart[]/idlen[] indexing below
+       * analyzers can prove the bit[]/data[]/istart[]/dbit[] indexing below
        * stays in range.
        */
       if (ndata + 3 > REC_CAP + 8)
@@ -250,8 +252,9 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
           bit[nbits++] = 1;
           bit[nbits++] = 1;
           data[ndata] = etb[i];
+          dbit[ndata] = istart[nitem];
           data[(long)ndata + 1] = eb[i];
-          idlen[nitem] = 2;
+          dbit[(long)ndata + 1] = istart[nitem] + 1;
           ndata += 2;
         }
       else if (cross)
@@ -260,9 +263,11 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
           bit[nbits++] = 1;
           bit[nbits++] = 0;
           data[ndata] = etb[i];
+          dbit[ndata] = istart[nitem];
           data[(long)ndata + 1] = eb[i];
+          dbit[(long)ndata + 1] = istart[nitem] + 1;
           data[(long)ndata + 2] = eb[(long)i + 1];
-          idlen[nitem] = 3;
+          dbit[(long)ndata + 2] = istart[nitem] + 2;
           ndata += 3;
         }
       else if (reloc)
@@ -270,15 +275,16 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
           bit[nbits++] = 1;
           bit[nbits++] = 0;
           data[ndata] = eb[i];
+          dbit[ndata] = istart[nitem];
           data[(long)ndata + 1] = eb[(long)i + 1];
-          idlen[nitem] = 2;
+          dbit[(long)ndata + 1] = istart[nitem] + 1;
           ndata += 2;
         }
       else
         { /* '0': absolute */
           bit[nbits++] = 0;
           data[ndata] = eb[i];
-          idlen[nitem] = 1;
+          dbit[ndata] = istart[nitem];
           ndata += 1;
         }
 
@@ -292,7 +298,6 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
   rb_be16 (&r, (unsigned)addr);
   rb_bin (&r, (unsigned)base); /* relocation base (.PROG. = 1, pinned = 0) */
 
-  ie = 0;
   doff = 0;
 
   for (c = 0; c < nctrl; c++)
@@ -306,18 +311,19 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
 
       rb_bin (&r, ctrl);
 
-      /* the data of every code that BEGINS in this control byte's window */
-      while (ie < nitem && istart[ie] < (c + 1) * 8)
+      /*
+       * Each data byte is written after the control byte whose 8-bit window
+       * holds the control bit that owns it (dbit[]).  A code whose bits
+       * straddle a control-byte boundary therefore has its data split across
+       * the two control bytes -- e.g. a relocatable word whose `10' in bits
+       * 7/8 lays its LSB after this control byte and its MSB after the next.
+       * (doff < REC_CAP + 8 by construction; the explicit bound lets static
+       * analyzers prove the data[] read stays in range.)
+       */
+      while (doff < ndata && doff < REC_CAP + 8 && dbit[doff] < (c + 1) * 8)
         {
-          int d;
-
-          /* doff + d <= ndata <= REC_CAP + 8 by construction; the explicit
-           * bound lets static analyzers prove the data[] read stays in range */
-          for (d = 0; d < idlen[ie] && (long)doff + d < REC_CAP + 8; d++)
-            rb_bin (&r, (unsigned)data[(long)doff + d]);
-
-          doff += idlen[ie];
-          ie++;
+          rb_bin (&r, (unsigned)data[doff]);
+          doff++;
         }
     }
 
