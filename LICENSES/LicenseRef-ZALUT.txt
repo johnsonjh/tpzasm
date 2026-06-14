@@ -1,32 +1,30 @@
 The book Z-80 ASSEMBLY LANGUAGE UNDER TurboDOS is
-Copyright (c) 1984, 1987, 1990, and 2009 by R. Roger Breton, the author,
+Copyright (c) 1984, 1987, 1990, 2009, and 2003 by R. Roger Breton, the author,
 with all rights reserved.
 
 Personal use and distribution exceptions are only as indicated herein.
 
 Personal-Use License
 
-I hereby give license for the PDF versions of this book to be freely used
-for personal-use only without charge. Note that that is for PERSONAL-USE
-ONLY. If I catch anyone selling these files, or otherwise using these files
-as a part of a commercial venture, for profit or otherwise, I WILL
-prosecute! Promise!
+I hereby give license for the PDF versions of this book to be freely used for
+personal-use only without charge. Note that that is for PERSONAL-USE ONLY. If
+I catch anyone selling these files, or otherwise using these files as a part
+of a commercial venture, for profit or otherwise, I WILL prosecute! Promise!
 
 Distribution License
 
 Persons may freely distribute the PDF versions of this book subject to the
 following conditions:
 
-1.The above five files are distributed together in a ZIP file bearing
-  the name “Z80_Assm.zip”; or
+1.The above five files are distributed together in a ZIP file bearing the
+  name "Z80_Assm.zip"; or
 
-2.The above five files are distributed together as the only files on a CD
-  or DVD and are contained in the root directory thereof.
+2.The above five files are distributed together as the only files on a CD or
+  DVD and are contained in the root directory thereof.
 
-In all cases, all four versions of the book and this Read_Me_First file
-MUST be distributed together. Under no circumstances may anyone distribute
-any version of this book by itself without prior written permission of the
-author.
+In all cases, all four versions of the book and this Read_Me_First file MUST
+be distributed together. Under no circumstances may anyone distribute any
+version of this book by itself without prior written permission of the author.
 
 This book may be distributed only as the above files. No-one may distribute
 any pre-printed form of this book without prior written permission of the
