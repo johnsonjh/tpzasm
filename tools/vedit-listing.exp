@@ -1,0 +1,70 @@
+#!/usr/bin/expect -f
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - vedit-listing.exp
+#
+# Drive a FULL-LISTING VEDIT-PLUS build of the originals under tnylpo: PRODUCE
+# LISTING=1 with every "LISTING OF" section = 1, so the listing covers all
+# sections (for a clone-vs-originals full-listing comparison).  Run from a dir
+# holding the VEDIT sources (CRLF) + the assembler .com + a tnylpo.cfg with
+# `printer mode = raw' (so the .PRN is the assembler's own listing, not the
+# tnylpo display fold).  Pass the assembler .com as $argv (default pasm.com).
+#
+# WHY SEQUENTIAL (one blocking `expect' per prompt, IN ORDER) rather than a
+# catch-all `-re "LISTING OF" {send 1; exp_continue}': the catch-all RACES on
+# the rapid-fire prompts and silently skips the tail ones (VISUAL MAIN onward
+# got no answer), so the originals listed different sections than the clone's
+# deterministic `-r' answer file -- the long-standing desync.  Answering each
+# prompt in order, identically to the clone's 30-answer `-r' stream
+# (1 3 1 1 0 0 1 then 23 ones), keeps the two builds in lockstep.
+
+set asm [lindex $argv 0]
+if {$asm eq ""} { set asm pasm.com }
+set timeout 120
+
+proc ask {pat ans} {
+  expect {
+    -ex $pat { send "$ans\r" }
+    timeout  { puts "\n\[TIMEOUT waiting for: $pat\]"; exit 2 }
+    eof      { puts "\n\[EOF waiting for: $pat\]"; exit 3 }
+  }
+}
+
+spawn tnylpo -f tnylpo.cfg -b $asm vedplus.asm
+
+# version menu (Full version, 8080, CRT = 3) + feature flags
+ask "VEDIT PLUS (1)"          1
+ask "version number"          3
+ask "INCLUDE PRINT FORMATTER" 1
+ask "INCLUDE WINDOWS"         1
+ask "DEMO VERSION"            0
+ask "DEVELOPMENT VERSION"     0
+ask "PRODUCE LISTING"         1
+
+# the 21 "LISTING OF" sections (LSMAIN..LSBUF), all = 1
+ask "LISTING OF MAIN"        1
+ask "HARDWARE DEPENDENT"     1
+ask "CONSOLE I/O"            1
+ask "INTIALIZATION"          1
+ask "OPSYS FILE HANDLING"    1
+ask "COMMON FILE HANDLING"   1
+ask "COMMAND PROCESSING"     1
+ask "COMMAND FUNCTIONS"      1
+ask "COMMAND SUPPORT"        1
+ask "VPLUS MATH"             1
+ask "SEARCH ROUTINES"        1
+ask "LISTING OF PRINT FORMATTER" 1
+ask "TEXT REGISTER"          1
+ask "COMMAND INTERFACE"      1
+ask "VISUAL MAIN"            1
+ask "VISUAL FUNCTIONS"       1
+ask "WORD PROCESSING"        1
+ask "VISUAL DISPLAY"         1
+ask "WINDOW DRIVERS"         1
+ask "AUXILIARY"              1
+ask "STORAGE AREA"           1
+
+# LSBUF=1 enables two more (LSFIX, LSCUST)
+ask "FIXED STORAGE"          1
+ask "INSTALL STORAGE"        1
+
+set timeout 600
+expect eof
