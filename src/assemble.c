@@ -70,6 +70,7 @@ typedef struct macrodef
 {
   char name[NAMEBUF];
   char params[8][NAMEBUF];
+  char defval[8][NAMEBUF]; /* per-param `PARAM(def)' default ("" = none) */
   int nparams;
   char *body[64];
   int nbody;
@@ -2140,9 +2141,12 @@ inline_block_end (const char *s)
 /******************************************************************************/
 
 /*
- * Read one string argument: "quoted" / 'quoted' or bare (up to space/comma/;).
- * Either quote delimits the string, matching the originals, so e.g. `.IFB '''
- * is the empty string just as `.IFB ""' is.
+ * Read one string argument: [bracketed], "quoted" / 'quoted', or bare (up to
+ * space/comma/;).  A `[...]' argument yields its CONTENT (the brackets are the
+ * delimiters), so `.IFB [END]' with END unbound -> `[]' -> empty -> blank, just
+ * as `.IFB '''/`.IFB ""' are empty; the matching `]' is found depth-aware so a
+ * nested `[...]' inside the argument is carried through verbatim.  Either quote
+ * also delimits the string.
  */
 
 static const char *
@@ -2151,6 +2155,31 @@ parse_str_arg (const char *p, char *out)
   int n = 0;
 
   p = skipws (p);
+
+  if ('[' == *p)
+    {
+      int depth = 1;
+      p++;
+
+      while ('\0' != *p)
+        {
+          if ('[' == *p)
+            depth++;
+          else if (']' == *p && 0 == --depth)
+            {
+              p++;
+              break;
+            }
+
+          if (n < 127)
+            out[n++] = *p;
+
+          p++;
+        }
+
+      out[n] = '\0';
+      return p;
+    }
 
   if ('"' == *p || '\'' == *p)
     {
@@ -3643,6 +3672,7 @@ do_define (astate *a, const char *operands)
       while ('\0' != *p && ']' != *p && ')' != *p && '=' != *p)
         {
           char *pn = m->params[m->nparams];
+          char *dv = m->defval[m->nparams];
           int pi = 0;
           const char *st = p;
           p = skipws (p);
@@ -3657,6 +3687,31 @@ do_define (astate *a, const char *operands)
             }
 
           pn[pi] = '\0';
+          dv[0] = '\0';
+
+          if ('(' == *p)
+            { /* `PARAM(default)': capture the parenthesized default value */
+              int dd = 1, di = 0;
+              p++;
+
+              while ('\0' != *p && dd > 0)
+                {
+                  if ('(' == *p)
+                    dd++;
+                  else if (')' == *p && 0 == --dd)
+                    {
+                      p++;
+                      break;
+                    }
+
+                  if (di < NAMEBUF - 1)
+                    dv[di++] = *p;
+
+                  p++;
+                }
+
+              dv[di] = '\0';
+            }
 
           if (pi > 0 && m->nparams < 7)
             m->nparams++;
@@ -3740,7 +3795,8 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
           if ('\'' == *in && oi < 500)
             out[oi++] = *in++;
         }
-      else if (isalpha ((unsigned char)*in) || '.' == *in || '%' == *in)
+      else if (isalpha ((unsigned char)*in) || '.' == *in || '%' == *in
+               || '$' == *in)
         {
           char tok[NAMEBUF];
           int tn = 0, j, pi = -1;
@@ -3767,6 +3823,15 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
             while ('\0' != *s && oi < 500)
               out[oi++] = *s++;
           }
+
+          /*
+           * paste-right: an apostrophe right after a substituted dummy is the
+           * concatenation operator (the mirror of `'dummy' paste-left above)
+           * and is elided, so e.g. `.ASCII 'A$'' yields the argument wrapped
+           * in its OWN quotes, not in an extra pair.
+           */
+          if (pi >= 0 && '\'' == *in)
+            in++;
         }
       else
         out[oi++] = *in++;
@@ -3931,6 +3996,51 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   /* `&' = the macro's argument count: the larger of the declared dummy-param
    * count and the number of arguments actually passed */
   a->mac_argc = ((nargs > m->nparams) ? nargs : m->nparams);
+
+  /*
+   * Bind any dummy parameter that received no argument.  A `%'-prefixed dummy
+   * gets a fresh per-expansion local label (`..NNNN', the form the original
+   * assemblers generate for macro-created symbols); any other unbound dummy
+   * takes its declared default value (`PARAM(def)'), or the empty string when
+   * it has none -- so a blank-argument test such as `.IFB [END]' sees a truly
+   * blank operand.  The synthetic arguments are appended to argbuf and indexed
+   * just past the supplied ones, after which substitution treats every dummy as
+   * bound.  genctr resets each pass (init_pass), so both passes generate the
+   * same labels in the same order.
+   */
+  {
+    int k;
+
+    for (k = nargs; k < m->nparams && k < 8 && j < 1000; k++)
+      {
+        args[k] = argbuf + j;
+
+        if ('%' == m->params[k][0])
+          {
+            char gl[24];
+            int gi;
+
+            a->genctr++;
+            (void)xsnprintf (gl, sizeof (gl), "..%04u", a->genctr);
+
+            for (gi = 0; '\0' != gl[gi] && j < 1000; gi++)
+              argbuf[j++] = gl[gi];
+          }
+        else
+          {
+            const char *dv = m->defval[k];
+
+            while ('\0' != *dv && j < 1000)
+              argbuf[j++] = *dv++;
+          }
+
+        if (j < 1000)
+          argbuf[j++] = '\0';
+      }
+
+    if (m->nparams > nargs)
+      nargs = m->nparams; /* substitution now treats every dummy as bound */
+  }
 
   /*
    * Macro-expansion listing (pass 2).  The originals fold the body into the
