@@ -79,7 +79,16 @@ set -eu
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple dis maclc sall clabel \
-page cond imain macro macro2 str z80 z80b z80c"
+page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes"
+
+# Some real-world fixtures read assembly-time '\' console values; their answers
+# (the system options that select the assembled configuration) live in a
+# committed tests/<case>.ans file, fed to the clone with -r so the run is
+# non-interactive and deterministic.  go (a CP/M Users' Group GO command) and
+# the quote-handling audit (quotes -- ' " and / interchangeably in char
+# constants, .BYTE/.WORD/.ASCII/.ASCIZ/.ASCIS, plus .IFB '' == .IFB "") need no
+# answers; ittl (ITS100/TIP linker), atu4 and mtu4 (Alloy cipher/mag-tape
+# utilities) each take their port-group and overlap options from <case>.ans.
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1
@@ -101,8 +110,14 @@ for c in ${cases}; do
     # A fixture may deliberately assemble with diagnostics (e.g. i8080's "Z"
     # warnings), so the assembler can exit non-zero; we compare the object
     # bytes regardless, so do not let `set -e' abort on that exit status.
-    "${asm}" -p "${flag}" "${tmp}" "${here}/tests/${c}.asm" > /dev/null 2>&1 \
-      || true
+    rans=""
+    if [ -f "${here}/tests/${c}.ans" ]; then
+      rans="-r ${here}/tests/${c}.ans" # answer the '\' console prompts
+    fi
+    # word-split rans intentionally (flag + path)
+    # shellcheck disable=SC2086
+    "${asm}" -p ${rans} "${flag}" "${tmp}" "${here}/tests/${c}.asm" \
+      > /dev/null 2>&1 || :
 
     if [ ! -f "${gold}/${c}.${ext}" ]; then
       printf '%s\n' "FAILURE: missing golden tests/golden/${c}.${ext}"

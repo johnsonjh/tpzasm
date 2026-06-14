@@ -96,6 +96,35 @@ trim_trailing_whitespace = true
 
 ################################################################################
 
+# Real-world TDL sources kept verbatim as differential-test fixtures: the GO
+# command (Memory Merchants, CP/M Users' Group) and the Alloy Engineering
+# ITS100/TIP linker (1979).  Both are tab-indented; the listing reproduces the
+# source text exactly, so their original trailing whitespace must NOT be
+# trimmed (ittl carries significant trailing blanks inside comments).
+[tests/{go,ittl}.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = false
+
+################################################################################
+
+# Real-world Alloy Engineering TDL utilities kept verbatim (the cipher- and
+# mag-tape utilities, 1980-1981).  They are mostly tab-indented with a few
+# space-aligned lines, so leave the indentation style unchecked, and preserve
+# their original trailing whitespace (it is part of the verbatim listing).
+[tests/{atu4,mtu4}.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = unset
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = false
+
+################################################################################
+
 [*akefile*]
 charset = utf-8
 end_of_line = lf

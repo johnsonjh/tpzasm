@@ -1,0 +1,53 @@
+#!/usr/bin/expect -f
+# TPZASM: TDL ZASM / PSA PASM compatible assembler - tools/answer.exp
+# Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
+# SPDX-License-Identifier: MIT-0
+#
+# Drive a TDL/PSA assembler's assembly-time '\' console prompts under tnylpo
+# from a committed answer file, so a prompt-driven real-world fixture can be
+# assembled non-interactively for the differential listing test.  tnylpo's
+# line-mode console (-b) does NOT consume redirected stdin in lock-step with
+# the prompts, so the prompts must be answered interactively over the pty --
+# hence expect.
+#
+#   answer.exp <assembler.com> <CPM-BASENAME> <answer-file> <tnylpo-config>
+#
+# Each non-blank line of <answer-file> answers the next prompt (each ends in a
+# ':' read prompt); any extra prompt is answered '0' so a malformed run cannot
+# spin forever.  Always run under an outer `timeout' as a backstop.
+
+set timeout 120
+set com     [lindex $argv 0]
+set base    [lindex $argv 1]
+set ansfile [lindex $argv 2]
+set cfg     [lindex $argv 3]
+
+set fh [open $ansfile r]
+set raw [read $fh]
+close $fh
+
+set answers {}
+foreach ln [split $raw "\n"] {
+  set ln [string trim $ln]
+  if {[string length $ln] > 0} {
+    lappend answers $ln
+  }
+}
+set n [llength $answers]
+set i 0
+
+log_user 0
+spawn tnylpo -b -f $cfg $com $base
+expect {
+  -re {: ?$} {
+    if {$i < $n} {
+      send "[lindex $answers $i]\r"
+      incr i
+    } else {
+      send "0\r"
+    }
+    exp_continue
+  }
+  eof { }
+  timeout { exit 2 }
+}

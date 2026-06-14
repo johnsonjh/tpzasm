@@ -54,7 +54,22 @@ find_command awk basename cp diff env mkdir rm sed timeout tnylpo tr \
 ref=${ASM_REF:-${here}}
 asm="${ref}/asm"
 
-fixtures="macro macro2 mconcat macnest maclc sall clabel page"
+# Fixtures whose object is byte-exact (tests/test_obj.sh) AND whose full LISTING
+# must match both originals.  The trailing real-world programs are large: go (a
+# CP/M Users' Group GO command), the quote-handling audit (quotes), and three
+# prompt-driven Alloy Engineering / ITS sources -- ittl (ITS100/TIP linker),
+# atu4 and mtu4 (cipher / mag-tape utilities) -- which read assembly-time '\'
+# console values.  Those answers live in tests/<fixture>.ans; the original is
+# driven over a pty with expect (tnylpo's line-mode console will not take them
+# from redirected stdin) and the clone with -r.  When expect is absent the
+# prompt-driven fixtures are skipped (the rest still run).
+fixtures="macro macro2 mconcat macnest maclc sall clabel page \
+go quotes ittl atu4 mtu4"
+
+have_expect=0
+if command -v expect > /dev/null 2>&1; then
+  have_expect=1
+fi
 
 # Normalize a raw listing to the project-standard parity form on stdout: drop
 # CR/form-feed, page headers, the error-count line and the console error tally,
@@ -80,6 +95,15 @@ for c in ${fixtures}; do
     continue
   fi
 
+  # A prompt-driven fixture carries its '\' console answers in tests/<c>.ans;
+  # those need expect to drive the original.  Skip such fixtures (cleanly) when
+  # expect is unavailable rather than fail.
+  ans="${ref}/tests/${c}.ans"
+  if [ -f "${ans}" ] && [ "${have_expect}" -ne 1 ]; then
+    printf '  %-8s %-4s : SKIP (expect not found; prompt-driven)\n' "${c}" "--"
+    continue
+  fi
+
   # Check each fixture in BOTH dialects -- the clone's -p/-z listing against the
   # matching original (pasm.com / zasm.com) -- as the rest of the suite does.
   for dc in "-p:pasm" "-z:zasm"; do
@@ -93,7 +117,13 @@ for c in ${fixtures}; do
       mkdir -p "${work}"
     }
 
-    "${asm}" "${flag}" -l "${work}/clone.prn" "${src}" > /dev/null 2>&1 || true
+    rans=""
+    if [ -f "${ans}" ]; then
+      rans="-r ${ans}" # the clone answers the '\' prompts from the file
+    fi
+    # shellcheck disable=SC2086
+    "${asm}" ${rans} "${flag}" -l "${work}/clone.prn" "${src}" \
+      > /dev/null 2>&1 || :
 
     # oracle listing: CR/LF + ^Z source on A:, capture LST: via printer config
     {
@@ -104,11 +134,20 @@ for c in ${fixtures}; do
       > "${work}/tnylpo.cfg"
     env cp -f "${ref}/orig/${com}.com" "${work}/"
     uc=$(printf '%s' "${c}" | tr '[:lower:]' '[:upper:]')
-    (
-      cd "${work}" || exit 1
-      timeout 30 tnylpo -f tnylpo.cfg "${com}.com" "${uc}" < /dev/null \
-        > console.txt 2>&1
-    )
+    if [ -f "${ans}" ]; then
+      # prompt-driven: drive the original over a pty, answers from <c>.ans
+      (
+        cd "${work}" || exit 1
+        timeout 90 expect "${ref}/tools/answer.exp" "${com}.com" "${uc}" \
+          "${ans}" tnylpo.cfg > console.txt 2>&1
+      )
+    else
+      (
+        cd "${work}" || exit 1
+        timeout 30 tnylpo -f tnylpo.cfg "${com}.com" "${uc}" < /dev/null \
+          > console.txt 2>&1
+      )
+    fi
 
     if [ ! -f "${work}/${c}.prn" ]; then
       printf '%s\n' "FAILURE: ${c} (${com}): oracle produced no listing"
