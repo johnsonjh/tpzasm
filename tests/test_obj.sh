@@ -69,15 +69,15 @@ set -eu
 # the real-world TDL Z80 disassembler (c) 1979 -- an absolute (.PABS) program
 # using .LADDR/.LALL, mid-source .RADIX 16/10, double-quoted .TITLE/.SBTTL, and
 # many .LOC-addressed tables (dis; object byte-exact to BOTH originals), and the
-# empty-body[0] macro call-line-LC cases (maclc) and the .SALL macro-collapse
-# cases (sall) -- object byte-exact; their LISTINGS are the subject of
-# tests/test_listing.sh.  The
+# empty-body[0] macro call-line-LC cases (maclc), the .SALL macro-collapse cases
+# (sall) and the labeled-conditional LC cases (clabel) -- object byte-exact;
+# their LISTINGS are the subject of tests/test_listing.sh.  The
 # trailing group (cond imain macro macro2 str z80 z80b z80c) were originally
 # added as standalone LISTING fixtures (compared by hand against the originals);
 # their emitted object is byte-exact too, so they are guarded here as well.
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
-insnest psym temps varargs extop dref cinl laddr zapple dis maclc sall \
+insnest psym temps varargs extop dref cinl laddr zapple dis maclc sall clabel \
 cond imain macro macro2 str z80 z80b z80c"
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)

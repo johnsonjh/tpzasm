@@ -4428,10 +4428,13 @@ do_line (astate *a, const char *line)
 
       if (2 == a->pass)
         { /*
-           * the originals list the conditional directive
-           * line itself, with a blank LC column
+           * the originals list the conditional directive line itself with a
+           * blank LC column -- UNLESS it carries a label (`LBL: .IFx ...'),
+           * in which case the label's address (= lc0) is shown, as for any
+           * labeled line.
            */
-          a->lst_loc = -1;
+          a->lst_loc = (('\0' != L.label[0]) ? (long)lc0 : -1);
+          a->lst_lbase = -1;
           print_lst (a, lc0, line);
         }
 

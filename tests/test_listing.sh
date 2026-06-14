@@ -11,13 +11,13 @@
 # The object output is guarded byte-for-byte by tests/test_obj.sh, but the
 # LISTING (the .PRN) has its own delicate model -- in particular the macro
 # expansion call-line LC and the '+' continuation lines.  This test assembles
-# each macro fixture with the clone (-p, listing to a file) AND with the
-# original PSA PASM (pasm.com under tnylpo, listing captured via a `printer
-# mode = raw' config), normalizes both the project-standard way (strip the
-# form-feeds, page headers, the error-count line, blank lines and trailing
-# whitespace), and diffs them.  Any difference is a macro-listing regression.
+# each fixture with the clone AND with the matching original under tnylpo (a
+# `printer mode = raw' config captures the LST:) in BOTH dialects -- clone -p
+# vs pasm.com and clone -z vs zasm.com -- normalizes both the project-standard
+# way (strip form-feeds, page headers, the error-count line, blank lines and
+# trailing whitespace), and diffs them.  Any difference is a listing regression.
 #
-# Scoped to the macro fixtures, whose listings are expected to match exactly:
+# Scoped to the macro/conditional listing fixtures, expected to match exactly:
 #   macro    - body[0] emits (CLR `[XRA A'): folded onto the call line.
 #   macro2   - REPT, an empty-body[0] macro whose body[1] is a conditional
 #              (.IFN): the call line is blank (the emit is reached indirectly).
@@ -25,6 +25,9 @@
 #   macnest  - OUTER, an empty-body[0] macro whose body[1] DIRECTLY emits
 #              (.BYTE V): the call line carries the expansion's start LC.
 #   maclc    - isolates the empty-body[0] call-line-LC cases side by side.
+#   sall     - .SALL macro-collapse: the call line carries the first emitting
+#              statement's LC + value-form (incl. a nested macro).
+#   clabel   - a labeled conditional (`LBL: .IFx ...') shows the label's LC.
 #
 # Skips cleanly (success) when tnylpo is not installed, like make longtest.
 
@@ -47,7 +50,7 @@ find_command awk basename cp diff env mkdir rm sed timeout tnylpo tr \
 ref=${ASM_REF:-${here}}
 asm="${ref}/asm"
 
-fixtures="macro macro2 mconcat macnest maclc sall"
+fixtures="macro macro2 mconcat macnest maclc sall clabel"
 
 # Normalize a raw listing to the project-standard parity form on stdout: drop
 # CR/form-feed, page headers, the error-count line and the console error tally,
@@ -58,6 +61,7 @@ normalize()
     | sed -e 's/[[:space:]]*$//' \
       -e '/PSA Macro Assembler/d' \
       -e '/Phoenix Software/d' \
+      -e '/TDL Z80 CP\/M DISK ASSEMBLER/d' \
       -e '/[Ee][Rr][Rr][Oo][Rr][Ss]* [Ww][Ee][Rr][Ee] [Dd]etected/d' \
       -e '/^[0-9][0-9]* error(s)$/d' \
       -e '/^[[:space:]]*$/d'
@@ -72,52 +76,58 @@ for c in ${fixtures}; do
     continue
   fi
 
-  # shellcheck disable=SC2119
-  work=$(mktemp -d 2> /dev/null || mktemp_local)
-  [ -d "${work}" ] || {
-    rm -f "${work}"
-    mkdir -p "${work}"
-  }
+  # Check each fixture in BOTH dialects -- the clone's -p/-z listing against the
+  # matching original (pasm.com / zasm.com) -- as the rest of the suite does.
+  for dc in "-p:pasm" "-z:zasm"; do
+    flag=${dc%:*}
+    com=${dc#*:}
 
-  # clone listing
-  "${asm}" -p -l "${work}/clone.prn" "${src}" > /dev/null 2>&1 || true
+    # shellcheck disable=SC2119
+    work=$(mktemp -d 2> /dev/null || mktemp_local)
+    [ -d "${work}" ] || {
+      rm -f "${work}"
+      mkdir -p "${work}"
+    }
 
-  # oracle listing: CR/LF + ^Z source on A:, capture LST: via printer config
-  {
-    sed 's/$/\r/' -- "${src}"
-    printf '\032'
-  } > "${work}/${c}.asm"
-  printf 'printer file = "./%s.prn"\nprinter mode = raw\n' "${c}" \
-    > "${work}/tnylpo.cfg"
-  env cp -f "${ref}/orig/pasm.com" "${work}/"
-  uc=$(printf '%s' "${c}" | tr '[:lower:]' '[:upper:]')
-  (
-    cd "${work}" || exit 1
-    timeout 30 tnylpo -f tnylpo.cfg pasm.com "${uc}" < /dev/null \
-      > console.txt 2>&1
-  )
+    "${asm}" "${flag}" -l "${work}/clone.prn" "${src}" > /dev/null 2>&1 || true
 
-  if [ ! -f "${work}/${c}.prn" ]; then
-    printf '%s\n' "FAILURE: ${c}: oracle produced no listing"
-    fail=1
+    # oracle listing: CR/LF + ^Z source on A:, capture LST: via printer config
+    {
+      sed 's/$/\r/' -- "${src}"
+      printf '\032'
+    } > "${work}/${c}.asm"
+    printf 'printer file = "./%s.prn"\nprinter mode = raw\n' "${c}" \
+      > "${work}/tnylpo.cfg"
+    env cp -f "${ref}/orig/${com}.com" "${work}/"
+    uc=$(printf '%s' "${c}" | tr '[:lower:]' '[:upper:]')
+    (
+      cd "${work}" || exit 1
+      timeout 30 tnylpo -f tnylpo.cfg "${com}.com" "${uc}" < /dev/null \
+        > console.txt 2>&1
+    )
+
+    if [ ! -f "${work}/${c}.prn" ]; then
+      printf '%s\n' "FAILURE: ${c} (${com}): oracle produced no listing"
+      fail=1
+      env rm -rf "${work}"
+      continue
+    fi
+
+    cn="${work}/clone.norm"
+    on="${work}/oracle.norm"
+    normalize "${work}/clone.prn" > "${cn}"
+    normalize "${work}/${c}.prn" > "${on}"
+
+    if diff -u "${on}" "${cn}" > "${work}/diff.txt"; then
+      printf '  %-8s %-4s : listing IDENTICAL\n' "${c}" "${com}"
+    else
+      printf '  %-8s %-4s : listing DIFFERS\n' "${c}" "${com}"
+      sed 's/^/    /' "${work}/diff.txt"
+      fail=1
+    fi
+
     env rm -rf "${work}"
-    continue
-  fi
-
-  cn="${work}/clone.norm"
-  on="${work}/oracle.norm"
-  normalize "${work}/clone.prn" > "${cn}"
-  normalize "${work}/${c}.prn" > "${on}"
-
-  if diff -u "${on}" "${cn}" > "${work}/diff.txt"; then
-    printf '  %-8s : listing IDENTICAL\n' "${c}"
-  else
-    printf '  %-8s : listing DIFFERS\n' "${c}"
-    sed 's/^/    /' "${work}/diff.txt"
-    fail=1
-  fi
-
-  env rm -rf "${work}"
+  done
 done
 
 if [ "${fail}" -ne 0 ]; then
