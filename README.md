@@ -46,7 +46,7 @@
 
 ## Status
 
-* **`TPZASM`** is \~**99.5%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+* **`TPZASM`** is \~**99.7%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.  It is a fully faithful implementation
   that can assemble the substantial (\~2,500 SLOC)
   [Zapple Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
