@@ -32,14 +32,14 @@
 
 ## Portability
 
-* **TPZASM** should compile cleanly on any system with an
-  ANSI&nbsp;C89 compiler.
+**TPZASM** should compile cleanly on any system with an
+ANSI&nbsp;C89 compiler.
 
-  Linux, AIX, OS/400, Solaris, illumos, FreeBSD, NetBSD, OpenBSD,
+* Linux, AIX, OS/400, Solaris, illumos, FreeBSD, NetBSD, OpenBSD,
   DragonFly&nbsp;BSD, Haiku, MS‑DOS, OS/2, and Windows are known to work
   without modification.
 
-  The GNU&nbsp;GCC, LLVM&nbsp;Clang, PCC, NVIDIA&nbsp;HPC&nbsp;SDK&nbsp;C/C++,
+* The GNU&nbsp;GCC, LLVM&nbsp;Clang, PCC, NVIDIA&nbsp;HPC&nbsp;SDK&nbsp;C/C++,
   Oracle&nbsp;Studio&nbsp;C/C++, DMD&nbsp;ImportC, CompCert&nbsp;C, Open64,
   PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP,
   Microsoft&nbsp;Visual&nbsp;C/C++, IBM&nbsp;Open&nbsp;XL&nbsp;C/C++,
@@ -100,9 +100,9 @@ error‑handling semantics, plus user‑configurable control of output padding.
 
 ## Notes
 
-* **TPZASM** is ***not*** related to the similarly named
-  [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM or
-  [Megato**kio**](https://github.com/Megatokio) ZASM assemblers.
+**TPZASM** is ***not*** related to the similarly named
+[Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM or
+[Megato**kio**](https://github.com/Megatokio) ZASM assemblers.
 
 ## Reference
 
