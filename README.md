@@ -47,9 +47,11 @@
 ## Status
 
 * **`TPZASM`** is \~**99.7%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
-  and **PSA&nbsp;PASM&nbsp;1.02**.  It is a fully faithful implementation
-  that can assemble several substantial historical codebases: the
-  (\~*2,500 SLOC*) [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
+  and **PSA&nbsp;PASM&nbsp;1.02**.
+
+  * It is a fully faithful reimplementation that can assemble many substantial
+  historical codebases, including the the (\~*2,500 SLOC*)
+  [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
   the (\~*2,200 SLOC*) [Burke&nbsp;Disassembler](tests/dis.asm),
   the (\~*30,000 SLOC*) [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and
   the (\~*3,500 SLOC*) [SARGON](tests/sargon.asm).  In every case, **TPZASM**
