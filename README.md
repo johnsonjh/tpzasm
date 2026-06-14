@@ -60,7 +60,7 @@
     * [Alloy](tests/ittl.asm) [Engineering](tests/atu4.asm)
       [Utilities](tests/mtu4.asm) (\~2,800 SLOC)
     * [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) (\~30,000 SLOC)
-    * [DMS/3&nbsp;/&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)
+    * [DMS/3&nbsp;∕&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)
       (\~10,000 SLOC)
     * [SARGON](tests/sargon.asm) (\~3,500 SLOC)
     []()
