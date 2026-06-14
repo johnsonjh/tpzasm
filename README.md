@@ -151,7 +151,9 @@
 * The [`orig/`](orig) directory contains the original CP/M‑80 executables.
 
 * The [`docs/`](docs) directory contains PDF‑format documentation for the
-  assemblers (directly applicable to **TPZASM**).
+  assemblers (directly applicable to **TPZASM**) and the book
+  ‘**Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**’ by
+  R.&nbsp;Roger&nbsp;Breton (and excellent TDL assembly resource).
 
 ## License
 
@@ -171,8 +173,8 @@
   with all rights acquired by
   [DRDOS,&nbsp;Inc.&nbsp;dba&nbsp;DeviceLogics&nbsp;LLC.](https://en.wikipedia.org/wiki/DeviceLogics)
 
-* The book **Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**
-  is © 1984, 1987, 1990, 2009, 2003 R. Roger Breton and distributed
+* The book ‘**Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**’
+  is © 1984, 1987, 1990, 2009, 2003 R.&nbsp;Roger&nbsp;Breton and distributed
   with permission under the terms and conditions of the
   [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
 
