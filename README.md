@@ -52,7 +52,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 
 * It is a fully faithful reimplementation of *both* assemblers (including
   their bugs) and can assemble many substantial historic codebases (which
-  also serve as test cases), including:
+  also serve as [test cases](tests)), including:
 
   | Codebase                                                                                    |               Size |
   |:--------------------------------------------------------------------------------------------|-------------------:|
