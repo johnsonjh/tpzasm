@@ -46,58 +46,24 @@
 
 ## Status
 
-* **`TPZASM`** is \~**99%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
-  and **PSA&nbsp;PASM&nbsp;1.02**.  It is fully dialect‑faithful and can
-  assemble the substantial (\~30,000 SLOC)
+* **`TPZASM`** is \~**99.5%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+  and **PSA&nbsp;PASM&nbsp;1.02**.  It is a fully faithful implementation
+  that can assemble the substantial (\~2,500 SLOC)
+  [Zapple Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
+  (\~2,200 SLOC) [Burke Disassembler](tests/dis.asm), (\~30,000 SLOC)
   [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) and (\~3,500 SLOC)
-  [SARGON](tests/sargon.asm) codebases, producing byte‑for‑byte identical
-  output to the reference TDL/PSA assemblers.
+  [SARGON](tests/sargon.asm) codebases, in every case producing identical
+  listings and byte‑for‑byte identical object output to the reference TDL/PSA
+  assemblers.  The only differences are when processing *deliberately*
+  *malformed* or specially crafted inputs (that cause the reference assemblers
+  to abort or crash).
 
-  * The standalone test corpus is byte‑for‑byte identical to both originals
-    in **both** the object output and the **listing**, for **both** dialects.
-    Error handling reproduces the originals' lettered error codes (a column‑1
-    letter, the `?` marker at the fault, and the per‑page/trailing error
-    count), the leading **multiply‑defined report page**, and the symbol‑table
-    error flags (**`M`** multiply‑defined, **`U`** undefined).
-
-  * The full TDL/PSA expression‑operator set is supported — the arithmetic and
-    logical operators (including **`#`** logical NOT and **`^`** XOR / unary
-    radix change), the **`#`** inline external‑symbol modifier (`SYM#` ≡
-    `.EXTERN SYM`) and the **`::`**/**`=:`**/**`==:`** internal‑definition
-    delimiters (≡ `.INTERN`), the **`.I8080`**/**`.Z80`** mode (Z80‑in‑8080
-    `Z` warning), macro argument concatenation (**`'`**), nesting, the PASM
-    variable‑argument facility (**`.TEMPS`**/`![sub]` local temporaries and the
-    **`&`** argument count), the full conditional family (14 **`.IF`** forms),
-    **`.INSERT`** (default extension, ignored drive specifier, one‑level‑only
-    with an `F` error), the **`.PSYM`** symbol‑table object record (the **`&`**
-    record for the PSA *BUG* debugger), and the **`.XLINK`** relocatable
-    core‑image listing.
-
-  * The only differences left appear on *deliberately malformed or
-    wrong‑dialect* input — the kind the reference assemblers themselves abort
-    on or render from uninitialized memory — together with a \~1‑line
-    pagination residual (and its running per‑page error count) on very large
-    listings.  Real‑world code is byte‑for‑byte identical in both the object
-    *and* the listing, throughout.
-
-  * **TPZASM** implements the full **multi‑segment, relocatable, linkable**
-    object model: the three program segments (**`.PROG.`**, **`.DATA.`**,
-    **`.BLNK.`**) with `.LOC`/`.RELOC` segment switching and cross‑segment
-    relocation, the predefined segment‑base symbols, external symbols
-    (**`.EXTERN`**, with 16‑ and 8‑bit references), and the entry/internal
-    symbol records (**`.ENTRY`**, **`.INTERN`**, **`.IDENT`**).  It also
-    implements multi‑module *library file generation* (**`.PRGEND`**): each
-    module is assembled as its own independent two‑pass unit and emits its own
-    object record framing.  All of this is byte‑for‑byte identical to
-    **PSA&nbsp;PASM&nbsp;1.02** (and, less the program‑id record, to
-    **TDL&nbsp;ZASM&nbsp;2.21**).
-
-  * **TPZASM** can write the assembled output as a raw binary image, or as a
-    **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or an absolute
-    Intel‑HEX module (`.PABS`) formats, serialized either as raw binary
-    (the `-R` flag, *i.e.* `.PBIN`) or as ASCII‑hex text (the `-X` flag,
-    *i.e.* `.PHEX`), which is byte‑for‑byte identical to the object output of
-    **PSA&nbsp;PASM&nbsp;1.02**.
+* **TPZASM** can write the assembled output as a raw binary image, or as a
+  **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or absolute
+  Intel‑HEX module (`.PABS`) formats, serialized either as raw binary
+  (the `-R` flag, *i.e.* `.PBIN`) or as ASCII‑hex text (the `-X` flag,
+  *i.e.* `.PHEX`), all of which is byte‑for‑byte identical to the object
+  output of the original software.
 
 * **`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
   output to the original reference tool, with matching messages and identical
@@ -105,51 +71,27 @@
 
 ## Future
 
-* A few edges remain before *every* input is byte‑for‑byte identical, none of
-  which arise in the standalone corpus or the VEDIT‑PLUS / SARGON codebases:
-
-  * *Wrong‑dialect* input the originals cannot diagnose cleanly themselves: a
-    PASM‑only construct (**`.TEMPS`**, `![sub]`, **`&`**,
-    **`.IFB`**/**`.IFNB`**) fed to **`ZASM`**, which *aborts* rather than
-    flagging it, and a parse error that drives **`PASM`** to copy
-    uninitialized memory into the subtitle.
-
-  * Two obscure error‑recovery edges on deliberately malformed **`PASM`**
-    input: the listing of a relocatable **`.BYTE`** operand, and the object
-    record **`PASM`** emits for the truncated byte of an out‑of‑range 8‑bit
-    relocation.
-
-  * A \~1‑line pagination residual — with its running per‑page error count —
-    on very large listings (the differential test normalizes it away).
-
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
-  survived.
+  survived. Its assembly output seems to be byte‑for‑byte identical to
+  **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding and the
+  same relocatable object output) for all test inputs, but the listing format
+  was completely overhauled.  It also exhibits several behaviors that are
+  clearly bugs, such as sometimes omitting the symbol table from listings
+  when certain macros are defined.  Support for emulation of its improved
+  listing style (without the bugs) may be offered in a future release.
 
-  Its behavior has now been analyzed: the assembly output seems byte‑for‑byte
-  identical to **PSA&nbsp;PASM&nbsp;1.02** (same instruction encoding and the
-  same relocatable object output); only the *listing* format was reworked
-  (source line numbers, line truncation instead of wrapping, *likely a bug*,
-  and a `=` value flag), and it exhibits several behaviors that are clearly
-  bugs (*i.e.*, an unfilled date/time stamp, the symbol table is sometimes
-  omitted from listings when certain macros are defined).
-
-  Optional emulation of its improved listing style (without the disappearing
-  symbol bugs) may be offered in a future release, but the well‑behaved
-  **1.02** output currently remains the reference.
-
-* An optional *extended error checking* mode may be added: echoing errors to
-  the console even when the listing is written to a file, and emitting new,
-  clone‑only diagnostics the originals never gave (for example, warning when a
-  symbol longer than six characters is silently truncated).  It would be off by
-  default so the standard output stays byte‑identical to the originals.
+* An optional *extended error checking* mode may be added, possibly printing
+  errors to the console even when the listing is written to a file, classifying
+  errors or warnings by severity, and emitting new diagnostics the originals
+  never supported, for example, warning when symbols longer than six
+  characters would be silently truncated.
 
 ## Notes
 
 * **TPZASM** is ***not*** related to the similarly named
-  [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM,
-  [Megatokio](https://github.com/Megatokio) ZASM,
-  SLR Systems Z80ASM, or [Pasmo](https://pasmo.speccy.org) Z80 assemblers.
+  [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM or
+  [Megatokio](https://github.com/Megatokio) ZASM assemblers.
 
 ## Reference
 
