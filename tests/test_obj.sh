@@ -80,7 +80,7 @@ cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple dis maclc sall clabel \
 page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
-relmode bios"
+relmode bios tapelib"
 
 # Some real-world fixtures read assembly-time '\' console values; their answers
 # (the system options that select the assembled configuration) live in a
@@ -104,6 +104,13 @@ relmode bios"
 # bios is the real-world DMS/3, DMS/4 CP/M BIOS (~9300 lines) that drove all of
 # the above conditional/local/`$'/`.ascii'/`.PABS' fixes (SELECT=1/HARDboot=0 in
 # bios.ans); it is byte-exact in OBJECT and LISTING against BOTH originals.
+# tapelib is the real-world TAPELIB cassette-tape library manager (S. J. Singer,
+# 1977), a .PABS COM built entirely from TDL `.DEFINE' macros; it drove the
+# macro engine's `PARAM(default)' default values, `%'-prefixed auto-generated
+# local labels (`..NNNN'), the paste-right apostrophe (`.ASCII 'A$''),
+# `$'-leading dummy substitution, and bracketed `.IFB/.IFNB/.IFIDN' arguments --
+# byte-exact in OBJECT and LISTING vs BOTH originals; its provided tapelib.com
+# matches bit-for-bit once its saved dirty-RAM BSS tail is excluded.
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1

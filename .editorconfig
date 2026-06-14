@@ -140,6 +140,20 @@ trim_trailing_whitespace = false
 
 ################################################################################
 
+# The real-world TAPELIB cassette-tape library manager (S. J. Singer, 1977) kept
+# verbatim as a differential-test fixture: it is tab-indented and the listing
+# reproduces the source text exactly, so its original trailing whitespace must
+# NOT be trimmed.
+[tests/tapelib.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = false
+
+################################################################################
+
 [*akefile*]
 charset = utf-8
 end_of_line = lf

@@ -64,7 +64,7 @@ asm="${ref}/asm"
 # from redirected stdin) and the clone with -r.  When expect is absent the
 # prompt-driven fixtures are skipped (the rest still run).
 fixtures="macro macro2 mconcat macnest maclc sall clabel page \
-go quotes ittl atu4 mtu4 cond3 relmode bios"
+go quotes ittl atu4 mtu4 cond3 relmode bios tapelib"
 
 have_expect=0
 if command -v expect > /dev/null 2>&1; then
