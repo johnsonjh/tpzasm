@@ -173,7 +173,7 @@
   with all rights acquired by
   [DRDOS,&nbsp;Inc.&nbsp;dba&nbsp;DeviceLogics&nbsp;LLC.](https://en.wikipedia.org/wiki/DeviceLogics)
 
-* The book ‘**Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**’
+* The book '**Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**'
   is © 1984, 1987, 1990, 2009, 2003 R.&nbsp;Roger&nbsp;Breton and distributed
   with permission under the terms and conditions of the
   [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
