@@ -48,15 +48,15 @@
 
 * **`TPZASM`** is \~**99.7%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.  It is a fully faithful implementation
-  that can assemble the substantial (\~2,500 SLOC)
-  [Zapple Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
-  (\~2,200 SLOC) [Burke Disassembler](tests/dis.asm), (\~30,000 SLOC)
-  [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) and (\~3,500 SLOC)
-  [SARGON](tests/sargon.asm) codebases, in every case producing identical
-  listings and byte‑for‑byte identical object output to the reference TDL/PSA
-  assemblers.  The only differences are when processing *deliberately*
-  *malformed* or specially crafted inputs (that cause the reference assemblers
-  to abort or crash).
+  that can assemble several substantial historical codebases: the
+  (\~2,500 SLOC) [Zapple Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
+  the (\~2,200 SLOC) [Burke Disassembler](tests/dis.asm), the (\~30,000 SLOC)
+  [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and the (\~3,500 SLOC)
+  [SARGON](tests/sargon.asm).  In every case, **TPZASM** produces identical
+  listings as well as byte‑for‑byte identical object output when compared to
+  the reference TDL/PSA assemblers.  The only differences are exposed when
+  processing *deliberately malformed* or specially crafted inputs (that cause
+  the reference assemblers to abort or crash).
 
 * **TPZASM** can write the assembled output as a raw binary image, or as a
   **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or absolute
