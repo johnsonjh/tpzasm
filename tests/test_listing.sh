@@ -138,13 +138,13 @@ for c in ${fixtures}; do
       # prompt-driven: drive the original over a pty, answers from <c>.ans
       (
         cd "${work}" || exit 1
-        timeout 90 expect "${ref}/tools/answer.exp" "${com}.com" "${uc}" \
+        timeout -k 5 90 expect "${ref}/tools/answer.exp" "${com}.com" "${uc}" \
           "${ans}" tnylpo.cfg > console.txt 2>&1
       )
     else
       (
         cd "${work}" || exit 1
-        timeout 30 tnylpo -f tnylpo.cfg "${com}.com" "${uc}" < /dev/null \
+        timeout -k 5 30 tnylpo -f tnylpo.cfg "${com}.com" "${uc}" < /dev/null \
           > console.txt 2>&1
       )
     fi

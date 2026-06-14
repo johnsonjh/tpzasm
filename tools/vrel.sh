@@ -28,8 +28,46 @@ work=$(mktemp -d 2> /dev/null || mktemp_local)
 }
 trap 'env rm -rf "$work"' EXIT
 
+# A prompt-driven fixture carries its assembly-time '\' console answers in
+# <src>.ans (the system options that select the assembled configuration).  Feed
+# them to the clone with -r, and drive the original over a pty with expect --
+# tnylpo's line-mode console does NOT take them from redirected stdin, so an
+# undriven prompt fixture HANGS `make longtest'.  Skip cleanly (success) when
+# expect is unavailable, like the rest of the suite.
+srcdir=$(cd "$(dirname "${src}")" && pwd)
+ansfile="${srcdir}/${base}.ans"
+rans=""
+drive_expect=0
+if [ -f "${ansfile}" ]; then
+  if command -v expect > /dev/null 2>&1; then
+    rans="-r ${ansfile}"
+    drive_expect=1
+    : > "${work}/vrel.cfg"
+  else
+    printf '  %-6s : SKIP (%s prompt-driven; expect not found)\n' \
+      "vrel" "${base}"
+    exit 0
+  fi
+fi
+
+# Drive pasm.com on the staged ${base}.asm, answering any '\' prompts.
+run_oracle()
+{
+  if [ "${drive_expect}" -eq 1 ]; then
+    (
+      cd "${work}" || exit 1
+      timeout -k 5 90 expect "${ref}/tools/answer.exp" pasm.com "${base}" \
+        "${ansfile}" vrel.cfg > /dev/null 2>&1
+    )
+  else
+    (cd "${work}" && timeout -k 5 30 tnylpo -b pasm.com "${base}.asm" \
+      > /dev/null 2>&1)
+  fi
+}
+
 # clone: binary REL (-R) and ASCII REL (-X)
-"${ref}/asm" -p -R "${work}/clone.rel" -X "${work}/clone.hex" "${src}" \
+# shellcheck disable=SC2086
+"${ref}/asm" -p ${rans} -R "${work}/clone.rel" -X "${work}/clone.hex" "${src}" \
   > /dev/null 2>&1
 
 # oracle: PSA PASM names its object after the source -- .rel for a relocatable
@@ -44,6 +82,24 @@ copy_obj()
     env cp -f "${work}/${base}.hex" "${1}"
   fi
 }
+
+# Run the oracle on the already-staged ${base}.asm and copy its object to
+# <dest>.  tnylpo busy-spins the emulated Z80 and can, rarely, hang -- then
+# `timeout' (now SIGKILL-hardened with -k) reaps it but no object is written;
+# retry once so a single transient hang does not fail the whole differential.
+run_oracle_to()
+{
+  i=0
+  while [ "${i}" -lt 2 ]; do
+    rm -f "${work}/${base}.rel" "${work}/${base}.hex"
+    run_oracle
+    if [ -f "${work}/${base}.rel" ] || [ -f "${work}/${base}.hex" ]; then
+      break
+    fi
+    i=$((i + 1))
+  done
+  copy_obj "${1}"
+}
 for f in "$(dirname "${src}")"/*.asm; do
   [ -f "${f}" ] || continue
   b=$(basename "${f}" | tr '[:upper:]' '[:lower:]')
@@ -53,9 +109,20 @@ for f in "$(dirname "${src}")"/*.asm; do
   } > "${work}/${b}"
 done
 env cp -f "${ref}/orig/pasm.com" "${work}/"
-rm -f "${work}/${base}.rel" "${work}/${base}.hex"
-(cd "${work}" && timeout 30 tnylpo -b pasm.com "${base}.asm" > /dev/null 2>&1)
-copy_obj "${work}/oracle.rel"
+
+# Binary oracle: the clone's -R is always the BINARY object form, but the
+# original emits whichever the source's .PHEX/.PBIN selects -- so a `.PHEX'
+# source would make pasm.com write the ASCII form and mismatch.  Force .PBIN
+# (prepend it, and re-assert it after any .PHEX or a .PRGEND module boundary)
+# so the original emits binary too; a `.PBIN'/no-mode source is unaffected.
+{
+  printf '\t.PBIN\r\n'
+  awk '{printf "%s\r\n",$0}
+       toupper($0)~/\.PHEX|\.PRGEN/{printf "\t.PBIN\r\n"}' "${src}"
+  printf '\032'
+} \
+  > "${work}/${base}.asm"
+run_oracle_to "${work}/oracle.rel"
 
 # ASCII oracle: prepend .PHEX and reassemble (ASCII object, same extension).
 # .PRGEND resets the per-module output mode, so re-assert .PHEX after each
@@ -67,9 +134,7 @@ copy_obj "${work}/oracle.rel"
   printf '\032'
 } \
   > "${work}/${base}.asm"
-rm -f "${work}/${base}.rel" "${work}/${base}.hex"
-(cd "${work}" && timeout 30 tnylpo -b pasm.com "${base}.asm" > /dev/null 2>&1)
-copy_obj "${work}/oracle.hex"
+run_oracle_to "${work}/oracle.hex"
 
 python3 - "${work}" << 'PY'
 import sys, os

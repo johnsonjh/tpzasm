@@ -73,11 +73,11 @@ build_one()
   env mkdir -p "${dest}"
   (
     cd "${work}" || exit 1
-    timeout 300 tnylpo "${ref}/orig/${asm}.com" "${muc}" \
+    timeout -k 5 300 tnylpo "${ref}/orig/${asm}.com" "${muc}" \
       < "${answers}" > asm.con 2>&1
     echo "[asm rc=$?]" >> asm.con
     if [ -f "${mlc}.hex" ]; then
-      timeout 120 tnylpo "${ref}/orig/hexcom.com" "${muc}" \
+      timeout -k 5 120 tnylpo "${ref}/orig/hexcom.com" "${muc}" \
         < /dev/null > hexcom.con 2>&1
       echo "[hexcom rc=$?]" >> hexcom.con
     fi

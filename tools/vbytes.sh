@@ -44,8 +44,9 @@ done
 env cp -f "${ref}/orig/zasm.com" "${work}"/
 printf 'printer file = "./out.prn"\nprinter mode = text\n' \
   > "${work}/tnylpo.cfg"
-(cd "${work}" && timeout 30 tnylpo -f tnylpo.cfg -b zasm.com "${base}.asm" \
-  > /dev/null 2>&1)
+(cd "${work}" \
+  && timeout -k 5 30 tnylpo -f tnylpo.cfg -b zasm.com "${base}.asm" \
+    > /dev/null 2>&1)
 [ -f "${work}/out.prn" ] || {
   echo "RESULT: oracle produced no listing"
   exit 1

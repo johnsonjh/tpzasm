@@ -70,7 +70,8 @@ printf 'Yw3\ne2-e4\ng1-f3\nf1-c4\nb1-c3\nd2-d4\nd1-e2\n\022NN\n' \
   > "${work}/in.txt"
 
 # 60s is generous: the reference run is ~9s of emulated depth-3 search.
-(cd "${work}" && timeout 60 tnylpo -b sargon.com < in.txt > out.raw 2>&1) || :
+(cd "${work}" && timeout -k 5 60 tnylpo -b sargon.com < in.txt > out.raw 2>&1) \
+  || :
 
 # Normalize away terminal control noise (ANSI CSI sequences + bare CRs).
 esc=$(printf '\033')

@@ -65,7 +65,7 @@ run()
   (
     cd "${scratch}" || exit 1
     env rm -f "${lc}.rel" "${lc}.prn" "${lc}.hex"
-    timeout 30 tnylpo "${ref}/orig/${name}.com" "${uc}" \
+    timeout -k 5 30 tnylpo "${ref}/orig/${name}.com" "${uc}" \
       < "${ans}" > console.txt 2>&1
     echo "[rc=$?]" >> console.txt
   )
