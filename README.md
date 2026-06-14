@@ -73,12 +73,12 @@
     record for the PSA *BUG* debugger), and the **`.XLINK`** relocatable
     core‑image listing.
 
-  * The only remaining differences appear on *deliberately malformed or
-    wrong‑dialect* input: the per‑format **`Q`**/**`A`**/**`L`** extra‑operand
-    diagnostic letters and `?` markers, the single‑line inline
-    conditional‑block form, and a \~1‑line pagination residual (with its
-    running per‑page error count) on very large files — none of which change
-    the emitted object, which is byte‑for‑byte identical throughout.
+  * The only differences left appear on *deliberately malformed or
+    wrong‑dialect* input — the kind the reference assemblers themselves abort
+    on or render from uninitialized memory — together with a \~1‑line
+    pagination residual (and its running per‑page error count) on very large
+    listings.  Real‑world code is byte‑for‑byte identical in both the object
+    *and* the listing, throughout.
 
   * **TPZASM** implements the full **multi‑segment, relocatable, linkable**
     object model: the three program segments (**`.PROG.`**, **`.DATA.`**,
@@ -106,16 +106,21 @@
 ## Future
 
 * A few edges remain before *every* input is byte‑for‑byte identical, none of
-  which arise in the standalone corpus or the VEDIT‑PLUS / SARGON codebases,
-  and none of which change the **emitted object** (only the *listing* of
-  malformed or wrong‑dialect input):
+  which arise in the standalone corpus or the VEDIT‑PLUS / SARGON codebases:
 
-  * The per‑format **`Q`**/**`A`**/**`L`** extra‑operand diagnostic letters and
-    `?` markers, and the single‑line inline conditional‑block form.
+  * *Wrong‑dialect* input the originals cannot diagnose cleanly themselves: a
+    PASM‑only construct (**`.TEMPS`**, `![sub]`, **`&`**,
+    **`.IFB`**/**`.IFNB`**) fed to **`ZASM`**, which *aborts* rather than
+    flagging it, and a parse error that drives **`PASM`** to copy
+    uninitialized memory into the subtitle.
 
-  * A multi‑word **`.WORD`** under **`.LIMAGE`** in the ZASM dialect (the TDL
-    two‑word value‑field overstrike), and a \~1‑line pagination residual (with
-    its running per‑page error count) on very large files.
+  * Two obscure error‑recovery edges on deliberately malformed **`PASM`**
+    input: the listing of a relocatable **`.BYTE`** operand, and the object
+    record **`PASM`** emits for the truncated byte of an out‑of‑range 8‑bit
+    relocation.
+
+  * A \~1‑line pagination residual — with its running per‑page error count —
+    on very large listings (the differential test normalizes it away).
 
 * Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
   *release*), is also known, though no documentation for it seems to have
