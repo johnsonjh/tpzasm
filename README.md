@@ -6,9 +6,10 @@
 # TPZASM
 
 * **TPZASM** is a portable cross‑assembler intended to be fully interchangeable
-  (and in most cases bug‑compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
-  **PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
-  Zilog&nbsp;**Z80**, and other equivalent processors.
+  (and in most cases bug‑for‑bug compatible) with the
+  **TDL&nbsp;ZASM&nbsp;2.21** and **PSA&nbsp;PASM&nbsp;1.02** assemblers,
+  targeting the Intel&nbsp;**8080**, Zilog&nbsp;**Z80**, and other
+  equivalent processors.
 
 * An enhanced clone of **`HEXCOM`** 3.00, the DRI
   [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
@@ -49,8 +50,9 @@
 * **`TPZASM`** is \~**99.7%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.
 
-  * It is a fully faithful reimplementation that can assemble many substantial
-  historical codebases, including the \~2,500 SLOC
+  * It is a fully faithful reimplementation of both assemblers (including their
+  bugs) that can assemble many substantial historical codebases, including
+  the \~2,500 SLOC
   [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
   the \~2,200 SLOC [Burke&nbsp;Disassembler](tests/dis.asm),
   the \~30,000 SLOC [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and
