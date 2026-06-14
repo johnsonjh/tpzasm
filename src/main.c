@@ -188,22 +188,29 @@ usage (const char *prog, dialect_t dialect)
   (void)fprintf (stderr,
                  "\n"
                  "  Usage: %s [options] <source[.asm]>\n\n"
-                 "    -z       Emulate TDL ZASM 2.21 behavior%s\n"
-                 "    -p       Emulate PSA PASM 1.02 behavior%s\n"
-                 "    -o file  Write the assembled binary image to file\n"
-                 "    -P       Pad output to full CP/M record boundary\n"
-                 "    -l file  Write the listing to file (default: stderr)\n",
+                 "    --zasm, -z         Emulate TDL ZASM 2.21 behavior%s\n"
+                 "    --pasm, -p         Emulate PSA PASM 1.02 behavior%s\n"
+                 "    --out,  -o <file>  Write the assembled binary image"
+                 " to file\n"
+                 "    --pad,  -P         Pad output to full CP/M record"
+                 " boundary\n"
+                 "    --list, -l <file>  Write the listing to file"
+                 " (default: stderr)\n",
                  prog,
                  (DIALECT_ZASM == dialect ? " (default)" : ""),
                  (DIALECT_PASM == dialect ? " (default)" : ""));
 
   (void)fprintf (stderr,
-                 "    -R file  Write the object module as binary TDL REL\n"
-                 "    -X file  Write the object module as ASCII-hex REL\n"
-                 "    -L       Allow long (>6 character) symbol names\n"
-                 "    -r file  Answer assembly-time prompts from file\n"
-                 "    -e expr  Evaluate single expression and exit\n"
-                 "    -h       Show this help text and exit\n"
+                 "    --pbin, -R <file>  Write the object module as binary"
+                 " TDL REL\n"
+                 "    --phex, -X <file>  Write the object module as ASCII-hex"
+                 " REL\n"
+                 "    --long, -L         Allow long (>6 character) symbol"
+                 " names\n"
+                 "    --read, -r <file>  Answer assembly-time prompts from"
+                 " file\n"
+                 "    --expr, -e <expr>  Evaluate single expression and exit\n"
+                 "    --help, -h         Show this help text and exit\n"
                  "\n");
 }
 
@@ -227,10 +234,44 @@ main (int argc, char **argv)
   for (i = 1; i < argc; ++i)
     {
       const char *a = argv[i];
+      char opt = '\0';
 
-      if ('-' == a[0] && '\0' != a[1] && '\0' == a[2])
+      if ('-' == a[0] && '-' == a[1] && '\0' != a[2])
         {
-          switch (a[1])
+          /* GNU-style long option: map to its short-option letter, then fall
+           * through to the shared per-option handling below */
+          static const struct
+          {
+            const char *name;
+            char ch;
+          } longs[]
+              = { { "zasm", 'z' }, { "pasm", 'p' }, { "out", 'o' },
+                  { "pad", 'P' },  { "list", 'l' }, { "pbin", 'R' },
+                  { "phex", 'X' }, { "long", 'L' }, { "read", 'r' },
+                  { "expr", 'e' }, { "help", 'h' } };
+          int li;
+
+          for (li = 0; li < (int)(sizeof (longs) / sizeof (longs[0])); ++li)
+            if (0 == strcmp (a + 2, longs[li].name))
+              {
+                opt = longs[li].ch;
+                break;
+              }
+
+          if ('\0' == opt)
+            {
+              (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
+              usage (prog, dialect);
+
+              return 2;
+            }
+        }
+      else if ('-' == a[0] && '\0' != a[1] && '\0' == a[2])
+        opt = a[1];
+
+      if ('\0' != opt)
+        {
+          switch (opt)
             {
             case 'p':
               dialect = DIALECT_PASM;
