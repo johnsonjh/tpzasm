@@ -245,6 +245,15 @@ typedef struct
   int mac_plus; /* place the '+' macro-continuation marker */
   int mac_active; /* inside the outermost macro expansion's listing */
   int lst_suppress; /* assemble a line but emit no listing output */
+  /*
+   * .SALL macro-collapse: the whole expansion lists as ONE bare call line that
+   * carries the first emitting statement's LC + value-form bytes.  sall_call is
+   * that call line's source text while a .SALL expansion is in flight (else
+   * NULL); sall_done marks the call line already emitted (by the first emitter,
+   * possibly deep in a nested macro).  See print_lst and expand_macro.
+   */
+  const char *sall_call;
+  int sall_done;
   int ins_depth; /* .INSERT nesting: inserted lines carry the '@' mark */
 } astate;
 
@@ -2524,6 +2533,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   const char *lfl = ((lbase > 0) ? seg_flag (lbase, a->dialect) : " ");
   int clen;
   char mark = 0; /* macro '+' / .INSERT '@' continuation marker, or none */
+  int sall_render = 0; /* this line IS a .SALL macro-collapse call line */
 
   if (a->lst_suppress) /* assembling only (e.g. a macro's first body line) */
     return;
@@ -2564,9 +2574,23 @@ print_lst (astate *a, u16 lc0, const char *rawline)
        * .XALL (default) drops the no-code lines, .LALL lists everything
        */
       if (a->lst_ctl & LSTC_SALL)
-        return;
-
-      if (0 == a->nbytes && !(a->lst_ctl & LSTC_LALL))
+        { /*
+           * .SALL collapses the expansion to one bare call line carrying the
+           * FIRST emitting statement's LC + value-form (possibly from a nested
+           * macro -- this fires on the first emitting statement at any depth).
+           * Render it here with the invocation as the source; suppress the
+           * rest of the body.
+           */
+          if (NULL != a->sall_call && !a->sall_done && a->nbytes > 0)
+            {
+              rawline = a->sall_call;
+              a->sall_done = 1;
+              sall_render = 1;
+            }
+          else
+            return;
+        }
+      else if (0 == a->nbytes && !(a->lst_ctl & LSTC_LALL))
         return;
     }
 
@@ -2576,7 +2600,8 @@ print_lst (astate *a, u16 lc0, const char *rawline)
    */
   if (a->ins_depth > 0)
     mark = '@';
-  else if (a->mac_plus || (a->mac_active && NULL == a->mac_src))
+  else if (!sall_render
+           && (a->mac_plus || (a->mac_active && NULL == a->mac_src)))
     mark = '+';
 
   /* .LIMAGE: a data statement whose image spilled past one line is rendered
@@ -3723,6 +3748,52 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
    * (driven by mac_active/lst_suppress in print_lst).
    */
   outer = (2 == a->pass && NULL != callline && !a->mac_active && m->nbody > 0);
+
+  if (outer && (a->lst_ctl & LSTC_SALL))
+    { /*
+       * .SALL: the whole expansion collapses to ONE bare call line.  Assemble
+       * every body line (NOT suppressed, so print_lst runs); the first emitting
+       * statement -- at any nesting depth -- renders the call line via the
+       * sall_call hook in print_lst.  If nothing emits, list the bare call line
+       * (its label's LC, or blank when unlabeled), as for any no-code line.
+       */
+      u16 lc0 = a->lc;
+      int bi;
+
+      a->mac_active = 1;
+      a->sall_call = callline;
+      a->sall_done = 0;
+
+      for (bi = 0; bi < m->nbody && !a->macro_exit; bi++)
+        {
+          char lnb[512];
+          macro_subst (m, args, nargs, m->body[bi], lnb);
+          do_line (a, lnb);
+        }
+
+      if (2 == a->pass && !a->sall_done)
+        {
+          a->nbytes = 0;
+          a->lst_kind = 0;
+          a->lst_loc = (labeled ? (long)lc0 : -1);
+          a->lst_lbase = -1;
+          a->lst_obase = 0;
+          a->lst_nec = 0;
+          a->mac_src = callline;
+          a->mac_plus = 0;
+          print_lst (a, lc0, callline);
+          a->mac_src = NULL;
+        }
+
+      a->sall_call = NULL;
+      a->sall_done = 0;
+      a->macro_depth--;
+      a->mac_argc = saved_argc;
+      a->macro_exit = 0;
+      a->mac_active = 0;
+
+      return;
+    }
 
   if (outer)
     {
@@ -5284,6 +5355,8 @@ init_pass (astate *a, int pass)
   a->genctr = 0;
   a->macro_depth = 0;
   a->macro_exit = 0;
+  a->sall_call = NULL;
+  a->sall_done = 0;
   a->scope = 0;
   a->pending = 0;
   a->pend_console = NULL;

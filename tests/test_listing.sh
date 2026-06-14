@@ -47,7 +47,7 @@ find_command awk basename cp diff env mkdir rm sed timeout tnylpo tr \
 ref=${ASM_REF:-${here}}
 asm="${ref}/asm"
 
-fixtures="macro macro2 mconcat macnest maclc"
+fixtures="macro macro2 mconcat macnest maclc sall"
 
 # Normalize a raw listing to the project-standard parity form on stdout: drop
 # CR/form-feed, page headers, the error-count line and the console error tally,
