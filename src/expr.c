@@ -336,18 +336,23 @@ ev_primary (ectx *e)
       return e->env->temps[sub];
     }
 
-  if ('\'' == *e->p)
-    { /* character constant 'A' / 'AB' */
+  if ('\'' == *e->p || '"' == *e->p)
+    { /*
+       * character constant: 'A'/'AB' or the equivalent double-quoted "A"/"AB"
+       * form (the TDL/PSA assemblers accept either quote, so `CPI "'"' is 027H
+       * and `.WORD "AB"' is 04142H).
+       */
+      char q = *e->p;
       u16 val = 0;
       e->p++;
 
-      while ('\0' != *e->p && '\'' != *e->p)
+      while ('\0' != *e->p && q != *e->p)
         {
           val = (u16)((val << 8) | (unsigned char)*e->p);
           e->p++;
         }
 
-      if ('\'' == *e->p)
+      if (q == *e->p)
         e->p++;
       else
         efail (e, "unterminated character constant");
@@ -463,6 +468,30 @@ ev_primary (ectx *e)
 
       if (NULL == s || !s->defined)
         {
+          /*
+           * an instruction mnemonic used as a value yields its opcode template
+           * bytes (operand fields zero) as a little-endian integer -- a TDL/PSA
+           * feature (`MVI A,JMP' == `MVI A,0C3H', `.WORD LDIR' == 0B0EDH).  A
+           * defined symbol of the same name shadows it (handled above), so
+           * this is reached only for a non-symbol name; resolve it in both
+           * passes (the value is fixed, like any constant).
+           */
+          if ('.' != name[0])
+            {
+              char up[IDBUF];
+              const insn *in;
+              int i;
+
+              for (i = 0; i < IDBUF - 1 && '\0' != name[i]; i++)
+                up[i] = (char)toupper ((unsigned char)name[i]);
+
+              up[i] = '\0';
+              in = insn_find (up);
+
+              if (NULL != in)
+                return mkabs (insn_value (in));
+            }
+
           if (e->env->undef0)
             return mkabs (0); /* pass-1 tolerance */
 

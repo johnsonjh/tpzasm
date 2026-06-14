@@ -298,6 +298,7 @@ typedef struct
 
 const insn *insn_find (const char *upname); /* upname must be uppercase */
 int insn_is_z80 (const insn *in); /* 1 if a Z80 extension (for the .I8080 `Z') */
+u16 insn_value (const insn *in); /* mnemonic-as-value: opcode template bytes LE */
 
 /******************************************************************************/
 

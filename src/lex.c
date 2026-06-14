@@ -144,8 +144,13 @@ lex_line (const char *line, line_t *out)
           return;
         }
 
-      if (idstart ((unsigned char)*r))
-        { /* symbol EQU/SET expr ? */
+      if (idstart ((unsigned char)*r) && '.' != tok1[0])
+        { /*
+           * symbol EQU/SET expr ?  Only when the first token is a plain symbol:
+           * a dot-prefixed directive is never an assignment target, so
+           * `.WORD SET' is the data directive with the mnemonic `SET' as its
+           * operand (value 0C0CBH), not an assignment to a symbol `.WORD'.
+           */
           char tok2[NAMEBUF];
           const char *s = parse_id (r, tok2);
 

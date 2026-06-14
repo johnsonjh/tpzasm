@@ -269,6 +269,57 @@ insn_is_z80 (const insn *in)
 /******************************************************************************/
 
 /*
+ * The numeric value of a mnemonic used as an expression operand: the TDL/PSA
+ * assemblers let an instruction name stand for its opcode template bytes (all
+ * operand fields zero), read as a little-endian integer.  So `MVI A,JMP' is
+ * `MVI A,0C3H', `.WORD LDIR' is 0B0EDH (ED B0 in memory order), `.WORD BIT' is
+ * 040CBH (CB 40), and `.WORD PCIX' is 0E9DDH (DD E9).  A defined symbol of the
+ * same name takes precedence; this is only consulted when the name is not a
+ * symbol (see ev_primary in expr.c).
+ */
+
+u16
+insn_value (const insn *in)
+{
+  unsigned int pfx = 0;
+
+  if (NULL == in)
+    return 0;
+
+  switch ((int)in->fmt) /* (int) cast: switch on the value, not the enum type */
+    {
+    case FMT_ED16:
+    case FMT_EDHL:
+    case FMT_ED0:
+    case FMT_EDDST:
+      pfx = 0xED;
+      break;
+
+    case FMT_CBR:
+    case FMT_CBB:
+      pfx = 0xCB;
+      break;
+
+    case FMT_IXP:
+    case FMT_IXADD:
+    case FMT_IXADDR:
+      /* index prefix from the mnemonic's register letter: X -> DD, Y -> FD */
+      pfx = (NULL != strchr (in->name, 'Y') ? 0xFD : 0xDD);
+      break;
+
+    default:
+      break;
+    }
+
+  if (0 != pfx)
+    return (u16)(pfx | ((unsigned int)in->opcode << 8));
+
+  return (u16)in->opcode;
+}
+
+/******************************************************************************/
+
+/*
  * Local Variables:
  * mode: c
  * indent-tabs-mode: nil

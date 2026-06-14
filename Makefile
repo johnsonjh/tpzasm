@@ -138,16 +138,17 @@ longtest: test tests/test_play.sh tools/vrel.sh
 
 ################################################################################
 
-test_expr: $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o
+test_expr: $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o \
+		$(SRCDIR)/insn.o
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-o $@ $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o \
-		$(SRCDIR)/sym.o "$${CFLAGS:-$(XCFLAGS)}" \
+		$(SRCDIR)/sym.o $(SRCDIR)/insn.o "$${CFLAGS:-$(XCFLAGS)}" \
 		"$${LDFLAGS:-$(XLDFLAGS)}"
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-o $@ $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o \
-		$(SRCDIR)/sym.o "$${CFLAGS:-$(XCFLAGS)}" \
+		$(SRCDIR)/sym.o $(SRCDIR)/insn.o "$${CFLAGS:-$(XCFLAGS)}" \
 		"$${LDFLAGS:-$(XLDFLAGS)}"
 
 ################################################################################
