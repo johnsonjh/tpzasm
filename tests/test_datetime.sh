@@ -94,7 +94,7 @@ if [ "${fail}" -ne 0 ]; then
   exit 1
 fi
 
-printf '\n%s\n\n' "SUCCESS: .DATE/.TIME tests passed."
+printf '%s\n\n' "SUCCESS: .DATE/.TIME tests passed."
 exit 0
 
 ################################################################################
