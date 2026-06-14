@@ -24,7 +24,10 @@ tool, is also included.
 - [Future](#future)
 - [Notes](#notes)
 - [Reference](#reference)
+  * [Binaries](#binaries)
+  * [Documentation](#documentation)
 - [License](#license)
+  * [Third‑party materials](#third%E2%80%91party-materials)
 
 <!-- tocstop -->
 
@@ -47,7 +50,7 @@ ANSI&nbsp;C89 compiler.
 
 ## Status
 
-**`TPZASM`** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+**TPZASM** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
 and **PSA&nbsp;PASM&nbsp;1.02**.
 
 * It is a fully faithful reimplementation of *both* assemblers (including
@@ -72,7 +75,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 
 * **TPZASM** can write the assembled output as a raw binary image, or as a
   **TDL&nbsp;Object&nbsp;Module** in relocatable `.PREL` or absolute
-  Intel‑HEX module `.PABS` formats, serialized either as raw binary
+  Intel&nbsp;HEX module `.PABS` formats, serialized either as raw binary
   (using the `-R` flag, *i.e.*, `.PBIN`) or as ASCII‑hex text (using the `-X`
   flag, *i.e.*, `.PHEX`), all of which is byte‑for‑byte identical to the
   object output of the reference software.
@@ -103,7 +106,7 @@ error‑handling semantics, plus user‑configurable control of output padding.
 
 **TPZASM** is ***not*** related to the similarly named
 [Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM or
-[Megato**kio**](https://github.com/Megatokio) ZASM assemblers.
+[Megatokio](https://github.com/Megatokio) ZASM assemblers.
 
 ## Reference
 
@@ -123,7 +126,7 @@ error‑handling semantics, plus user‑configurable control of output padding.
 The **TPZASM** software is distributed under the terms of the permissive
 [MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0)](LICENSE) license.
 
-### Third-party materials
+### Third‑party materials
 
 The following third‑party materials are provided under their own licenses:
 
