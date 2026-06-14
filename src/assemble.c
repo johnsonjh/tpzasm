@@ -148,6 +148,15 @@ typedef struct
   /* assembly-time console input (the '\' operator) */
   int in_prompt;
 
+  /* the quote char that opened the current '\' prompt string (' or ") */
+  char prompt_quote;
+
+  /* consuming a multi-line .REMARK string body; remark_close is the matching
+   * delimiter still being sought (']' for a '[' open, else the open char) */
+  int in_remark;
+  char remark_close;
+  int remark_depth; /* nested '[' depth when the delimiter is a bracket */
+
   /* label awaiting a multi-line '\' prompt value */
   symbol *pend_console;
 
@@ -196,8 +205,12 @@ typedef struct
   /* listing output stream (stderr, or the -l file) */
   FILE *lst;
 
-  /* .TITLE text for the page subtitle (captured in pass 1) */
+  /* page-heading text captured from the directives (both passes, so pass 2's
+   * page-1 heading already has whatever was set before the first listed line):
+   *   title    -- .TITLE   text: heading line A, after the "modname - " prefix
+   *   subtitle -- .SBTTL   text: heading line B, on its own */
   char title[64];
+  char subtitle[64];
 
   /* macro support */
   unsigned genctr; /* counter for %-generated local labels */
@@ -224,6 +237,9 @@ typedef struct
   long lst_loc; /* LOC-column value: -1 blank, -2 use lc0 */
   long lst_line; /* listing line counter, for pagination */
   int lst_page; /* current listing page number */
+  int lst_pending; /* the first body page's heading is owed: emit it (without a
+                    * form-feed) before the first listed line, so a .TITLE or
+                    * .SBTTL ahead of that line already shows in it */
   int lst_pagelen; /* lines per page (PASM `.PAGE width,length' 2nd arg); the
                     * width->wrap (1st arg) is not yet implemented */
   int lst_lbase; /* LC relocation base: -1 derive from lc_reloc/base, else # */
@@ -1694,6 +1710,11 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
       if (NULL != a->image)
         a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
 
+      /* the object is built from the emission log, not the image, so set the
+       * high bit on the last logged byte too (the char just emitted) */
+      if (NULL != a->em_byte && a->em_n > 0)
+        a->em_byte[a->em_n - 1] = (u8)(a->em_byte[a->em_n - 1] | 0x80u);
+
       if (a->nbytes > 0)
         a->bytes[(long)a->nbytes - 1]
             = (u8)(a->bytes[(long)a->nbytes - 1] | 0x80u);
@@ -2039,8 +2060,9 @@ inline_block_end (const char *s)
 /******************************************************************************/
 
 /*
- * Read one string argument: "quoted" or bare
- * (up to space/comma/;)
+ * Read one string argument: "quoted" / 'quoted' or bare (up to space/comma/;).
+ * Either quote delimits the string, matching the originals, so e.g. `.IFB '''
+ * is the empty string just as `.IFB ""' is.
  */
 
 static const char *
@@ -2050,14 +2072,15 @@ parse_str_arg (const char *p, char *out)
 
   p = skipws (p);
 
-  if ('"' == *p)
+  if ('"' == *p || '\'' == *p)
     {
+      char q = *p;
       p++;
 
-      while ('\0' != *p && '"' != *p && n < 127)
+      while ('\0' != *p && q != *p && n < 127)
         out[n++] = *p++;
 
-      if ('"' == *p)
+      if (q == *p)
         p++;
     }
   else
@@ -2381,6 +2404,13 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
         col++;
       }
 
+  /*
+   * The originals fold at EXACTLY wrapw: a line whose text ends on the fold
+   * column still opens a continuation row (empty here) -- a real physical line
+   * that counts for pagination.  lst_wrap is a no-op when col is short.
+   */
+  (void)lst_wrap (a, col, wrapw, indent);
+
   (void)fputc ('\n', a->lst);
   a->lst_line++; /* count this final physical line */
 }
@@ -2597,6 +2627,17 @@ print_lst (astate *a, u16 lc0, const char *rawline)
     }
 
   /*
+   * the first body page owes its heading (no form-feed); emit it now that a
+   * line is committed to the listing, so a .TITLE/.SBTTL on the leading lines
+   * is already captured in it
+   */
+  if (a->lst_pending)
+    {
+      lst_header (a);
+      a->lst_pending = 0;
+    }
+
+  /*
    * inserted-file lines carry '@'; continued macro statements carry '+'
    * (but not the macro call line, which sets mac_src with mac_plus clear)
    */
@@ -2730,8 +2771,67 @@ print_lst (astate *a, u16 lc0, const char *rawline)
 /******************************************************************************/
 
 /*
+ * The closing delimiter for a string value opened by `open' in this dialect.
+ * A PASM `[' opens a bracket-delimited string that pairs with `]' and nests;
+ * every other delimiter -- and `[' under ZASM, which has no bracket form --
+ * closes on its own character.  (PSA PASM manual, "String Values".)
+ */
+
+static char
+svalue_close (const astate *a, char open)
+{
+  if (DIALECT_PASM == a->dialect && '[' == open)
+    return ']';
+
+  return open;
+}
+
+/*
+ * Capture a single-line string value (a .TITLE/.SBTTL operand) into dst.  The
+ * first non-blank character is the delimiter; the text runs from just after it
+ * to the matching delimiter (see svalue_close) or to the end of the line.  An
+ * absent operand clears dst.  Either quote (' or "), a slash, or any other
+ * delimiter works, matching the originals -- the delimiters are not kept.
+ */
+
+static void
+capture_svalue (const astate *a, const char *operands, char *dst, size_t dstsz)
+{
+  const char *p = skipws (operands);
+
+  dst[0] = '\0';
+
+  if ('\0' != *p && ';' != *p)
+    {
+      const char close = svalue_close (a, *p);
+      int depth = 0;
+      size_t n = 0;
+
+      for (p++; '\0' != *p && n + 1 < dstsz; p++)
+        {
+          if (']' == close && '[' == *p)
+            depth++;
+          else if (close == *p)
+            {
+              if (']' == close && depth > 0)
+                depth--;
+              else
+                break;
+            }
+
+          dst[n++] = *p;
+        }
+
+      dst[n] = '\0';
+    }
+}
+
+/*
  * Per-page listing heading.  TDL and PSA differ in the title, the PAGE/Page
- * spelling and column, and (PSA) a blank line before the ".MAIN. -" subtitle.
+ * spelling and column, and (PSA) a blank line after "Page N".  Both render two
+ * heading text lines: line A is "modname - <.TITLE>" (the "modname - " prefix
+ * is dropped for an .XLINK core image, which has no module identity) and line
+ * B is the bare <.SBTTL> subtitle.
  */
 
 static void
@@ -2753,20 +2853,23 @@ lst_header (astate *a)
       else
         (void)fputc ('\n', a->lst);
 
-      /* the leading multiply-defined report page, and an .XLINK core image,
-       * omit the ".MAIN. - title" subtitle (a blank line in its place) */
-      if (a->mdef_page || a->obj_xlink)
+      /* the leading multiply-defined report page leaves the heading blank */
+      if (a->mdef_page)
         (void)fprintf (a->lst, "\n\n\n\n");
+      else if (a->obj_xlink) /* .XLINK core image: title without "modname - " */
+        (void)fprintf (a->lst, "%s\n%s\n\n\n", a->title, a->subtitle);
       else
-        (void)fprintf (a->lst, "%-6.6s - %s\n\n\n\n", a->modname, a->title);
+        (void)fprintf (a->lst, "%-6.6s - %s\n%s\n\n\n", a->modname, a->title,
+                       a->subtitle);
     }
-  else if (a->obj_xlink) /* ZASM .XLINK: blank subtitle line */
-    (void)fprintf (a->lst, "%-64sPAGE %d\n\n\n\n\n",
-                   "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page);
-  else
-    (void)fprintf (a->lst, "%-64sPAGE %d\n%-6.6s - %s\n\n\n\n",
+  else if (a->obj_xlink) /* ZASM .XLINK: title with no "modname - " prefix */
+    (void)fprintf (a->lst, "%-64sPAGE %d\n%s\n%s\n\n\n",
                    "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
-                   a->modname, a->title);
+                   a->title, a->subtitle);
+  else
+    (void)fprintf (a->lst, "%-64sPAGE %d\n%-6.6s - %s\n%s\n\n\n",
+                   "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
+                   a->modname, a->title, a->subtitle);
 
   /* heading line count */
   a->lst_line = ((DIALECT_PASM == a->dialect) ? 9 : 8);
@@ -3051,9 +3154,9 @@ lst_symhead (astate *a)
       else
         (void)fputc ('\n', a->lst);
 
-      /* an .XLINK core image omits the ".MAIN. - title" subtitle */
+      /* an .XLINK core image drops the "modname - " prefix from the title */
       if (a->obj_xlink)
-        (void)fprintf (a->lst, "\n+++++ Symbol Table +++++\n\n\n");
+        (void)fprintf (a->lst, "%s\n+++++ Symbol Table +++++\n\n\n", a->title);
       else
         (void)fprintf (a->lst, "%-6.6s - %s\n+++++ Symbol Table +++++\n\n\n",
                        a->modname, a->title);
@@ -3063,9 +3166,10 @@ lst_symhead (astate *a)
   else
     {
       if (a->obj_xlink)
-        (void)fprintf (a->lst, "%-64sPAGE %d\n\n+++++ SYMBOL TABLE +++++\n\n\n",
-                       "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21",
-                       a->lst_page);
+        (void)fprintf (a->lst,
+                       "%-64sPAGE %d\n%s\n+++++ SYMBOL TABLE +++++\n\n\n",
+                       "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21", a->lst_page,
+                       a->title);
       else
         (void)fprintf (a->lst,
                        "%-64sPAGE %d\n%-6.6s - %s\n"
@@ -3109,10 +3213,18 @@ lst_symtab (astate *a)
       all[nuser++] = all[i];
 
   qsort (all, (size_t)nuser, sizeof (symbol *), sym_name_cmp);
-  (void)fputc ('\f', a->lst); /* eject to a fresh page */
-  lst_symhead (a);
+
   /* an .XLINK core image has no link info: omit the segment-base rows */
   total = nuser + (a->obj_xlink ? 0 : 3);
+
+  if (0 == total)
+    { /* nothing to show: the originals emit no symbol-table page at all */
+      FREE (all);
+      return;
+    }
+
+  (void)fputc ('\f', a->lst); /* eject to a fresh page */
+  lst_symhead (a);
   col = 0;
 
   for (i = 0; i < total; i++)
@@ -3978,10 +4090,10 @@ do_line (astate *a, const char *line)
     }
 
   if (a->in_prompt)
-    { /* consuming a multi-line '\' prompt string */
+    { /* consuming a multi-line '\' prompt string (' or " delimited) */
       const char *q = line;
 
-      while ('\0' != *q && '\'' != *q)
+      while ('\0' != *q && a->prompt_quote != *q)
         {
           if (NULL != a->pend_console)
             (void)fputc (*q, stderr);
@@ -3989,7 +4101,7 @@ do_line (astate *a, const char *line)
           q++;
         }
 
-      if ('\'' == *q)
+      if (a->prompt_quote == *q)
         {
           a->in_prompt = 0;
 
@@ -4004,6 +4116,37 @@ do_line (astate *a, const char *line)
 
       /* the originals list each continuation line of the prompt verbatim
        * (blank LC), as the source it is */
+      if (2 == a->pass)
+        {
+          a->lst_loc = -1;
+          print_lst (a, a->lc, line);
+        }
+
+      return;
+    }
+
+  if (a->in_remark)
+    { /* consuming the body of a multi-line .REMARK string; list it verbatim,
+       * emit nothing, until the matching delimiter is reached.  A '[' ... ']'
+       * remark nests; any other delimiter closes on its first reappearance. */
+      const char *q;
+
+      for (q = line; '\0' != *q; q++)
+        {
+          if (']' == a->remark_close && '[' == *q)
+            a->remark_depth++;
+          else if (a->remark_close == *q)
+            {
+              if (']' == a->remark_close && a->remark_depth > 0)
+                a->remark_depth--;
+              else
+                {
+                  a->in_remark = 0;
+                  break;
+                }
+            }
+        }
+
       if (2 == a->pass)
         {
           a->lst_loc = -1;
@@ -4474,8 +4617,9 @@ do_line (astate *a, const char *line)
 
           q = skipws (q + 1); /* the prompt string follows */
 
-          if ('\'' == *q)
-            { /* echo the prompt, then read */
+          if ('\'' == *q || '"' == *q)
+            { /* echo the prompt, then read (either quote delimits it) */
+              const char qc = *q;
               const char *p = q + 1;
 
               if (reading)
@@ -4488,14 +4632,14 @@ do_line (astate *a, const char *line)
                   (void)fflush (stderr);
                 }
 
-              while ('\0' != *p && '\'' != *p)
+              while ('\0' != *p && qc != *p)
                 {
                   if (reading)
                     (void)fputc (*p, stderr);
 
                   p++;
                 }
-              if ('\'' == *p)
+              if (qc == *p)
                 { /* prompt complete on this line */
                   (void)fflush (stdout);
                   (void)fflush (stderr);
@@ -4511,6 +4655,7 @@ do_line (astate *a, const char *line)
                       a->pend_console = s;
                     }
 
+                  a->prompt_quote = qc;
                   a->in_prompt = 1;
                 }
             }
@@ -4735,8 +4880,41 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".REMARK", NULL))
-    /* a remark listed in the source body; emits no bytes */
-    a->lst_loc = -1;
+    { /* a remark listed in the source body; emits no bytes.  Its argument is
+       * a generic string value (a delimiter then text up to the matching
+       * delimiter) that may run for any number of lines -- when it does not
+       * close on this line, consume the body verbatim until it does. */
+      const char *q = skipws (L.operands);
+
+      if ('\0' != *q)
+        {
+          const char close = svalue_close (a, *q);
+          int depth = 0;
+          const char *p;
+
+          for (p = q + 1; '\0' != *p; p++)
+            {
+              if (']' == close && '[' == *p)
+                depth++;
+              else if (close == *p)
+                {
+                  if (']' == close && depth > 0)
+                    depth--;
+                  else
+                    break;
+                }
+            }
+
+          if ('\0' == *p) /* delimiter never closed: spills onto later lines */
+            {
+              a->remark_close = close;
+              a->remark_depth = depth;
+              a->in_remark = 1;
+            }
+        }
+
+      a->lst_loc = -1;
+    }
   else if (opeq (op, ".EXIT", NULL))
     { /* terminate the current macro expansion early */
       if (a->macro_depth > 0)
@@ -5034,35 +5212,16 @@ do_line (astate *a, const char *line)
 
       return;
     }
-  else if (opeq (op, ".TITLE", NULL) || opeq (op, ".SBTTL", NULL)
-           || opeq (op, ".SUBTTL", NULL))
-    { /*
-       * capture the page subtitle (in both passes, so pass 2's page-1
-       * heading already has it); the directive is not listed in the body.
-       * .SBTTL/.SUBTTL set the subtitle and, like .TITLE, do not self-list
-       * (the originals suppress the directive line too).
-       */
-      const char *p = skipws (L.operands);
-      char quote = (('\'' == *p || '"' == *p) ? *p : '\0');
-      int n = 0;
-
-      if ('\0' != quote)
-        p++;
-
-      while ('\0' != *p && n < (int)sizeof (a->title) - 1)
-        {
-          if ('\0' != quote ? (*p == quote) : (';' == *p))
-            break;
-
-          a->title[n++] = *p++;
-        }
-
-      while (n > 0
-             && (' ' == a->title[(long)n - 1]
-                 || '\t' == a->title[(long)n - 1]))
-        n--; /* trim trailing blanks (unquoted form) */
-
-      a->title[n] = '\0';
+  else if (opeq (op, ".TITLE", NULL))
+    { /* capture the page title -- heading line A, after "modname - ".  Done in
+       * both passes so pass 2's page-1 heading already has whatever was set
+       * before the first listed line.  The directive does not self-list. */
+      capture_svalue (a, L.operands, a->title, sizeof (a->title));
+      return; /* suppressed from the body listing */
+    }
+  else if (opeq (op, ".SBTTL", NULL) || opeq (op, ".SUBTTL", NULL))
+    { /* capture the page subtitle -- heading line B, on its own; same rules */
+      capture_svalue (a, L.operands, a->subtitle, sizeof (a->subtitle));
       return; /* suppressed from the body listing */
     }
   else if (opeq (op, ".PAGE", NULL))
@@ -5114,7 +5273,7 @@ do_line (astate *a, const char *line)
             {
               print_lst (a, lc0, line); /* list the `Q'+`?' line first ... */
               (void)fputc ('\f', a->lst); /* ... then eject like a bare .PAGE */
-              lst_header (a);
+              a->lst_pending = 1; /* heading deferred to the next listed line */
             }
 
           return;
@@ -5123,12 +5282,14 @@ do_line (astate *a, const char *line)
       /*
        * bare `.PAGE': skip to the top of the next listing page; the directive
        * itself is not listed (.EJECT is NOT a synonym -- the originals reject
-       * it).
+       * it).  Eject now but defer the heading to the next listed line, so a
+       * .SBTTL between this .PAGE and that line shows in the new heading (the
+       * originals emit the heading lazily, not at the eject).
        */
       if (2 == a->pass)
         {
           (void)fputc ('\f', a->lst);
-          lst_header (a);
+          a->lst_pending = 1;
         }
 
       return; /* suppressed from the body listing */
@@ -5403,6 +5564,11 @@ init_pass (astate *a, int pass)
   a->next_ebase = 4;
   a->next_decl = 1;
   (void)xstrlcpy (a->modname, ".MAIN.", sizeof (a->modname));
+  /* clear the page heading: a page header emitted before the source reaches
+   * its .TITLE/.SBTTL (e.g. page 1, whose header precedes the first listed
+   * line) shows it blank, exactly as the originals do */
+  a->title[0] = '\0';
+  a->subtitle[0] = '\0';
   a->seg_hw[0] = a->seg_hw[1] = a->seg_hw[2] = a->seg_hw[3] = 0;
   a->loc_sp = 0;
   a->obj_abs = 0; /* default .PREL */
@@ -5419,6 +5585,10 @@ init_pass (astate *a, int pass)
   a->cdepth = 0;
   a->pend_else = 0;
   a->in_prompt = 0;
+  a->prompt_quote = 0;
+  a->in_remark = 0;
+  a->remark_close = 0;
+  a->remark_depth = 0;
   a->genctr = 0;
   a->macro_depth = 0;
   a->macro_exit = 0;
@@ -5682,10 +5852,13 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           }
 
         /*
-         * the page-1 heading prints the module name and (for .XLINK) omits the
-         * subtitle, but neither .IDENT nor .XLINK is seen until pass 2 reads
-         * the body -- carry both learned in the prior pass across the pass-2
-         * reset so the first heading is correct
+         * The page-1 heading omits the subtitle for an .XLINK core image and
+         * names the module (.IDENT), but neither is seen until pass 2 reads the
+         * body -- carry both learned in the prior pass across the pass-2 reset
+         * so the first heading is correct.  The .TITLE/.SBTTL text, by
+         * contrast, is captured live: the heading is deferred (lst_pending)
+         * until the first line is actually listed, so a title set on the
+         * leading lines shows on page 1 while one set lower down does not.
          */
         {
           char modsave[8];
@@ -5695,7 +5868,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           (void)xstrlcpy (a.modname, modsave, sizeof (a.modname));
           a.obj_xlink = xlsave;
         }
-        lst_header (&a);
+        a.lst_pending = 1;
         process_module (&a, srcpath, modidx);
 
         /* this module's object records (-R binary REL, -X ASCII REL) */
