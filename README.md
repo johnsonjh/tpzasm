@@ -54,15 +54,15 @@
 []()
   * It is a fully faithful reimplementation of both assemblers (including their
     bugs) that can assemble many substantial historical codebases, including:
-    * the \~2,500 SLOC
-      [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
-    * the \~2,200 SLOC [Burke&nbsp;Disassembler](tests/dis.asm),
-    * the \~2,800 SLOC [Alloy](tests/ittl.asm) [Engineering](tests/atu4.asm)
-      [Utilities](tests/mtu4.asm),
-    * the \~30,000 SLOC [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT),
-    * the \~10,000 SLOC
-      [DMS/{3/4}&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm), and,
-    * the \~3,500 SLOC [SARGON](tests/sargon.asm).
+    * [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)
+      (\~2,500 SLOC)
+    * [Burke&nbsp;Disassembler](tests/dis.asm) (\~2,200 SLOC)
+    * [Alloy](tests/ittl.asm) [Engineering](tests/atu4.asm)
+      [Utilities](tests/mtu4.asm) (\~2,800 SLOC)
+    * [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT) (\~30,000 SLOC)
+    * [DMS/3&nbsp;/&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)
+      (\~10,000 SLOC)
+    * [SARGON](tests/sargon.asm) (\~3,500 SLOC)
     []()
 
     []()
