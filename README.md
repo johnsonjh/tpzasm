@@ -6,7 +6,7 @@
 # TPZASM
 
 * **TPZASM** is a portable cross‑assembler intended to be fully interchangeable
-  (and bug‑compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
+  (and in most cases bug‑compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
   **PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
   Zilog&nbsp;**Z80**, and other equivalent processors.
 
@@ -49,21 +49,21 @@
 * **`TPZASM`** is \~**99.7%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.  It is a fully faithful implementation
   that can assemble several substantial historical codebases: the
-  (\~2,500 SLOC) [Zapple Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
-  the (\~2,200 SLOC) [Burke Disassembler](tests/dis.asm), the (\~30,000 SLOC)
-  [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and the (\~3,500 SLOC)
-  [SARGON](tests/sargon.asm).  In every case, **TPZASM** produces identical
-  listings as well as byte‑for‑byte identical object output when compared to
-  the reference TDL/PSA assemblers.  The only differences are exposed when
-  processing *deliberately malformed* or specially crafted inputs (that cause
-  the reference assemblers to abort or crash).
+  (\~*2,500 SLOC*) [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
+  the (\~*2,200 SLOC*) [Burke&nbsp;Disassembler](tests/dis.asm),
+  the (\~*30,000 SLOC*) [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and
+  the (\~*3,500 SLOC*) [SARGON](tests/sargon.asm).  In every case, **TPZASM**
+  produces identical listings as well as byte‑for‑byte identical object output
+  when compared to the reference TDL/PSA assemblers.  The only differences are
+  when processing *deliberately malformed* or specially crafted inputs (that
+  cause the reference assemblers to abort or crash).
 
-* **TPZASM** can write the assembled output as a raw binary image, or as a
-  **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or absolute
-  Intel‑HEX module (`.PABS`) formats, serialized either as raw binary
-  (the `-R` flag, *i.e.* `.PBIN`) or as ASCII‑hex text (the `-X` flag,
-  *i.e.* `.PHEX`), all of which is byte‑for‑byte identical to the object
-  output of the original software.
+  * **TPZASM** can write the assembled output as a raw binary image, or as a
+    **TDL&nbsp;Object&nbsp;Module** in relocatable `.PREL` or absolute
+    Intel‑HEX module `.PABS` formats, serialized either as raw binary
+    (using the `-R` flag, *i.e.*, `.PBIN`) or as ASCII‑hex text (using the `-X`
+    flag, *i.e.*, `.PHEX`), all of which is byte‑for‑byte identical to the
+    object output of the reference software.
 
 * **`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
   output to the original reference tool, with matching messages and identical
