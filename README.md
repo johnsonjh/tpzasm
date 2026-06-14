@@ -153,7 +153,7 @@
 * The [`docs/`](docs) directory contains PDF‑format documentation for the
   assemblers (directly applicable to **TPZASM**) and the book
   ‘**Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**’ by
-  R.&nbsp;Roger&nbsp;Breton (and excellent TDL assembly resource).
+  R.&nbsp;Roger&nbsp;Breton (an excellent TDL assembly resource).
 
 ## License
 
