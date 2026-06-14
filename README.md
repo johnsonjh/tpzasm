@@ -115,26 +115,28 @@ error‑handling semantics, plus user‑configurable control of output padding.
 
 ## License
 
-* The **TPZASM** software is distributed under the terms of the permissive
-  [MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0)](LICENSE) license.
+The **TPZASM** software is distributed under the terms of the permissive
+[MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0)](LICENSE) license.
 
-* The `ZASM` assembler and its accompanying documentation are © 1976‑1977
-  [Technical&nbsp;Design&nbsp;Labs,&nbsp;Inc.](https://en.wikipedia.org/wiki/Technical_Design_Labs),
-  with all rights acquired by Phoenix&nbsp;Software&nbsp;Associates,&nbsp;Ltd.
+* The following third‑party materials are provided under their own licenses:
 
-* The `PASM` assembler and its accompanying documentation are © 1980‑1981
-  [Phoenix Software Associates,&nbsp;Ltd.](https://en.wikipedia.org/wiki/Phoenix_Technologies),
-  now [Phoenix&nbsp;Technologies,&nbsp;Ltd.](https://phoenixtech.com/)
+  * The `ZASM` assembler and its accompanying documentation are © 1976‑1977
+    [Technical&nbsp;Design&nbsp;Labs,&nbsp;Inc.](https://en.wikipedia.org/wiki/Technical_Design_Labs),
+    with all rights acquired by Phoenix&nbsp;Software&nbsp;Associates,&nbsp;Ltd.
 
-* The `HEXCOM` utility is © 1982
-  [Digital&nbsp;Research,&nbsp;Inc.](https://en.wikipedia.org/wiki/Digital_Research),
-  with all rights acquired by
-  [DRDOS,&nbsp;Inc.&nbsp;dba&nbsp;DeviceLogics&nbsp;LLC.](https://en.wikipedia.org/wiki/DeviceLogics)
+  * The `PASM` assembler and its accompanying documentation are © 1980‑1981
+    [Phoenix Software Associates,&nbsp;Ltd.](https://en.wikipedia.org/wiki/Phoenix_Technologies),
+    now [Phoenix&nbsp;Technologies,&nbsp;Ltd.](https://phoenixtech.com/)
 
-* The book **Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**
-  is © 1984, 1987, 1990, 2003, 2009 R.&nbsp;Roger&nbsp;Breton and distributed
-  with permission under the terms and conditions of the
-  [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
+  * The `HEXCOM` utility is © 1982
+    [Digital&nbsp;Research,&nbsp;Inc.](https://en.wikipedia.org/wiki/Digital_Research),
+    with all rights acquired by
+    [DRDOS,&nbsp;Inc.&nbsp;dba&nbsp;DeviceLogics&nbsp;LLC.](https://en.wikipedia.org/wiki/DeviceLogics)
+
+  * The book **Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**
+    is © 1984, 1987, 1990, 2003, 2009 R.&nbsp;Roger&nbsp;Breton and distributed
+    with permission under the terms and conditions of the
+    [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
 
 <!--
 Local Variables:
