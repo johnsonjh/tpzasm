@@ -50,11 +50,11 @@
   and **PSA&nbsp;PASM&nbsp;1.02**.
 
   * It is a fully faithful reimplementation that can assemble many substantial
-  historical codebases, including the the (\~*2,500 SLOC*)
+  historical codebases, including the the \~2,500 SLOC
   [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor),
-  the (\~*2,200 SLOC*) [Burke&nbsp;Disassembler](tests/dis.asm),
-  the (\~*30,000 SLOC*) [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and
-  the (\~*3,500 SLOC*) [SARGON](tests/sargon.asm).  In every case, **TPZASM**
+  the \~2,200 SLOC [Burke&nbsp;Disassembler](tests/dis.asm),
+  the \~30,000 SLOC [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT), and
+  the \~3,500 SLOC [SARGON](tests/sargon.asm).  In every case, **TPZASM**
   produces identical listings as well as byte‑for‑byte identical object output
   when compared to the reference TDL/PSA assemblers.  The only differences are
   when processing *deliberately malformed* or specially crafted inputs (that
