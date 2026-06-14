@@ -53,18 +53,18 @@
 
 []()
   * It is a fully faithful reimplementation of *both* assemblers (including
-    their bugs) that can assemble many substantial historic codebases (which
+    their bugs) and can assemble many substantial historic codebases (which
     also serve as test cases), including:
 
-    |                                                                                    Codebase | Size          |
-    |--------------------------------------------------------------------------------------------:|:--------------|
-    | [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                         |  \~2,500 SLOC |
-    | [Burke&nbsp;Disassembler](tests/dis.asm)                                                    |  \~2,200 SLOC |
-    | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm) |  \~2,800 SLOC |
-    | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                            | \~30,000 SLOC |
-    | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                | \~10,000 SLOC |
-    | [SARGON](tests/sargon.asm)                                                                  |  \~3,500 SLOC |
-    | **Total**                                                                                   | \~51,000 SLOC |
+    | Codebase                                                                                    |               Size |
+    |:-------------------------------------------------------------------------------------------:|-------------------:|
+    | [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                         |  \~2,500&nbsp;SLOC |
+    | [Burke&nbsp;Disassembler](tests/dis.asm)                                                    |  \~2,200&nbsp;SLOC |
+    | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm) |  \~2,800&nbsp;SLOC |
+    | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                            | \~30,000&nbsp;SLOC |
+    | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                | \~10,000&nbsp;SLOC |
+    | [SARGON](tests/sargon.asm)                                                                  |  \~3,500&nbsp;SLOC |
+    | **Total**                                                                                   | \~51,000&nbsp;SLOC |
 
     []()
 
