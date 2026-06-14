@@ -49,9 +49,7 @@
 
 * **`TPZASM`** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
   and **PSA&nbsp;PASM&nbsp;1.02**.
-[]()
 
-[]()
   * It is a fully faithful reimplementation of *both* assemblers (including
     their bugs) and can assemble many substantial historic codebases (which
     also serve as test cases), including:
@@ -64,19 +62,13 @@
     | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                            | \~30,000&nbsp;SLOC |
     | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                | \~10,000&nbsp;SLOC |
     | [SARGON](tests/sargon.asm)                                                                  |  \~3,500&nbsp;SLOC |
-    | **Total**                                                                                   | \~51,000&nbsp;SLOC |
 
-    []()
-
-    []()
     In every case, **TPZASM** produces identical listings as well as
     byte‑for‑byte identical object output when compared to the reference
     TDL/PSA assemblers.  The only differences are when processing
     *deliberately malformed* or specially crafted inputs (that cause the
     reference assemblers to abort or crash).
-[]()
 
-[]()
   * **TPZASM** can write the assembled output as a raw binary image, or as a
     **TDL&nbsp;Object&nbsp;Module** in relocatable `.PREL` or absolute
     Intel‑HEX module `.PABS` formats, serialized either as raw binary
