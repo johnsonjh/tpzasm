@@ -33,6 +33,18 @@ SPDX-FileCopyrightText = "1976, 1977 Technical Design Labs, Inc."
 SPDX-License-Identifier = "LicenseRef-TDL"
 
 [[annotations]]
+path = "tests/zapple.asm"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1976 Technical Design Labs, Inc."
+SPDX-License-Identifier = "LicenseRef-TDL"
+
+[[annotations]]
+path = "tests/dis.asm"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1979 Tim Burke"
+SPDX-License-Identifier = "LicenseRef-DIS"
+
+[[annotations]]
 path = "orig/zasm.com"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1976, 1977 Technical Design Labs, Inc."
