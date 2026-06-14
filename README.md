@@ -57,7 +57,7 @@
     also serve as test cases), including:
 
     | Codebase                                                                                    |               Size |
-    |:-------------------------------------------------------------------------------------------:|-------------------:|
+    |:--------------------------------------------------------------------------------------------|-------------------:|
     | [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                         |  \~2,500&nbsp;SLOC |
     | [Burke&nbsp;Disassembler](tests/dis.asm)                                                    |  \~2,200&nbsp;SLOC |
     | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm) |  \~2,800&nbsp;SLOC |
