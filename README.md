@@ -116,9 +116,9 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
   **Computer Design Labs** (CDL), with both companies offering TDL‑derived
   development tools for several years.
 
-* The **CDL** **MACRO I** and **MACRO II** assemblers are in the same family,
-  and at least two variants are definitively known from listing outputs
-  (`E12011-0311` and `C12012-0312`, so, versions `3.11` and `3.12`).
+* The **CDL MACRO** assemblers are in the same family, with two variants of
+  these three assemblers definitively known from listing outputs
+  (`E12011-0311` and `C12012-0312`, *i.e.*, versions `3.11` and `3.12`).
 
   * **MACRO I** is described as "a macro assembler which will generate
     relocatable or absolute code for the 8080 or Z80 using standard Intel
