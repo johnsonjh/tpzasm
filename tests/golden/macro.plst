@@ -1,0 +1,22 @@
+                                 .RADIX  16
+                                 .DEFINE CLR[X] =
+                                 [XRA    A
+                                 STA     X]
+                                 .DEFINE MVIB[X,Y] =
+                                 [MVI    A,Y
+                                 STA     X]
+                                 .DEFINE NOPS =
+                                 [NOP
+                                 NOP]
+   1234                  LOC1    =       1234H
+   0000'   AF                    CLR     LOC1            ;-> AF 32 34 12[XRA
+                         A
+   0001'   32 1234      +        STA     LOC1]
+   0004'   3E42                  MVIB    5678H,42H       ;-> 3E 42 32 78 56[MVI
+                                 A,42H
+   0006'   32 5678      +        STA     5678H]
+   0009'   00                    NOPS                    ;-> 00 00[NOP
+   000A'   00           +        NOP]
+                                 .END
++++++ Symbol Table +++++
+LOC1   1234         .BLNK. 0000:03 X    .DATA. 0000"   X    .PROG. 000B'   X

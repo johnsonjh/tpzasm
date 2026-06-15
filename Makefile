@@ -107,11 +107,13 @@ $(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
 # against committed golden files (no CP/M oracle needed); tools/vrel.sh does
 # the differential check against the original PSA PASM when tnylpo is present.
 test: test_expr asm tests/test_trunc.sh tests/test_obj.sh \
-	tests/test_datetime.sh tests/test_page.sh tests/longname.asm
+	tests/test_maclist.sh tests/test_datetime.sh tests/test_page.sh \
+	tests/longname.asm
 	@printf '%s\n' "" 2> /dev/null || :
 	@./test_expr
 	@./tests/test_trunc.sh
 	@./tests/test_obj.sh
+	@./tests/test_maclist.sh
 	@./tests/test_datetime.sh
 	@./tests/test_page.sh
 

@@ -1,0 +1,21 @@
+                                 .RADIX  16
+                                 .DEFINE REPT[N,X] = [
+                                 .IFN    N, [
+                                 X
+                                 REPT    \N-1,(X)
+                                 ]
+                                 ]
+                                 REPT    3,(.BYTE 0AAH)[
+   0000'   AA           +        .BYTE 0AAH
+   0001'   AA           +        .BYTE 0AAH
+   0002'   AA           +        .BYTE 0AAH
+                        +        ]
+                                 .IFIDN  "B" "B", [
+   0003'   11                    .BYTE   011H
+                                 ]
+                                 .IFDIF  "B" "C", [
+   0004'   22                    .BYTE   022H
+                                 ]
+                                 .END
++++++ Symbol Table +++++
+.BLNK. 0000:03 X    .DATA. 0000"   X    .PROG. 0005'   X

@@ -1,0 +1,33 @@
+                         ; TPZASM: TDL ZASM / PSA PASM compatible assembler - t
+                         ests/macnest.asm
+                         ; Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev
+                         @gmail.com>
+                         ; SPDX-License-Identifier: MIT-0
+                         ;
+                         ; Macro nesting (manual Ch.4): a macro may be DEFINED
+                         inside another macro.  The
+                         ; inner macro is not available until the outer macro h
+                         as been called; once it
+                         ; has, the inner macro may be called by any statement.
+                           Here OUTER emits its
+                         ; argument and defines INNER; after a single OUTER cal
+                         l, INNER is callable and
+                         ; adds 10H to its argument.  Emits 01 12 14.  Byte-for
+                         -byte identical on both
+                         ; dialects.  (Calling OUTER twice would redefine INNER
+                          -- a multiply-defined
+                         ; 'M' error -- so OUTER is called once.)
+                                 .DEFINE OUTER[V]=[
+                                 .BYTE   V
+                                 .DEFINE INNER[W]=[.BYTE W+10H]
+                         ]
+                                 OUTER   1               ; -> 01, and defines I
+                         NNER[
+   0000'   01           +        .BYTE   1
+                        +]
+   0001'   12                    INNER   2               ; -> 12  (INNER now ca
+                         llable)[.BYTE 2+10H]
+   0002'   14                    INNER   4               ; -> 14[.BYTE 4+10H]
+                                 .END
++++++ Symbol Table +++++
+.BLNK. 0000:03 X    .DATA. 0000"   X    .PROG. 0003'   X

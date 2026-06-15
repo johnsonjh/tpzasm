@@ -1,0 +1,59 @@
+                                .RADIX  16
+                                .PABS
+   0100                         .LOC    100H
+                        ;
+                        ;       Macro call-line LC: an empty-body[0] mac
+                        ro (the `[' ends the .DEFINE
+                        ;       line) carries the expansion's start LC o
+                        n its call line IFF the first
+                        ;       non-empty body statement DIRECTLY emits;
+                         it is blank when that statement
+                        ;       is a conditional/directive (the emit hap
+                        pens inside it).
+                        ;
+                                .DEFINE LD16[R,S] = [
+                                .IFIDN  "R"  "D",  [
+                                LDED    S
+                                ]
+                                ]
+                                .DEFINE SIMPLE[X] = [
+                                PUSH    H
+                                POP     H
+                                ]
+                                .DEFINE WDIR[V] = [
+                                .WORD   V
+                                NOP
+                                ]
+                                .DEFINE OUTER[X] = [
+                                PUSH    H
+                                LD16    D,X
+                                POP     H
+                                ]
+   0100                 S1:     SIMPLE  1               ;body[1]=PUSH H
+                        emits -> call line shows LC[
+   0100    E5          +        PUSH    H
+   0101    E1          +        POP     H
+                       +        ]
+   0102    00                   NOP
+   0103                 W1:     WDIR    1234H           ;body[1]=.WORD e
+                        mits -> call line shows LC[
+   0103    1234        +        .WORD   1234H
+   0105    00          +        NOP
+                       +        ]
+   0106    00                   NOP
+   0107                 L1:     LD16    D,5678H         ;body[1]=.IFIDN
+                        (cond) -> call line blank[
+   0107    ED5B 5678   +        LDED    5678H
+                       +        ]
+   010B    00                   NOP
+   010C                 O1:     OUTER   9ABCH           ;empty body[0],
+                        body[1]=PUSH H, nested LD16[
+   010C    E5          +        PUSH    H
+   010D    ED5B 9ABC   +        LDED    9ABCH
+   0111    E1          +        POP     H
+                       +        ]
+                                .END
++++++ SYMBOL TABLE +++++
+L1     0107         O1     010C         S1     0100
+W1     0103         .BLNK. 0000:03 X    .DATA. 0000*   X
+.PROG. 0000'   X

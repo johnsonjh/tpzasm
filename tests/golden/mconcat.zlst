@@ -1,0 +1,32 @@
+                        ; TPZASM: TDL ZASM / PSA PASM compatible assembl
+                        er - tests/mconcat.asm
+                        ; Copyright (c) 2026 Jeffrey H. Johnson <johnson
+                        jh.dev@gmail.com>
+                        ; SPDX-License-Identifier: MIT-0
+                        ;
+                        ; Macro argument concatenation with the apostrop
+                        he/single-quote operator (manual
+                        ; Ch.4): inside a macro definition, "'" joins a
+                        dummy argument with adjacent
+                        ; text to form a single symbol.  The manual's ow
+                        n example -- a conditional-
+                        ; branch macro -- builds the Z80 relative-jump m
+                        nemonic from its condition arg:
+                        ;   .DEFINE BR[A,B]=[JR'A B]   then   BR Z,L1  -
+                        >  JRZ L1
+                        ; Here A is pasted onto JR to form JRZ / JRNZ /
+                        JRC.  Byte-for-byte identical on
+                        ; both dialects (JRZ=28, JRNZ=20, JRC=38, + the
+                        relative displacement).
+                                .DEFINE BR[A,B]=[JR'A B]
+   0000'   2804                 BR      Z,L1            ; -> JRZ  L1[JRZ
+                         L1             ]
+   0002'   2002                 BR      NZ,L1           ; -> JRNZ L1[JRN
+                        Z L1            ]
+   0004'   3800                 BR      C,L1            ; -> JRC  L1[JRC
+                         L1             ]
+   0006'   00           L1:     NOP
+                                .END
++++++ SYMBOL TABLE +++++
+L1     0006'        .BLNK. 0000:03 X    .DATA. 0000*   X
+.PROG. 0007'   X
