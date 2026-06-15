@@ -142,13 +142,13 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
   analyzed, their bugs, quirks, and listing styles could be emulated in a
   future **TPZASM** release.
 
-* Another **PSA PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely a beta
-  release*), is also known, though no documentation for it seems to have
-  survived.  Its assembly output seems to be byte‑for‑byte identical to
-  **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding and the
-  same relocatable object output) for all test inputs, but the listing format
-  was completely overhauled.  It also exhibits several behaviors that are
-  clearly bugs, such as sometimes omitting the symbol table from listings
+* Another **PSA PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (`C12011-0200G`,
+  *likely a beta release*), is also known, though no documentation for it
+  seems to have survived.  Its assembly output seems to be byte‑for‑byte
+  identical to **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding
+  and the same relocatable object output) for all test inputs, but the listing
+  format was completely overhauled.  It also exhibits several behaviors that
+  are clearly bugs, such as sometimes omitting the symbol table from listings
   when certain macros are defined.
 
   Support for emulation of its improved listing style (without the bugs) may
