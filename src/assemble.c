@@ -3639,10 +3639,7 @@ macro_free_all (astate *a)
  * false positive locally (no leak: see macro_free_all()).
  */
 
-/* -Wanalyzer-malloc-leak is a real-gcc-only option; clang (which also defines
- * __GNUC__) and the gcc-compatible compilers below would reject the pragma
- * under -Werror, so guard it to real gcc. */
-#if defined(__GNUC__) && !defined(__clang__) \
+#if defined(GCC_ANALYZER) && defined(__GNUC__) && !defined(__clang__) \
     && !(defined(__OPEN64__) || defined(__OPENCC__) || defined(__PCC__))
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wanalyzer-malloc-leak"
@@ -3706,7 +3703,7 @@ macro_capture (astate *a, const char *p)
   macro_addbody (m, dupstr (buf));
 }
 
-#if defined(__GNUC__) && !defined(__clang__) \
+#if defined(GCC_ANALYZER) && defined(__GNUC__) && !defined(__clang__) \
     && !(defined(__OPEN64__) || defined(__OPENCC__) || defined(__PCC__))
 # pragma GCC diagnostic pop
 #endif
