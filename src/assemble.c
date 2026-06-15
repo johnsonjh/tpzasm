@@ -3783,7 +3783,6 @@ do_define (astate *a, const char *operands)
   macrodef *m = (macrodef *)malloc (sizeof (*m));
   const char *p = skipws (operands);
   char buf[NAMEBUF];
-  char dbuf[NAMEBUF];
   int n = 0, i;
 
   if (NULL == m)
@@ -3815,6 +3814,8 @@ do_define (astate *a, const char *operands)
 
   if ('[' == *p)
     { /* parameter list */
+      char dbuf[NAMEBUF];
+
       p++;
 
       while ('\0' != *p && ']' != *p && ')' != *p && '=' != *p)
