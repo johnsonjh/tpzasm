@@ -110,15 +110,48 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 ## Future
 
-* Another **PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely* *a* *beta*
-  *release*), is also known, though no documentation for it seems to have
-  survived. Its assembly output seems to be byte‑for‑byte identical to
+* In 1979, after the closure of TDL/Xitan, Neil J. Colvin formed **Phoenix
+  Software Associates** (PSA), and Carl Galletti and Roger Amidon formed
+  **Computer Design Labs** (CDL), with both companies offering TDL‑derived
+  development tools for several years.
+
+* The **CDL** **MACRO I** and **MACRO II** assemblers are in the same family,
+  and at least two versions are definitively known from listing outputs
+  (`E12011-0311` and `C12012-0312`), effectively, versions 3.11 and 3.12.
+
+  * **CDL MACRO I** is described as "a macro assembler which will generate
+    relocatable or absolute code for the 8080 or Z80 using standard Intel
+    mnemonics plus TDL/Z80 extensions.  Functions include 14 conditionals, 16
+    listing controls, 54 pseudo‑ops, 11 arithmetic/logical operations, local
+    and global symbols, chaining files, linking capability with optional
+    linker, and recursive/reiterative macros",
+
+  * **CDL MACRO II** as "expanding upon MACRO I's linking capabilities and
+    offering more listing options", and,
+
+  * **CDL MACRO III** as "an enhanced version of MACRO II; internal buffers
+    have been increased to achieve a significant improvement in speed of
+    assembly; additional features include line numbers, cross reference
+    compressed PRN files, form feeds, page parity, additional pseudo-ops,
+    internal setting of time and date, and expanded assembly‑time data entry".
+
+  Unfortunately, no copies of these CDL assemblers are known to be archived,
+  but **TPZASM** successfully assembles several program sources written for
+  CDL MACRO without modification.  If these assemblers could be found and
+  analyzed, their bugs, quirks, and listing styles could be emulated in a
+  future **TPZASM** release.
+
+* Another **PSA PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (*likely a beta
+  release*), is also known, though no documentation for it seems to have
+  survived.  Its assembly output seems to be byte‑for‑byte identical to
   **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding and the
   same relocatable object output) for all test inputs, but the listing format
   was completely overhauled.  It also exhibits several behaviors that are
   clearly bugs, such as sometimes omitting the symbol table from listings
-  when certain macros are defined.  Support for emulation of its improved
-  listing style (without the bugs) may be offered in a future release.
+  when certain macros are defined.
+
+  Support for emulation of its improved listing style (without the bugs) may
+  be offered in a future release.
 
 * An optional *extended error checking* mode may be added, possibly printing
   errors to the console even when the listing is written to a file, classifying
