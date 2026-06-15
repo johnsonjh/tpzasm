@@ -60,6 +60,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 
   | Codebase                                                                                    |               Size |
   |:--------------------------------------------------------------------------------------------|-------------------:|
+  | [Zapple&nbsp;1K&nbsp;Monitor](tests/zap1k.asm)                                              |  \~1,000&nbsp;SLOC |
   | [TAPELIB](tests/tapelib.asm)                                                                |  \~1,500&nbsp;SLOC |
   | [Burke&nbsp;Disassembler](tests/dis.asm)                                                    |  \~2,200&nbsp;SLOC |
   | [Zapple&nbsp;2K&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                 |  \~2,500&nbsp;SLOC |
