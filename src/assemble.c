@@ -26,6 +26,57 @@
 /******************************************************************************/
 
 #include "asm.h"
+#include "platform.h" /* HAVE_SIGNAL_H (and <signal.h>) when available */
+
+/******************************************************************************/
+
+static ASM_NORETURN void
+fatal_oom (void)
+{
+  (void)fprintf (stderr, "\n*** Out of memory\n");
+  exit (2);
+}
+
+/******************************************************************************/
+
+#if defined(HAVE_SIGNAL_H) && defined(SIGINT)
+
+static volatile sig_atomic_t g_interrupted = 0;
+
+/******************************************************************************/
+
+static void
+on_sigint (int signo)
+{
+  (void)signo;
+  g_interrupted = 1;
+}
+
+#endif
+
+/******************************************************************************/
+
+static void
+install_sigint (void)
+{
+#if defined(HAVE_SIGNAL_H) && defined(SIGINT)
+  (void)signal (SIGINT, on_sigint);
+#endif
+}
+
+/******************************************************************************/
+
+static void
+check_interrupt (void)
+{
+#if defined(HAVE_SIGNAL_H) && defined(SIGINT)
+  if (0 != g_interrupted)
+    {
+      (void)fprintf (stderr, "\n*** Interrupted\n");
+      exit (255);
+    }
+#endif
+}
 
 /******************************************************************************/
 
@@ -68,9 +119,9 @@ typedef struct
 
 typedef struct macrodef
 {
-  char name[NAMEBUF];
-  char params[8][NAMEBUF];
-  char defval[8][NAMEBUF]; /* per-param `PARAM(def)' default ("" = none) */
+  char *name;
+  char *params[8];
+  char *defval[8]; /* per-param `PARAM(def)' default (NULL = none) */
   int nparams;
   char *body[64];
   int nbody;
@@ -337,21 +388,30 @@ em_record (astate *a, u8 v)
   if (a->em_n >= a->em_cap) /* grow the emission buffers */
     {
       long nc = a->em_cap * 2;
-      u8 *nb = (u8 *)realloc (a->em_byte, (size_t)nc);
-      u8 *nr = (u8 *)realloc (a->em_rel, (size_t)nc);
-      u8 *nt = (u8 *)realloc (a->em_tbase, (size_t)nc);
 
-      if (NULL != nb)
-        a->em_byte = nb;
+#if ASM_SIZE_T_NARROW /* 16-bit size_t: keep the request inside 64 KiB */
+      if (nc > 65535L)
+        nc = 65535L;
+#endif
 
-      if (NULL != nr)
-        a->em_rel = nr;
+      if (nc > a->em_cap)
+        {
+          u8 *nb = (u8 *)realloc (a->em_byte, (size_t)nc);
+          u8 *nr = (u8 *)realloc (a->em_rel, (size_t)nc);
+          u8 *nt = (u8 *)realloc (a->em_tbase, (size_t)nc);
 
-      if (NULL != nt)
-        a->em_tbase = nt;
+          if (NULL != nb)
+            a->em_byte = nb;
 
-      if (NULL != nb && NULL != nr && NULL != nt)
-        a->em_cap = nc;
+          if (NULL != nr)
+            a->em_rel = nr;
+
+          if (NULL != nt)
+            a->em_tbase = nt;
+
+          if (NULL != nb && NULL != nr && NULL != nt)
+            a->em_cap = nc;
+        }
     }
 
   if (a->em_n >= a->em_cap)
@@ -376,22 +436,32 @@ em_record (astate *a, u8 v)
     {
       if (a->nspans >= a->span_cap) /* grow the span arrays */
         {
-          int sc = a->span_cap * 2;
-          u16 *na = (u16 *)realloc (a->span_a, (size_t)sc * sizeof (u16));
-          u16 *nn = (u16 *)realloc (a->span_n, (size_t)sc * sizeof (u16));
-          u8 *ng = (u8 *)realloc (a->span_seg, (size_t)sc * sizeof (u8));
+          long nsc = (long)a->span_cap * 2;
 
-          if (NULL != na)
-            a->span_a = na;
+#if ASM_SIZE_T_NARROW /* 16-bit size_t: keep the byte size inside 64 KiB */
+          if (nsc > 65535L / (long)sizeof (u16))
+            nsc = 65535L / (long)sizeof (u16);
+#endif
 
-          if (NULL != nn)
-            a->span_n = nn;
+          if (nsc > (long)a->span_cap)
+            {
+              int sc = (int)nsc;
+              u16 *na = (u16 *)realloc (a->span_a, (size_t)sc * sizeof (u16));
+              u16 *nn = (u16 *)realloc (a->span_n, (size_t)sc * sizeof (u16));
+              u8 *ng = (u8 *)realloc (a->span_seg, (size_t)sc * sizeof (u8));
 
-          if (NULL != ng)
-            a->span_seg = ng;
+              if (NULL != na)
+                a->span_a = na;
 
-          if (NULL != na && NULL != nn && NULL != ng)
-            a->span_cap = sc;
+              if (NULL != nn)
+                a->span_n = nn;
+
+              if (NULL != ng)
+                a->span_seg = ng;
+
+              if (NULL != na && NULL != nn && NULL != ng)
+                a->span_cap = sc;
+            }
         }
 
       if (a->nspans < a->span_cap)
@@ -421,15 +491,20 @@ emit (astate *a, u16 v)
     {
       if (NULL != a->image)
         {
-          a->image[a->lc] = (u8)(v & 0xFFu);
+#if ASM_SIZE_T_NARROW /* 16-bit size_t: the top byte (0xFFFF) is not storable */
+          if (a->lc < 65535U)
+#endif
+            {
+              a->image[a->lc] = (u8)(v & 0xFFu);
 
-          if (!a->img_any || a->lc < a->img_min)
-            a->img_min = a->lc;
+              if (!a->img_any || a->lc < a->img_min)
+                a->img_min = a->lc;
 
-          if (!a->img_any || a->lc > a->img_max)
-            a->img_max = a->lc;
+              if (!a->img_any || a->lc > a->img_max)
+                a->img_max = a->lc;
 
-          a->img_any = 1;
+              a->img_any = 1;
+            }
         }
 
       if (NULL != a->em_byte) /* object output: record in emission order */
@@ -1720,7 +1795,12 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
   else if (2 == mode && started && 2 == a->pass) /* .ASCIS: flag last byte */
     {
       if (NULL != a->image)
-        a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
+        {
+#if ASM_SIZE_T_NARROW /* 16-bit size_t: the top byte (0xFFFF) is not storable */
+          if (last_lc < 65535U)
+#endif
+            a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
+        }
 
       /* the object is built from the emission log, not the image, so set the
        * high bit on the last logged byte too (the char just emitted) */
@@ -3084,17 +3164,7 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
   ts = (symbol **)malloc ((size_t)total * sizeof (symbol *));
 
   if (NULL == all || NULL == es || NULL == is || NULL == ts)
-    {
-      if (NULL != all)
-        FREE (all);
-      if (NULL != es)
-        FREE (es);
-      if (NULL != is)
-        FREE (is);
-      if (NULL != ts)
-        FREE (ts);
-      return;
-    }
+    fatal_oom ();
 
   sym_collect (t, all);
 
@@ -3186,16 +3256,7 @@ collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
   ds = (symbol **)malloc ((size_t)total * sizeof (symbol *));
 
   if (NULL == all || NULL == es || NULL == ds)
-    {
-      if (NULL != all)
-        FREE (all);
-      if (NULL != es)
-        FREE (es);
-      if (NULL != ds)
-        FREE (ds);
-
-      return;
-    }
+    fatal_oom ();
 
   sym_collect (t, all);
 
@@ -3311,7 +3372,7 @@ lst_symtab (astate *a)
   all = (symbol **)malloc (sizeof (symbol *)
                            * (size_t)(navail > 0 ? navail : 1));
   if (NULL == all)
-    return;
+    fatal_oom ();
 
   sym_collect (a->syms, all);
 
@@ -3490,8 +3551,10 @@ dupstr (const char *s)
   size_t n = strlen (s) + 1;
   char *p = (char *)malloc (n);
 
-  if (NULL != p)
-    (void)memcpy (p, s, n);
+  if (NULL == p)
+    fatal_oom ();
+
+  (void)memcpy (p, s, n);
 
   return p;
 }
@@ -3545,6 +3608,16 @@ macro_free_all (astate *a)
       for (i = 0; i < m->nbody; i++)
         FREE (m->body[i]);
 
+      for (i = 0; i < 8; i++)
+        {
+          if (NULL != m->params[i])
+            FREE (m->params[i]);
+
+          if (NULL != m->defval[i])
+            FREE (m->defval[i]);
+        }
+
+      FREE (m->name);
       FREE (m);
     }
 
@@ -3645,24 +3718,35 @@ do_define (astate *a, const char *operands)
 {
   macrodef *m = (macrodef *)malloc (sizeof (*m));
   const char *p = skipws (operands);
-  int n = 0;
+  char buf[NAMEBUF];
+  char dbuf[NAMEBUF];
+  int n = 0, i;
 
   if (NULL == m)
     return;
 
+  m->name = NULL;
   m->nparams = 0;
   m->nbody = 0;
   m->next = NULL;
 
+  for (i = 0; i < 8; i++)
+    {
+      m->params[i] = NULL;
+      m->defval[i] = NULL;
+    }
+
   while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p || '%' == *p)
     {
       if (n < NAMEBUF - 1)
-        m->name[n++] = (char)toupper ((unsigned char)*p);
+        buf[n++] = (char)toupper ((unsigned char)*p);
 
       p++;
     }
 
-  m->name[n] = '\0';
+  buf[n] = '\0';
+  m->name = dupstr (buf);
+
   p = skipws (p);
 
   if ('[' == *p)
@@ -3671,8 +3755,6 @@ do_define (astate *a, const char *operands)
 
       while ('\0' != *p && ']' != *p && ')' != *p && '=' != *p)
         {
-          char *pn = m->params[m->nparams];
-          char *dv = m->defval[m->nparams];
           int pi = 0;
           const char *st = p;
           p = skipws (p);
@@ -3681,13 +3763,13 @@ do_define (astate *a, const char *operands)
                  || '%' == *p)
             {
               if (pi < NAMEBUF - 1)
-                pn[pi++] = *p;
+                buf[pi++] = *p;
 
               p++;
             }
 
-          pn[pi] = '\0';
-          dv[0] = '\0';
+          buf[pi] = '\0';
+          dbuf[0] = '\0';
 
           if ('(' == *p)
             { /* `PARAM(default)': capture the parenthesized default value */
@@ -3705,16 +3787,26 @@ do_define (astate *a, const char *operands)
                     }
 
                   if (di < NAMEBUF - 1)
-                    dv[di++] = *p;
+                    dbuf[di++] = *p;
 
                   p++;
                 }
 
-              dv[di] = '\0';
+              dbuf[di] = '\0';
             }
 
+          /* Commit the param (and any default) only when it will be kept, so
+           * an empty slot or a parameter past the 7-dummy cap does not leak a
+           * dupstr() that the next iteration would overwrite. */
           if (pi > 0 && m->nparams < 7)
-            m->nparams++;
+            {
+              m->params[m->nparams] = dupstr (buf);
+
+              if ('\0' != dbuf[0])
+                m->defval[m->nparams] = dupstr (dbuf);
+
+              m->nparams++;
+            }
 
           p = skipws (p);
 
@@ -4030,8 +4122,9 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
           {
             const char *dv = m->defval[k];
 
-            while ('\0' != *dv && j < 1000)
-              argbuf[j++] = *dv++;
+            if (NULL != dv)
+              while ('\0' != *dv && j < 1000)
+                argbuf[j++] = *dv++;
           }
 
         if (j < 1000)
@@ -5843,6 +5936,8 @@ process_module (astate *a, const char *path, int modidx)
     {
       size_t n = strlen (buf);
 
+      check_interrupt (); /* ^C since the last line: abort with exit 255 */
+
       while (n > 0 && ('\n' == buf[n - 1] || '\r' == buf[n - 1]))
         {
           buf[--n] = '\0';
@@ -5940,6 +6035,8 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   char srcpath[1024];
   FILE *tf, *lf = NULL;
 
+  install_sigint (); /* ^C aborts the assembly with exit 255 (see above) */
+
   /* zero-init without a partial-aggregate warning */
   (void)memset (&a, 0, sizeof (a));
 
@@ -6033,9 +6130,16 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
    * an image is needed for -o and for any object output (-R/-X); the emission
    * log and spans only for object output.
    */
-  a.image = ((NULL != outpath || NULL != relpath || NULL != hexpath)
-                ? (u8 *)calloc (65536UL, 1)
-                : NULL);
+  {
+#if ASM_SIZE_T_NARROW
+    size_t isz = (size_t)65535U; /* 16-bit size_t: 64 KiB minus the top byte */
+#else
+    size_t isz = (size_t)65536UL;
+#endif
+    a.image = ((NULL != outpath || NULL != relpath || NULL != hexpath)
+                  ? (u8 *)calloc (isz, 1)
+                  : NULL);
+  }
   a.em_byte = NULL;
   a.em_rel = NULL;
   a.em_tbase = NULL;
@@ -6063,28 +6167,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
       if (NULL == a.em_byte || NULL == a.em_rel || NULL == a.em_tbase
           || NULL == a.span_a || NULL == a.span_n || NULL == a.span_seg)
-        { /* out of memory: degrade to no object output */
-          if (NULL != a.em_byte)
-            FREE (a.em_byte);
-
-          if (NULL != a.em_rel)
-            FREE (a.em_rel);
-
-          if (NULL != a.em_tbase)
-            FREE (a.em_tbase);
-
-          if (NULL != a.span_a)
-            FREE (a.span_a);
-
-          if (NULL != a.span_n)
-            FREE (a.span_n);
-
-          if (NULL != a.span_seg)
-            FREE (a.span_seg);
-
-          a.em_cap = 0;
-          a.span_cap = 0;
-        }
+        fatal_oom ();
     }
 
   a.img_min = 0;
@@ -6202,6 +6285,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             objsym *psyms = (objsym *)malloc (((size_t)nsym + 3)
                                               * sizeof (objsym));
 
+            if (NULL == exts || NULL == ints || NULL == ents || NULL == psyms)
+              fatal_oom ();
+
             os.nexts = 0;
             os.nints = 0;
             os.nents = 0;
@@ -6209,11 +6295,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             os.psym = 0;
             os.psyms = psyms;
 
-            if (NULL != exts && NULL != ints && NULL != ents)
-              collect_obj_syms (a.syms, exts, &os.nexts, ints, &os.nints, ents,
-                                &os.nents);
+            collect_obj_syms (a.syms, exts, &os.nexts, ints, &os.nints, ents,
+                              &os.nents);
 
-            if (a.obj_psym && NULL != psyms)
+            if (a.obj_psym)
               {
                 collect_psyms (a.syms,
                                (a.obj_org_used ? 0u : (unsigned)a.seg_hw[1]),
@@ -6264,17 +6349,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
                 obj_module (hexf, &os);
               }
 
-            if (NULL != exts)
-              FREE (exts);
-
-            if (NULL != ints)
-              FREE (ints);
-
-            if (NULL != ents)
-              FREE (ents);
-
-            if (NULL != psyms)
-              FREE (psyms);
+            FREE (exts);
+            FREE (ints);
+            FREE (ents);
+            FREE (psyms);
           }
 
         /*

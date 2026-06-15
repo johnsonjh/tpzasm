@@ -55,15 +55,21 @@ ref=${ASM_REF:-${here}}
 asm="${ref}/asm"
 
 # Fixtures whose object is byte-exact (tests/test_obj.sh) AND whose full LISTING
-# must match both originals.  The trailing real-world programs are large: go (a
-# CP/M Users' Group GO command), the quote-handling audit (quotes), and three
-# prompt-driven Alloy Engineering / ITS sources -- ittl (ITS100/TIP linker),
-# atu4 and mtu4 (cipher / mag-tape utilities) -- which read assembly-time '\'
-# console values.  Those answers live in tests/<fixture>.ans; the original is
-# driven over a pty with expect (tnylpo's line-mode console will not take them
-# from redirected stdin) and the clone with -r.  When expect is absent the
-# prompt-driven fixtures are skipped (the rest still run).
-fixtures="macro macro2 mconcat macnest maclc sall clabel page \
+# must match both originals.  dref exercises a genuine multiply-defined symbol
+# and so covers the leading multiply-defined report page (the assembler's pass
+# 4): the M line reproduced there, the `?' label/reference marks, and the
+# absence of a spurious phase error -- behavior the object output cannot show
+# (it is byte-identical regardless) and that the other fixtures, whose only
+# duplicates are uniquified macro locals, never reach.  The trailing real-world
+# programs are large: go (a CP/M Users' Group GO command), the quote-handling
+# audit (quotes), and three prompt-driven Alloy Engineering / ITS sources --
+# ittl (ITS100/TIP linker), atu4 and mtu4 (cipher / mag-tape utilities) --
+# which read assembly-time '\' console values.  Those answers live in
+# tests/<fixture>.ans; the original is driven over a pty with expect (tnylpo's
+# line-mode console will not take them from redirected stdin) and the clone
+# with -r.  When expect is absent the prompt-driven fixtures are skipped (the
+# rest still run).
+fixtures="macro macro2 mconcat macnest maclc sall clabel page dref \
 go quotes ittl atu4 mtu4 cond3 relmode bios tapelib"
 
 have_expect=0

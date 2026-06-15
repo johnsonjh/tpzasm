@@ -44,6 +44,54 @@
 
 /******************************************************************************/
 
+# ifdef _CH_
+#  include <signal.h>
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# endif
+
+/******************************************************************************/
+
+# ifndef __CPPCHECK__
+#  ifndef _CH_
+#   if HAS_INCLUDE(<signal.h>)
+#    include <signal.h>
+#    ifndef HAVE_SIGNAL_H
+#     define HAVE_SIGNAL_H
+#    endif
+#   endif
+#  endif
+# endif
+
+/******************************************************************************/
+
+# if defined(HAVE_UTSNAME_H) || (defined(_WIN32) && !defined(__CYGWIN__))
+#  define HAVE_SYSARCH
+# endif
+
+/******************************************************************************/
+
+# ifndef ASM_SIZE_T_NARROW
+#  if defined(__SIZEOF_SIZE_T__)
+#   if __SIZEOF_SIZE_T__ <= 2
+#    define ASM_SIZE_T_NARROW 1
+#   else
+#    define ASM_SIZE_T_NARROW 0
+#   endif
+#  elif defined(__SIZE_WIDTH__)
+#   if __SIZE_WIDTH__ <= 16
+#    define ASM_SIZE_T_NARROW 1
+#   else
+#    define ASM_SIZE_T_NARROW 0
+#   endif
+#  else
+#   define ASM_SIZE_T_NARROW 0
+#  endif
+# endif
+
+/******************************************************************************/
+
 const char *platform_name (void);
 const char *sysarch (void);
 

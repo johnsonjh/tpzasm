@@ -16,12 +16,22 @@
 
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /******************************************************************************/
 
 #include "asm.h"
+
+/******************************************************************************/
+
+static ASM_NORETURN void
+sym_oom (void)
+{
+  (void)fprintf (stderr, "\n*** Out of memory\n");
+  exit (2);
+}
 
 /******************************************************************************/
 
@@ -285,18 +295,14 @@ sym_new (void)
   int i;
 
   if (NULL == t)
-    return NULL;
+    sym_oom ();
 
   t->nbuckets = 1024;
   t->count = 0;
   t->bucket = (symbol **)malloc (sizeof (symbol *) * (unsigned)t->nbuckets);
 
   if (NULL == t->bucket)
-    {
-      FREE (t);
-
-      return NULL;
-    }
+    sym_oom ();
 
   for (i = 0; i < t->nbuckets; i++)
     t->bucket[i] = NULL;
@@ -360,15 +366,12 @@ sym_intern (symtab *t, const char *name)
   s = (symbol *)malloc (sizeof (*s));
 
   if (NULL == s)
-    return NULL;
+    sym_oom ();
 
   s->name = (char *)malloc (strlen (n) + 1);
 
   if (NULL == s->name)
-    {
-      FREE (s);
-      return NULL;
-    }
+    sym_oom ();
 
   /*
    * Store the symbol name folded to upper case: both originals are

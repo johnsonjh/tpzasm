@@ -28,8 +28,20 @@
 
 /******************************************************************************/
 
+# if defined(__ORACLE_LINT__)
+#  define ASM_NORETURN /* nothing */
+# elif defined(__GNUC__) || defined(__clang__)
+#  define ASM_NORETURN __attribute__ ((noreturn))
+# elif defined(_MSC_VER)
+#  define ASM_NORETURN __declspec (noreturn)
+# else
+#  define ASM_NORETURN /* nothing */
+# endif
+
+/******************************************************************************/
+
 # include <stddef.h> /* size_t, NULL */
-# include <stdio.h>  /* FILE          */
+# include <stdio.h>  /* FILE         */
 
 /******************************************************************************/
 
@@ -77,15 +89,19 @@ typedef struct symbol
 {
   char *name;
   value_t val;
-  unsigned char defined;
-  unsigned char external;
-  unsigned char internal; /* .INTERN: emit an internal-symbol (`#') record */
-  unsigned char entry;    /* .ENTRY: also an entry point (`@' record)      */
-  unsigned char mdef;     /* multiply-defined (listing `M' class flag)     */
-  unsigned char udef;     /* referenced but undefined (listing `U' flag)   */
-  unsigned char seen;     /* pass # in which last defined as a label       */
+  unsigned defined : 1;
+  unsigned external : 1;
+  unsigned internal : 1; /* .INTERN: emit an internal-symbol (`#') record */
+  unsigned entry : 1;    /* .ENTRY: also an entry point (`@' record) */
+  unsigned mdef : 1;     /* multiply-defined (listing `M' class flag) */
+  unsigned udef : 1;     /* referenced but undefined (listing `U' flag) */
+  unsigned seen : 3;     /* pass # in which last defined as a label: holds
+                          * 1, 2, 3 (count-only) and 4 (mdef report page),
+                          * so it needs 3 bits -- 2 would truncate pass 4 to
+                          * 0 and break multiply-defined detection on that
+                          * pass (a spurious phase error, lost `M' line) */
   unsigned short decl;    /* .INTERN/.ENTRY declaration order (for records) */
-  unsigned short defseq;  /* definition order (for the `&' .PSYM record), 0=unset */
+  unsigned short defseq;  /* definition order (for & .PSYM record), 0=unset */
   struct symbol *next;
 } symbol;
 
@@ -125,20 +141,20 @@ int xsnprintf (char *dst, size_t cap, const char *fmt, ...);
 
 typedef struct
 {
-  int radix;          /* current numeric radix (2/8/10/16)       */
-  symtab *syms;       /* symbols for lookups (NULL => none)      */
-  u16 lc;             /* location counter (for '.')              */
-  int lc_reloc;       /* relocation coeff of '.'                 */
+  int radix;          /* current numeric radix (2/8/10/16) */
+  symtab *syms;       /* symbols for lookups (NULL => none) */
+  u16 lc;             /* location counter (for '.') */
+  int lc_reloc;       /* relocation coeff of '.' */
   int lc_base;        /* relocation base of '.' (active segment) */
-  const u16 *seg_hw;  /* per-base high-water [1..3], or NULL     */
+  const u16 *seg_hw;  /* per-base high-water [1..3], or NULL */
   int undef0;         /* if set, undefined symbols evaluate to 0 */
-  unsigned scope;     /* local-symbol scope ('..' labels)        */
-  int *ext_next;      /* &next external base# for the `SYM#' modifier (or NULL) */
-  int *ext_decl;      /* &next declaration sequence for `SYM#' (or NULL)        */
-  value_t *temps;     /* .TEMPS local array for `![sub]' (or NULL)              */
-  int ntemps;         /* number of allocated .TEMPS elements                    */
-  int tmp_ok;         /* 1 if `![sub]'/`&' are legal here (PASM, in a macro)     */
-  int mac_argc;       /* `&': arg count of the current macro invocation          */
+  unsigned scope;     /* local-symbol scope ('..' labels) */
+  int *ext_next;      /* &next external base# for the SYM# modifier (or NULL) */
+  int *ext_decl;      /* &next declaration sequence for SYM# (or NULL) */
+  value_t *temps;     /* .TEMPS local array for `![sub]' (or NULL) */
+  int ntemps;         /* number of allocated .TEMPS elements */
+  int tmp_ok;         /* 1 if `![sub]'/`&' are legal here (PASM, in a macro) */
+  int mac_argc;       /* `&': arg count of the current macro invocation */
 } eval_env;
 
 /******************************************************************************/
@@ -170,11 +186,11 @@ int expr_eval2 (const char *s, const eval_env *env, value_t *out,
 
 typedef struct
 {
-  char label[NAMEBUF];  /* label/symbol to define, or ""        */
-  char op[NAMEBUF];     /* mnemonic / pseudo-op, or ""          */
+  char label[NAMEBUF];  /* label/symbol to define, or "" */
+  char op[NAMEBUF];     /* mnemonic / pseudo-op, or "" */
   const char *operands; /* operand text (into the line), or " " */
-  int assign;           /* 1: `label` = operands (= / EQU)      */
-  int internal;         /* 1: defined with a `::'/`=:'/`==:' internal delimiter */
+  int assign;           /* 1: `label` = operands (= / EQU) */
+  int internal;         /* 1: defined with a ::/=:/==: internal delimiter */
 } line_t;
 
 void lex_line (const char *line, line_t *out);
@@ -198,11 +214,11 @@ int asm_source (const char *path, dialect_t dialect, const char *outpath,
  * address is classified so the object emitter can build TDL `;' data records.
  */
 
-# define REL_GAP  0 /* address not emitted (a .BLKB/.LOC gap)      */
-# define REL_ABS  1 /* absolute byte: load unmodified              */
-# define REL_LO   2 /* low byte of a relocatable 16-bit value      */
-# define REL_HI   3 /* high byte of that value (follows a REL_LO)  */
-# define REL_EXT8 4 /* single 8-bit byte relative to an external   */
+# define REL_GAP  0 /* address not emitted (a .BLKB/.LOC gap)     */
+# define REL_ABS  1 /* absolute byte: load unmodified             */
+# define REL_LO   2 /* low byte of a relocatable 16-bit value     */
+# define REL_HI   3 /* high byte of that value (follows a REL_LO) */
+# define REL_EXT8 4 /* single 8-bit byte relative to an external  */
 
 /* one internal/external symbol entry for the `#'/`&'/`\\' object records */
 typedef struct
@@ -232,14 +248,14 @@ typedef struct
   int emit_progid;    /* 1 = emit the `+' program-id record (PASM)        */
   int xlink;          /* 1 = .XLINK: omit the `!'/`\\' link records       */
   const char *modname; /* `!' module name (.IDENT, default ".MAIN.")      */
-  const objsym *exts;  /* external bases for the `\\' record (size 0)      */
+  const objsym *exts;  /* external bases for the `\\' record (size 0)     */
   int nexts;
-  const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for `#'        */
+  const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for `#'       */
   int nints;
-  const objsym *ents;  /* entry points (.ENTRY) for the `@' record         */
+  const objsym *ents;  /* entry points (.ENTRY) for the `@' record        */
   int nents;
-  int psym;            /* 1 = .PSYM: append the `&' symbol-table record(s)  */
-  const objsym *psyms; /* all global symbols for `&' (segs, exts, defs)     */
+  int psym;            /* 1 = .PSYM: append the `&' symbol-table record(s) */
+  const objsym *psyms; /* all global symbols for `&' (segs, exts, defs)    */
   int npsyms;
 } objspec;
 
@@ -297,8 +313,8 @@ typedef struct
 /******************************************************************************/
 
 const insn *insn_find (const char *upname); /* upname must be uppercase */
-int insn_is_z80 (const insn *in); /* 1 if a Z80 extension (for the .I8080 `Z') */
-u16 insn_value (const insn *in); /* mnemonic-as-value: opcode template bytes LE */
+int insn_is_z80 (const insn *in); /* 1 if a Z80 extension (for the .I8080 Z) */
+u16 insn_value (const insn *in); /* mnemonic-as-value opcode template byte LE */
 
 /******************************************************************************/
 

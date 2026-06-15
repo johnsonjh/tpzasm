@@ -710,6 +710,7 @@ asm_cycle()
     && ./asm -p -o "${ac_d}/p.com" -l "${ac_d}/p.lst" tests/macro.asm \
       > /dev/null 2>&1 \
     && ./asm -z -l "${ac_d}/c.lst" tests/cond.asm > /dev/null 2>&1 \
+    && ./asm -z tests/macparam.asm > /dev/null 2>&1 \
     && ./asm -e '(1+2)*3' > /dev/null 2>&1 \
     && ./test_expr > /dev/null 2>&1 \
     && ./hexcom "${ac_d}/h" > /dev/null 2>&1; then
@@ -767,6 +768,8 @@ command -v valgrind > /dev/null 2>&1 && {
       && valgrind --quiet --error-exitcode=99 --leak-check=full \
         ./asm -p -o "${vg_d}/p.com" -l "${vg_d}/p.lst" \
         tests/macro.asm > /dev/null \
+      && valgrind --quiet --error-exitcode=99 --leak-check=full \
+        ./asm -z tests/macparam.asm > /dev/null \
       && valgrind --quiet --error-exitcode=99 --leak-check=full \
         ./test_expr > /dev/null \
       && valgrind --quiet --error-exitcode=99 --leak-check=full \

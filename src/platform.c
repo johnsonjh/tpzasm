@@ -21,21 +21,125 @@
 
 /******************************************************************************/
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+# include <windows.h>
+#endif
+
+/******************************************************************************/
+
 const char *sysarch(void)
 {
-#ifndef HAVE_UTSNAME_H
+#if defined(_WIN32) && !defined(__CYGWIN__)
+  SYSTEM_INFO si;
+
+  GetSystemInfo (&si);
+
+  switch (si.wProcessorArchitecture)
+    {
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_INTEL
+    case PROCESSOR_ARCHITECTURE_INTEL:
+      return "x86";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_AMD64
+    case PROCESSOR_ARCHITECTURE_AMD64:
+      return "x64";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_ARM
+    case PROCESSOR_ARCHITECTURE_ARM:
+      return "ARM";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_ARM64
+    case PROCESSOR_ARCHITECTURE_ARM64:
+      return "ARM64";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_IA64
+    case PROCESSOR_ARCHITECTURE_IA64:
+      return "IA64";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_ALPHA
+    case PROCESSOR_ARCHITECTURE_ALPHA:
+      return "AXP";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_ALPHA64
+    case PROCESSOR_ARCHITECTURE_ALPHA64:
+      return "AXP64";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_MIPS
+    case PROCESSOR_ARCHITECTURE_MIPS:
+      return "MIPS";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_PPC
+    case PROCESSOR_ARCHITECTURE_PPC:
+      return "PowerPC";
+# endif
+
+  /*******************************************************************/
+
+# ifdef PROCESSOR_ARCHITECTURE_SHX
+    case PROCESSOR_ARCHITECTURE_SHX:
+      return "SH";
+# endif
+
+  /*******************************************************************/
+
+    default:
+      return NULL;
+    }
+#elif !defined(HAVE_UTSNAME_H)
   return NULL;
 #else
+
+  /*******************************************************************/
+
 # if defined(__DJGPP__)
   return "x86";
 # elif defined(_AIX)
+
+  /*******************************************************************/
+
 #  if defined(_ARCH_PPC64) || defined(__PPC64__)
   return "powerpc64";
+
+  /*******************************************************************/
+
 #  elif defined(_ARCH_PPC) || defined(__PPC__)
   return "powerpc";
+
+  /*******************************************************************/
+
 #  else
   return NULL;
 #  endif
+
+  /*******************************************************************/
+
 # else
   static char buf[1024];
   struct utsname u;
@@ -43,10 +147,15 @@ const char *sysarch(void)
   if (0 != uname (&u))
     return NULL;
 
+  /*******************************************************************/
+
   strncpy (buf, u.machine, sizeof(buf) - 1);
   buf[sizeof(buf) - 1] = '\0';
 
   return buf;
+
+  /*******************************************************************/
+
 # endif
 #endif
 }

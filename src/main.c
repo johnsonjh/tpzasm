@@ -115,17 +115,17 @@ static const char *osinfo(void)
 {
   static char buf[1024];
   const char *name;
-#ifdef HAVE_UTSNAME_H
+#ifdef HAVE_SYSARCH
   const char *arch;
 #endif
 
   name = platform_name ();
-#ifdef HAVE_UTSNAME_H
+#ifdef HAVE_SYSARCH
   arch = sysarch ();
 #endif
 
   if (
-#ifdef HAVE_UTSNAME_H
+#ifdef HAVE_SYSARCH
       NULL == arch &&
 #endif
       NULL == name)
@@ -138,7 +138,7 @@ static const char *osinfo(void)
   if (NULL != name)
     (void)strncat (buf, name, sizeof (buf) - strlen (buf) - 1);
 
-#ifdef HAVE_UTSNAME_H
+#ifdef HAVE_SYSARCH
   if (NULL != arch)
     {
       if (NULL != name)
