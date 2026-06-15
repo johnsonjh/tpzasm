@@ -2975,6 +2975,8 @@ svalue_close (const astate *a, char open)
   return open;
 }
 
+/******************************************************************************/
+
 /*
  * Capture a single-line string value (a .TITLE/.SBTTL operand) into dst.  The
  * first non-blank character is the delimiter; the text runs from just after it
@@ -3014,6 +3016,8 @@ capture_svalue (const astate *a, const char *operands, char *dst, size_t dstsz)
       dst[n] = '\0';
     }
 }
+
+/******************************************************************************/
 
 /*
  * Per-page listing heading.  TDL and PSA differ in the title, the PAGE/Page
@@ -3086,6 +3090,8 @@ sym_rank (int c)
   return 36 + (unsigned char)c; /* other name chars sort last */
 }
 
+/******************************************************************************/
+
 static int
 sym_name_cmp (const void *pa, const void *pb)
 {
@@ -3127,6 +3133,8 @@ cmp_defseq (const void *pa, const void *pb) /* by first-definition order */
 
   return ((x > y) - (x < y));
 }
+
+/******************************************************************************/
 
 static int
 cmp_decl (const void *pa, const void *pb)

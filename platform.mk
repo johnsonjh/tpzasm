@@ -220,6 +220,13 @@ endif
 
 ################################################################################
 
+# Detect if CC is DJGPP by name
+ifneq "$(findstring djgpp,$(CC))" ""
+ CFLAGS+=-Wno-attributes
+endif
+
+################################################################################
+
 # Display report
 $(info [MAKE] CFLAGS   = $(CFLAGS))
 $(info [MAKE] LDFLAGS  = $(LDFLAGS))
