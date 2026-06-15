@@ -68,7 +68,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
   | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                | \~10,000&nbsp;SLOC |
   | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                            | \~30,000&nbsp;SLOC |
 
-* In every case, **TPZASM** produces identical listings as well as
+* In every case, **TPZASM** produces identical listings and
   byte‑for‑byte identical object output when compared to the reference
   TDL/PSA assemblers.  The only differences are when processing
   *deliberately malformed* or specially crafted inputs (that cause the
@@ -116,28 +116,28 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
   development tools for several years.
 
 * The **CDL** **MACRO I** and **MACRO II** assemblers are in the same family,
-  and at least two versions are definitively known from listing outputs
-  (`E12011-0311` and `C12012-0312`), effectively, versions 3.11 and 3.12.
+  and at least two variants are definitively known from listing outputs
+  (`E12011-0311` and `C12012-0312`, so, versions `3.11` and `3.12`).
 
-  * **CDL MACRO I** is described as "a macro assembler which will generate
+  * **MACRO I** is described as "a macro assembler which will generate
     relocatable or absolute code for the 8080 or Z80 using standard Intel
     mnemonics plus TDL/Z80 extensions.  Functions include 14 conditionals, 16
     listing controls, 54 pseudo‑ops, 11 arithmetic/logical operations, local
     and global symbols, chaining files, linking capability with optional
     linker, and recursive/reiterative macros",
 
-  * **CDL MACRO II** as "expanding upon MACRO I's linking capabilities and
-    offering more listing options", and,
+  * **MACRO II** is described as "expanding upon MACRO I's linking
+    capabilities and offering more listing options", and,
 
-  * **CDL MACRO III** as "an enhanced version of MACRO II; internal buffers
-    have been increased to achieve a significant improvement in speed of
-    assembly; additional features include line numbers, cross reference
-    compressed PRN files, form feeds, page parity, additional pseudo-ops,
+  * **MACRO III** is described as "an enhanced version of MACRO II; internal
+    buffers have been increased to achieve a significant improvement in speed
+    of assembly; additional features include line numbers, cross‑reference
+    compressed PRN files, form feeds, page parity, additional pseudo‑ops,
     internal setting of time and date, and expanded assembly‑time data entry".
 
   Unfortunately, no copies of these CDL assemblers are known to be archived,
   but **TPZASM** successfully assembles several program sources written for
-  CDL MACRO without modification.  If these assemblers could be found and
+  **CDL MACRO** without modification.  If these assemblers could be found and
   analyzed, their bugs, quirks, and listing styles could be emulated in a
   future **TPZASM** release.
 
