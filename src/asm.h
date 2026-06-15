@@ -148,6 +148,12 @@ typedef struct
   int lc_base;        /* relocation base of '.' (active segment) */
   const u16 *seg_hw;  /* per-base high-water [1..3], or NULL */
   int undef0;         /* if set, undefined symbols evaluate to 0 */
+  int fwd_pass;       /* leading multiply-defined report page (mdef_page): the
+                       * pass a symbol's `seen' must match to count as defined.
+                       * A symbol defined only in an earlier pass (seen !=
+                       * fwd_pass -- not yet reached in this walk) is a FORWARD
+                       * reference, rendered undefined as the originals' pass-1
+                       * view does.  0 = off */
   unsigned scope;     /* local-symbol scope ('..' labels) */
   int *ext_next;      /* &next external base# for the SYM# modifier (or NULL) */
   int *ext_decl;      /* &next declaration sequence for SYM# (or NULL) */

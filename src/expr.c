@@ -383,6 +383,7 @@ ev_primary (ectx *e)
     {
       char name[IDBUF];
       int n = 0;
+      int fwd;
       symbol *s;
 
       while (idchar ((unsigned char)*e->p))
@@ -467,7 +468,19 @@ ev_primary (ectx *e)
           return r;
         }
 
-      if (NULL == s || !s->defined)
+      /*
+       * On the leading multiply-defined report page a FORWARD reference -- a
+       * symbol whose definition this re-walk has not reached yet (its `seen'
+       * predates fwd_pass) -- renders undefined, capturing the originals'
+       * pass-1 view (e.g. `EOCMD: call PRRANG' with PRRANG defined lower down
+       * lists `CALL 0000' with a `U'/`?').  The symbol IS defined, so it is NOT
+       * marked `udef' (that flag would wrongly carry into the body listing) and
+       * it is not resolved as a mnemonic-as-value either.
+       */
+      fwd = (NULL != s && s->defined && 0 != e->env->fwd_pass
+             && (unsigned)e->env->fwd_pass != s->seen);
+
+      if (NULL == s || !s->defined || fwd)
         {
           /*
            * an instruction mnemonic used as a value yields its opcode template
@@ -477,7 +490,7 @@ ev_primary (ectx *e)
            * this is reached only for a non-symbol name; resolve it in both
            * passes (the value is fixed, like any constant).
            */
-          if ('.' != name[0])
+          if ('.' != name[0] && !fwd)
             {
               char up[IDBUF];
               const insn *in;
@@ -498,9 +511,11 @@ ev_primary (ectx *e)
 
           /*
            * a genuinely undefined reference: record it in the symbol table so
-           * the listing can show it with the `U' flag, as the originals do.
+           * the listing can show it with the `U' flag, as the originals do.  A
+           * forward ref on the report page (fwd) is already defined -- skip
+           * that so the body listing does not inherit a spurious `U'.
            */
-          if (NULL != e->env->syms)
+          if (NULL != e->env->syms && !fwd)
             {
               symbol *u;
 

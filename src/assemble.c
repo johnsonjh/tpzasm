@@ -164,6 +164,8 @@ typedef struct
   int errs_finsert; /* nested-.INSERT (`F') count: also drives the leading pg */
   int count_only;  /* error-counting pre-pass: tally errs_hdr, list nothing   */
   int mdef_page;   /* leading-page pass: list only `M'/`F' (report) lines     */
+  int cur_mdef;    /* this line redefines a multiply-defined label: on the
+                    * report page its operand forward refs render undefined */
   char lst_ec[2];  /* up to two error-code letters for this line's column 1 */
   int lst_nec;     /* number of error codes recorded for this line          */
   int lst_qoff[2]; /* per-error `?' marker offsets into the line (one each)  */
@@ -726,6 +728,12 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.lc_base = a->base;
   env.seg_hw = a->seg_hw; /* live per-segment high-water for .PROG./.DATA. */
   env.undef0 = (1 == a->pass);
+  /* on the leading multiply-defined report page, a forward reference renders
+   * undefined like the originals' pass-1 capture -- but ONLY on the offending
+   * (multiply-defined-label) line itself, so a forward ref in a .LOC/DS size
+   * expression on an ordinary line still resolves and the LC (hence every other
+   * symbol's value) stays correct; elsewhere fwd_pass is 0 and refs resolve */
+  env.fwd_pass = ((a->mdef_page && a->cur_mdef) ? a->pass : 0);
   env.scope = a->scope;
   env.ext_next = &a->next_ebase; /* the `SYM#' modifier auto-declares externs */
   env.ext_decl = &a->next_decl;
@@ -4409,6 +4417,7 @@ do_line (astate *a, const char *line)
   a->cur_line = line; /* base for the parse-position offsets */
   a->ppos = 0;
   a->eval_undef = 0;
+  a->cur_mdef = 0; /* set when this line redefines a multiply-defined label */
 
   if (a->ended)
     return;
@@ -4774,6 +4783,8 @@ do_line (astate *a, const char *line)
           a->ppos = line_off (line, bp) + (int)strlen (L.label);
           aerr (a, line, "multiply-defined symbol");
           s->mdef = 1; /* flagged `M' in the symbol table */
+          a->cur_mdef = 1; /* operand forward refs render undefined on the
+                            * report page (the originals' pass-1 view) */
         }
     }
 
