@@ -2840,31 +2840,39 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   if (a->lst_ctlstmt && !(a->lst_ctl & LSTC_CTL))
     return;
 
-  if (NULL != a->mac_src) /* macro listing supplies the rendered source */
+  /*
+   * macro-expansion listing detail: .SALL collapses the expansion to one bare
+   * call line carrying the FIRST emitting statement's LC + value-form and
+   * suppresses the rest -- but an errored statement is ALWAYS listed (the
+   * originals never hide a diagnostic), as a normal '+' expansion line, even
+   * under .SALL.  This decision runs before the mac_src text substitution so it
+   * still applies to a body line whose rendered text (e.g. the ']'-appended
+   * body close) was supplied via mac_src.
+   */
+  if (a->mac_active && (a->lst_ctl & LSTC_SALL))
+    {
+      if (NULL != a->sall_call && !a->sall_done && a->nbytes > 0)
+        {
+          rawline = a->sall_call;
+          a->sall_done = 1;
+          sall_render = 1;
+        }
+      else if (NULL != a->mac_src && a->mac_src == a->sall_call)
+        { /* the call line force-listed when nothing emitted: always shown */
+          rawline = a->sall_call;
+          sall_render = 1;
+        }
+      else if (0 == a->lst_nec)
+        return; /* a non-errored body line: collapsed away */
+      else if (NULL != a->mac_src)
+        /* errored line: show its rendered (']'-closed) text */
+        rawline = a->mac_src;
+    }
+  else if (NULL != a->mac_src) /* macro listing supplies the rendered source */
     rawline = a->mac_src;
   else if (a->mac_active)
-    { /*
-       * macro-expansion listing detail: .SALL suppresses the whole body,
-       * .XALL (default) drops the no-code lines, .LALL lists everything
-       */
-      if (a->lst_ctl & LSTC_SALL)
-        { /*
-           * .SALL collapses the expansion to one bare call line carrying the
-           * FIRST emitting statement's LC + value-form (possibly from a nested
-           * macro -- this fires on the first emitting statement at any depth).
-           * Render it here with the invocation as the source; suppress the
-           * rest of the body.
-           */
-          if (NULL != a->sall_call && !a->sall_done && a->nbytes > 0)
-            {
-              rawline = a->sall_call;
-              a->sall_done = 1;
-              sall_render = 1;
-            }
-          else
-            return;
-        }
-      else if (0 == a->nbytes && !(a->lst_ctl & LSTC_LALL))
+    { /* .XALL (default) drops the no-code lines, .LALL lists everything */
+      if (0 == a->nbytes && !(a->lst_ctl & LSTC_LALL))
         return;
     }
 
@@ -2880,14 +2888,17 @@ print_lst (astate *a, u16 lc0, const char *rawline)
     }
 
   /*
-   * inserted-file lines carry '@'; continued macro statements carry '+'
-   * (but not the macro call line, which sets mac_src with mac_plus clear)
+   * continued macro statements carry '+'; other inserted-file lines carry '@'.
+   * The '+' takes priority: a macro EXPANSION line emitted while reading an
+   * .INSERT'd file is still a '+' (the originals mark it by what produced it,
+   * not where it lives) -- only the macro call line itself (mac_src set,
+   * mac_plus clear) and ordinary inserted lines fall through to '@'.
    */
-  if (a->ins_depth > 0)
-    mark = '@';
-  else if (!sall_render
-           && (a->mac_plus || (a->mac_active && NULL == a->mac_src)))
+  if (!sall_render
+      && (a->mac_plus || (a->mac_active && NULL == a->mac_src)))
     mark = '+';
+  else if (a->ins_depth > 0)
+    mark = '@';
 
   /* .LIMAGE: a data statement whose image spilled past one line is rendered
    * as a multi-line byte image with the source split across the lines */
@@ -3003,7 +3014,15 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       rq[1] = -1;
 
       for (i = 0; i < a->lst_nec; i++) /* `?' offsets vs the source field */
-        rq[i] = a->lst_qoff[i] - off;
+        {
+          rq[i] = a->lst_qoff[i] - off;
+
+          /* a `?' that lands on a macro body close `]' steps past it so it
+           * sits at the END of the rendered line, as the originals place it
+           * (`STA PPLNCN]?', not `STA PPLNCN?]') */
+          while (rq[i] >= 0 && ']' == src[rq[i]])
+            rq[i]++;
+        }
 
       lst_source (a, src, scol, wrapw, indent, rq, a->lst_nec);
     }
@@ -4230,7 +4249,22 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         {
           char lnb[512];
           macro_subst (m, args, nargs, m->body[bi], lnb);
-          do_line (a, lnb);
+
+          if (bi == m->nbody - 1)
+            { /* the body-close: an errored last statement that .SALL force-
+               * lists must show the ']' on a '+' line (mac_src carries the
+               * closed text; a non-errored line is still collapsed away in
+               * print_lst, where mac_plus is then irrelevant) */
+              char clb[600];
+              (void)xsnprintf (clb, sizeof (clb), "%s]", lnb);
+              a->mac_src = clb;
+              a->mac_plus = 1;
+              do_line (a, lnb);
+              a->mac_src = NULL;
+              a->mac_plus = 0;
+            }
+          else
+            do_line (a, lnb);
         }
 
       if (2 == a->pass && !a->sall_done)

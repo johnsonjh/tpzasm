@@ -1,0 +1,14 @@
+M  0100    00           DUP?:   nop
+                                .radix  16
+                                .define MVIB$[X,Y] = [MVI       A,Y
+                                STA     X]
+   0100                         .loc    100h
+   0200                 DUP     =       200h
+M  0100    00           DUP?:   nop
+   0101    3E00                 MVIB$   DUP,0
+D  0103    32 0200     +        STA     DUP]?
+                                .end
++++++ SYMBOL TABLE +++++
+DUP    0200     M   .BLNK. 0000:03 X    .DATA. 0000*   X
+.PROG. 0000'   X
+2 ERRORS WERE DETECTED *****

@@ -1,0 +1,11 @@
+                                .radix  16
+                                .define MVIB$[X,Y] = [MVI       A,Y
+                                STA     X]
+   0100                         .loc    100h
+                                .insert MACINSUB
+   0100    3E42        @        MVIB$   1234H,42H[MVI   A,42H
+   0102    32 1234     +        STA     1234H]
+   0105    00          @        nop
+                                .end
++++++ SYMBOL TABLE +++++
+.BLNK. 0000:03 X    .DATA. 0000*   X    .PROG. 0000'   X

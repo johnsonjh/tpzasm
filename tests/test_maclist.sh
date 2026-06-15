@@ -47,7 +47,12 @@ gold="${here}/tests/golden"
 #   maclc    - the empty-body[0] call-line-LC cases side by side.
 #   sall     - .SALL macro-collapse: the call line carries the first emitting
 #              statement's LC + value-form (incl. a nested macro).
-fixtures="macro macro2 mconcat macnest maclc sall"
+#   salldref - .SALL with an errored (multiply-defined operand) body statement,
+#              which is still listed as a '+' expansion (the originals never
+#              hide a diagnostic), with the body-close ']' and the `?' past it.
+#   macins   - a macro called from an .INSERT'd file: its expansion lines carry
+#              the '+' macro marker, not the '@' inserted-file marker.
+fixtures="macro macro2 mconcat macnest maclc sall salldref macins"
 
 # Normalize a raw listing to the project-standard compare form on stdout: drop
 # CR/form-feed, the per-page header (banner + `.MAIN. -' title line) and the
