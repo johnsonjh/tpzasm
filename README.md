@@ -62,7 +62,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
   |:--------------------------------------------------------------------------------------------|-------------------:|
   | [TAPELIB](tests/tapelib.asm)                                                                |  \~1,500&nbsp;SLOC |
   | [Burke&nbsp;Disassembler](tests/dis.asm)                                                    |  \~2,200&nbsp;SLOC |
-  | [Zapple&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                         |  \~2,500&nbsp;SLOC |
+  | [Zapple&nbsp;2K&nbsp;Monitor](https://en.wikipedia.org/wiki/Zapple_Monitor)                 |  \~2,500&nbsp;SLOC |
   | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm) |  \~2,800&nbsp;SLOC |
   | [SARGON](tests/sargon.asm)                                                                  |  \~3,500&nbsp;SLOC |
   | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                | \~10,000&nbsp;SLOC |
