@@ -21,6 +21,7 @@ tool, is also included.
 
 - [Portability](#portability)
 - [Status](#status)
+- [Usage](#usage)
 - [Future](#future)
 - [Notes](#notes)
 - [Reference](#reference)
@@ -83,6 +84,29 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 **`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
 output to the original reference tool, with matching messages and identical
 error‑handling semantics, plus user‑configurable control of output padding.
+
+## Usage
+
+```
+TPZASM - TDL ZASM / PSA PASM compatible assembler (AIX/powerpc64)
+Release 0.71 (Sun Jun 14 18:45:55 2026) https://github.com/johnsonjh/tpzasm
+Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
+
+  Usage: asm [options] <source[.asm]>
+
+    -z, --zasm         Emulate TDL ZASM 2.21 behavior [default]
+    -p, --pasm         Emulate PSA PASM 1.02 behavior
+    -o, --out <file>   Write the assembled binary image to file
+    -P, --pad          Pad output to full CP/M record boundary
+    -l, --list <file>  Write the listing to file [default: stderr]
+    -R, --pbin <file>  Write the object module as binary TDL REL
+    -X, --phex <file>  Write the object module as ASCII-hex REL
+    -L, --long         Allow long (>6 character) symbol names
+    -r, --read <file>  Answer assembly-time prompts from file
+    -e, --expr <expr>  Evaluate single expression and exit
+    -v, --version      Show version information and exit
+    -h, --help         Show this help text and exit
+```
 
 ## Future
 
