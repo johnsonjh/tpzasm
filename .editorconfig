@@ -155,6 +155,23 @@ trim_trailing_whitespace = false
 
 ################################################################################
 
+# The ZAPPLE 2-K monitor V2.R (Computer Design Labs / TDL, (c) 1978, re-keyed by
+# Herb Johnson 2019 from a V1.05R 1979 printout) kept verbatim as a differential-
+# test fixture: a .PABS/.PHEX/.XLINK absolute build, mostly tab-indented with a
+# few space-aligned lines (so leave the indent style unchecked), and its original
+# trailing whitespace must NOT be trimmed.  It even retains a stray ^A control
+# byte in one comment (a transcription artifact) which the assembler drops from
+# the listing; keep it verbatim.
+[tests/ssmon.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = unset
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = false
+
+################################################################################
+
 [*akefile*]
 charset = utf-8
 end_of_line = lf

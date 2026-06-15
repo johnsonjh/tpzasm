@@ -84,7 +84,7 @@ oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple zap1k dis maclc sall \
 clabel \
 page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
-relmode bios tapelib"
+relmode bios tapelib ssmon"
 
 # Some real-world fixtures read assembly-time '\' console values; their answers
 # (the system options that select the assembled configuration) live in a
@@ -114,7 +114,14 @@ relmode bios tapelib"
 # local labels (`..NNNN'), the paste-right apostrophe (`.ASCII 'A$''),
 # `$'-leading dummy substitution, and bracketed `.IFB/.IFNB/.IFIDN' arguments --
 # byte-exact in OBJECT and LISTING vs BOTH originals; its provided tapelib.com
-# matches bit-for-bit once its saved dirty-RAM BSS tail is excluded.
+# matches bit-for-bit once its saved dirty-RAM BSS tail is excluded.  ssmon is
+# the ZAPPLE 2-K monitor V2.R (Computer Design Labs / TDL, (c) 1978, re-keyed by
+# Herb Johnson in 2019 from a 1979 V1.05R printout) -- a .PABS/.PHEX/.XLINK
+# absolute build using .LOC tables and `.END BASE'; it assembles cleanly under
+# BOTH original assemblers and is byte-exact in OBJECT and LISTING vs both.  Its
+# verbatim source even carries a stray ^A (0x01) byte mid-word in one comment (a
+# transcription artifact), which the originals drop from the listing -- the
+# clone now does the same (a listing-only behavior; the object is unaffected).
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1

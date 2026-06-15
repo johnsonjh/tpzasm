@@ -2577,6 +2577,17 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
             }
           while (0 != ((col - indent) % 8));
         }
+      else if ((unsigned char)*s < 0x20 || 0x7F == (unsigned char)*s)
+        { /*
+           * the originals drop non-printable control characters from the
+           * listed source line (TAB, handled above, is the only one they
+           * keep); high-bit bytes (>= 0x80) are left alone.  This silently
+           * absorbs a stray control byte -- e.g. a ^A transcription artifact
+           * embedded in a comment -- exactly as the originals do.  si still
+           * advances (the for-update), so the `?' error offsets are unmoved.
+           */
+          continue;
+        }
       else
         {
           col = lst_wrap (a, col, wrapw, indent);
