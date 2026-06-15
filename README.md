@@ -158,11 +158,10 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
   Support for emulation of its improved listing style (without the bugs) may
   be offered in a future release.
 
-* An optional *extended error checking* mode may be added, possibly printing
-  errors to the console even when the listing is written to a file, classifying
-  errors or warnings by severity, and emitting new diagnostics the originals
-  never supported, for example, warning when symbols longer than six
-  characters would be silently truncated.
+* An optional *extended error checking* mode may be added in a future release,
+  enabling new features such as classifying errors or warnings by severity,
+  and emitting new diagnostics the originals never supported, for example,
+  warning when symbols longer than six characters would be silently truncated.
 
 ## Notes
 
