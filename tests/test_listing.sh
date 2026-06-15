@@ -68,13 +68,13 @@ asm="${ref}/asm"
 # tests/<fixture>.ans; the original is driven over a pty with expect (tnylpo's
 # line-mode console will not take them from redirected stdin) and the clone
 # with -r.  When expect is absent the prompt-driven fixtures are skipped (the
-# rest still run).  Last are the real-world TDL monitors -- the ZAPPLE 2-K (1976)
-# and ZAP 1-K (1977) relocatable (.PREL/.XLINK) sources, plus the ZAPPLE 2-K V2.R
-# (1978, ssmon: a .PABS/.PHEX/.XLINK absolute build) -- whose full listings
-# (mnemonic-as-value operands, the "] ... [" else form, the .TITLE/.SBTTL two-line
-# page heading, long JMP-vector runs, and -- in ssmon -- a stray ^A control byte
-# in a comment that the originals drop from the listing) must match both originals
-# exactly, the listing companion to their object check in tests/test_obj.sh.
+# rest still run).  Last are the TDL monitors -- the ZAPPLE 2-K (1976) and ZAP
+# 1-K (1977) relocatable (.PREL/.XLINK) sources, plus the ZAPPLE 2-K V2.R (1978,
+# ssmon: a .PABS/.PHEX/.XLINK absolute build) -- whose full listings
+# (mnemonic-as-value operands, the "] ... [" else form, the .TITLE/.SBTTL
+# two-line page heading, long JMP-vector runs, and -- in ssmon -- a stray ^A
+# control byte in a comment that the originals drop from the listing) must match
+# both originals exactly, the listing companion to their test_obj.sh check.
 fixtures="macro macro2 mconcat macnest maclc sall clabel page dref \
 go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon"
 

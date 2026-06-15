@@ -84,7 +84,7 @@ oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple zap1k dis maclc sall \
 clabel \
 page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
-relmode bios tapelib ssmon"
+relmode bios tapelib ssmon turbobs"
 
 # Some real-world fixtures read assembly-time '\' console values; their answers
 # (the system options that select the assembled configuration) live in a
@@ -122,6 +122,20 @@ relmode bios tapelib ssmon"
 # verbatim source even carries a stray ^A (0x01) byte mid-word in one comment (a
 # transcription artifact), which the originals drop from the listing -- the
 # clone now does the same (a listing-only behavior; the object is unaffected).
+# turbobs is the Plu*Perfect Systems Universal High-BIOS for the Advent Turbo
+# ROM (Kaypro, (c) 1985), a .PABS/.PHEX/.XLINK absolute build (syssiz=64 in
+# turbobs.ans) that drove three engine changes and is byte-identical in OBJECT
+# to BOTH originals: (1) the recursive PADBYT memory-fill macro nests one
+# conditional per byte, which overflowed the old 64-deep conditional stack, so
+# the MAXCOND/MACRO_NEST_MAX caps were raised to 1024; (2) TDL parenthesized
+# index addressing `mov a,(disp)(X)' is now parsed (the disp may be a `(' expr,
+# not only the bare `(X)'); and (3) a `\' segment-base byte in an absolute
+# (.PABS) `:' record is now per-span, so an `O'-error placeholder emitted while
+# the LC is still relocatable .PROG. (the unknown `.SETWID' directive sits ahead
+# of the first .LOC) carries base 1, as the originals write it.  (Its full
+# LISTING differs in only one place -- the .SALL-collapsed XENTRY call lines
+# show the equate value's low nibble in the originals -- so turbobs is guarded
+# for OBJECT here / vrel, not in tests/test_listing.sh.)
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1

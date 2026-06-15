@@ -172,6 +172,23 @@ trim_trailing_whitespace = false
 
 ################################################################################
 
+# The Plu*Perfect Systems Universal High-BIOS for the Advent Turbo ROM (Kaypro,
+# (c) 1985) kept verbatim as a regression fixture: a .PABS/.PHEX/.XLINK absolute
+# build that exercises a recursive memory-fill macro (PADBYT), TDL indexed
+# addressing `(disp)(X)', and an unknown directive (`.SETWID') ahead of the first
+# .LOC.  Tab-indented; its original trailing whitespace must NOT be trimmed.
+# (The recovered file's post-`.end' ^Z and disk-slack tail are dropped; the
+# source ends at `.end'.)
+[tests/turbobs.asm]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
+insert_final_newline = true
+max_line_length = 88
+trim_trailing_whitespace = false
+
+################################################################################
+
 [*akefile*]
 charset = utf-8
 end_of_line = lf

@@ -80,15 +80,22 @@ check_interrupt (void)
 
 /******************************************************************************/
 
-#define MAXCOND 64
+#define MAXCOND 1024 /* nested conditional-block (.IFx) depth.  A recursive
+                      * memory-fill macro nests one conditional per byte (e.g.
+                      * Turbo-ROM's PADBYT: `.ifg (addr-.),[ nop  PADBYT addr ]'
+                      * recurses ~addr-. deep, opening a `.ifg' each level), so
+                      * this must comfortably exceed any such span (the
+                      * originals were bounded only by available RAM) */
 #define MAXALIAS 128
 #define LOC_STK_DEPTH 32 /* .LOC/.RELOC save-stack depth */
 #define MAXTEMPS 256 /* .TEMPS local-array cap (the originals were RAM-bound) */
-#define MACRO_NEST_MAX 256 /* artificial macro-expansion recursion cap: the
-                            * originals were bounded only by available RAM; we
-                            * impose a high but finite limit so a runaway (e.g.
-                            * an unconditionally self-recursive macro) fails
-                            * cleanly instead of overflowing the C stack */
+#define MACRO_NEST_MAX 1024 /* artificial macro-expansion recursion cap: the
+                             * originals were bounded only by available RAM; we
+                             * impose a high but finite limit so a runaway (e.g.
+                             * an unconditionally self-recursive macro) fails
+                             * cleanly instead of overflowing the C stack.  Kept
+                             * in step with MAXCOND so a legitimately deep
+                             * recursive fill (PADBYT above) is not cut short */
 
 /*
  * listing-control flag bits (a->lst_ctl); LSTC_DEFAULT
@@ -261,6 +268,8 @@ typedef struct
   int nspans;
   int span_cap;
   long emit_prev;   /* last address emitted this pass, or -1 */
+  int loc_break;    /* a .LOC/.ORG forces the next byte to open a new object
+                     * record (span) even when its address is contiguous */
 
   /* listing output stream (stderr, or the -l file) */
   FILE *lst;
@@ -430,7 +439,7 @@ em_record (astate *a, u8 v)
   {
   u8 seg = (u8)(a->lc_reloc ? a->base : 0);
   if (a->nspans > 0 && a->emit_prev >= 0 && (long)a->lc == a->emit_prev + 1
-      && a->span_seg[(long)a->nspans - 1] == seg)
+      && a->span_seg[(long)a->nspans - 1] == seg && !a->loc_break)
     a->span_n[(long)a->nspans - 1]++;
   else
     {
@@ -474,6 +483,7 @@ em_record (astate *a, u8 v)
     }
   }
 
+  a->loc_break = 0; /* consumed by this byte's span decision */
   a->emit_prev = (long)a->lc;
 }
 
@@ -955,15 +965,39 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp)
       return 0;
     }
 
-  if ('(' != *p)
-    {
-      value_t v;
+  /*
+   * A displacement may precede the `(X)'/`(Y)' index.  It is evaluated unless
+   * the operand is the bare index `(X)'/`(Y)' (displacement 0).  The
+   * displacement itself may be PARENTHESISED -- TDL writes `(expr)(X)', e.g.
+   * `mov a,(curs83 - ldparm)(x)' -- so a leading `(' is not necessarily the
+   * index paren; treat it as the index only when it encloses exactly X or Y.
+   */
+  {
+    int bare = 0;
 
-      if (eval1 (a, &p, &v))
-        return -1;
+    if ('(' == *p)
+      {
+        const char *q = skipws (p + 1);
+        int ic = toupper ((unsigned char)*q);
 
-      *disp = v.value;
-    }
+        if ('X' == ic || 'Y' == ic)
+          {
+            q = skipws (q + 1);
+            if (')' == *q)
+              bare = 1;
+          }
+      }
+
+    if (!bare)
+      {
+        value_t v;
+
+        if (eval1 (a, &p, &v))
+          return -1;
+
+        *disp = v.value;
+      }
+  }
 
   p = skipws (p);
 
@@ -5378,6 +5412,8 @@ do_line (astate *a, const char *line)
             }
 
           a->lc = v.value;
+          a->loc_break = 1; /* the originals start a fresh object record at
+                             * every .LOC, even one that lands contiguously */
 
           if (0 != v.reloc && v.base >= 1 && v.base <= 3)
             { /* switch to the named segment, resuming its high-water */
@@ -6008,6 +6044,7 @@ init_pass (astate *a, int pass)
   a->em_pending = 0;
   a->nspans = 0;
   a->emit_prev = -1;
+  a->loc_break = 0;
   a->img_any = 0;
   a->ended = 0;
   a->nalias = 0;
@@ -6172,6 +6209,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.nspans = 0;
   a.span_cap = 0;
   a.emit_prev = -1;
+  a.loc_break = 0;
 
   if (NULL != relpath || NULL != hexpath)
     {
