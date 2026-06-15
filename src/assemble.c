@@ -2983,6 +2983,9 @@ svalue_close (const astate *a, char open)
  * to the matching delimiter (see svalue_close) or to the end of the line.  An
  * absent operand clears dst.  Either quote (' or "), a slash, or any other
  * delimiter works, matching the originals -- the delimiters are not kept.
+ * TAB characters within the text are dropped, as the originals do: a tab
+ * anywhere in the captured string is simply not copied (spaces are kept), so a
+ * `.TITLE "<TAB>text"' heading renders flush after the "modname - " prefix.
  */
 
 static void
@@ -3000,6 +3003,9 @@ capture_svalue (const astate *a, const char *operands, char *dst, size_t dstsz)
 
       for (p++; '\0' != *p && n + 1 < dstsz; p++)
         {
+          if ('\t' == *p)
+            continue; /* the originals drop TABs from .TITLE/.SBTTL text */
+
           if (']' == close && '[' == *p)
             depth++;
           else if (close == *p)

@@ -70,10 +70,11 @@ trim_trailing_whitespace = true
 
 ################################################################################
 
-# The TDL ZAPPLE 2-K monitor (1976) is a real-world source kept verbatim as a
-# differential-test fixture: the listing reproduces the source text exactly, so
-# its original trailing whitespace must NOT be trimmed (it is tab-indented).
-[tests/zapple.asm]
+# The TDL ZAPPLE 2-K monitor (1976) and ZAP 1-K monitor (1977) are real-world
+# sources kept verbatim as differential-test fixtures: the listing reproduces
+# the source text exactly, so their original trailing whitespace must NOT be
+# trimmed (both are tab-indented).
+[tests/{zapple,zap1k}.asm]
 charset = utf-8
 end_of_line = lf
 indent_style = tab

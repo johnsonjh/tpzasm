@@ -68,9 +68,14 @@ asm="${ref}/asm"
 # tests/<fixture>.ans; the original is driven over a pty with expect (tnylpo's
 # line-mode console will not take them from redirected stdin) and the clone
 # with -r.  When expect is absent the prompt-driven fixtures are skipped (the
-# rest still run).
+# rest still run).  Last are the two real-world TDL monitors -- the ZAPPLE 2-K
+# (1976) and ZAP 1-K (1977) relocatable (.PREL/.XLINK) sources -- whose full
+# listings (mnemonic-as-value operands, the "] ... [" else form, the .TITLE/
+# .SBTTL two-line page heading, and long relocatable JMP-vector runs) must match
+# both originals exactly, the listing companion to their object check in
+# tests/test_obj.sh.
 fixtures="macro macro2 mconcat macnest maclc sall clabel page dref \
-go quotes ittl atu4 mtu4 cond3 relmode bios tapelib"
+go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k"
 
 have_expect=0
 if command -v expect > /dev/null 2>&1; then
