@@ -4318,10 +4318,7 @@ console_read (const astate *a, symbol *s)
 
   if (NULL == fgets (ibuf, (int)sizeof (ibuf), stdin))
     {
-      /*
-       * End of input before every prompt was answered.
-       * Abort rather than default to 0 or block forever.
-       */
+      check_interrupt ();
 
       (void)fprintf (stderr,
           "\nerror: ran out of console responses (no value for '%s'); "
