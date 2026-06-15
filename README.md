@@ -137,6 +137,7 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
     of assembly; additional features include line numbers, cross‑reference
     compressed PRN files, form feeds, page parity, additional pseudo‑ops,
     internal setting of time and date, and expanded assembly‑time data entry".
+    At least one new pseudo‑op, `.SETWID`, has been identified.
 
   Unfortunately, no copies of these CDL assemblers are known to be archived,
   but **TPZASM** successfully assembles several program sources written for
