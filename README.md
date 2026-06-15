@@ -60,6 +60,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 
   | Codebase                                                                                                  |               Size |
   |:----------------------------------------------------------------------------------------------------------|-------------------:|
+  | [Plu\*Perfect Systems High-BIOS for Kaypro/Advent Turbo ROM](tests/turbobs.asm)                           |    \~900&nbsp;SLOC |
   | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[1K&nbsp;Monitor&nbsp;2.0](tests/zap1k.asm)   |  \~1,000&nbsp;SLOC |
   | [TAPELIB](tests/tapelib.asm)                                                                              |  \~1,500&nbsp;SLOC |
   | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor&nbsp;2.1R](tests/ssmon.asm)  |  \~1,900&nbsp;SLOC |
