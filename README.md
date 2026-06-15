@@ -60,11 +60,11 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 
   | Codebase                                                                                                  |               Size |
   |:----------------------------------------------------------------------------------------------------------|-------------------:|
-  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[1K&nbsp;Monitor](tests/zap1k.asm)&nbsp;2.0   |  \~1,000&nbsp;SLOC |
+  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[1K&nbsp;Monitor&nbsp;2.0](tests/zap1k.asm)   |  \~1,000&nbsp;SLOC |
   | [TAPELIB](tests/tapelib.asm)                                                                              |  \~1,500&nbsp;SLOC |
-  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor](tests/ssmon.asm)&nbsp;2.1R  |  \~1,900&nbsp;SLOC |
+  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor&nbsp;2.1R](tests/ssmon.asm)  |  \~1,900&nbsp;SLOC |
   | [Burke&nbsp;Z80&nbsp;Disassembler](tests/dis.asm)                                                         |  \~2,200&nbsp;SLOC |
-  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor](tests/zapple.asm)&nbsp;1.11 |  \~2,500&nbsp;SLOC |
+  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor&nbsp;1.11](tests/zapple.asm) |  \~2,500&nbsp;SLOC |
   | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm)               |  \~2,800&nbsp;SLOC |
   | [SARGON](tests/sargon.asm)                                                                                |  \~3,500&nbsp;SLOC |
   | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                              | \~10,000&nbsp;SLOC |
