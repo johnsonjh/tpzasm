@@ -1,5 +1,6 @@
-pasm2.com (2.00G) full keyword table: addr  name  TYPE IDX ATTR  (350 records)
+pasm2.com (2.00G) full keyword table (350 records):
 
+addr  name     TYPE IDX  ATTR
 40c1  .        T=11 I=00 ATTR=0000
 40cb  $        T=11 I=00 ATTR=0000
 40d5  A        T=11 I=00 ATTR=0700

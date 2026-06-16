@@ -1,6 +1,6 @@
 # TDL / PSA operand-format classes (TYPE / IDX / ATTR)
 
-Companion to `keyword-tables.md`. Decoded 2026-06-16 from `orig/*.com`.
+Companion to `keyword-tables.md`.
 Each keyword record is `<NAME:4> 00 00 <TYPE> <IDX> <ATTR:2>`.
 
 * **TYPE** = keyword *category* (which dispatch/mnemonic-set).
@@ -89,4 +89,3 @@ IDX = directive handler; ATTR = a sub-selector flag, e.g. the `.IFE`-family
 .IFLE/.IFN`); `.IF1`/`.IF2` use ATTR `0000`/`8000`; the listing-control family
 (IDX `1d`: `.LALL/.LIST/.XALL/.XLIST/.SALL/.XSYM/.LSYM/...`) uses ATTR as a
 bitmask. Full per-directive IDX/ATTR is in `pasm2-records.txt`.
-
