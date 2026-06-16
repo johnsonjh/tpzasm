@@ -6,9 +6,8 @@
 This directory contains the original documentation for the
 **TDL&nbsp;ZASM&nbsp;2.2** and **PSA&nbsp;PASM&nbsp;1.0** assemblers, and
 the book “**Z‑80 assembly language under TurboDOS**” (4th&nbsp;ed.)
-by R.&nbsp;Roger&nbsp;Breton (an excellent TDL assembly resource).
-
-The [`re/`](re) subdirectory contains reverse engineering notes.
+by R.&nbsp;Roger&nbsp;Breton (an excellent TDL assembly resource). The
+[`re/`](re) subdirectory contains reverse engineering notes.
 
 | File | Description | View |
 |---:|:---|:---|
