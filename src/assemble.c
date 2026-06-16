@@ -640,6 +640,8 @@ err_letter (const char *msg)
               { "multiply-defined reference", 'D' },
               { "subscript", 'S' },
               { "extra operand", 'Q' },
+              { "register value range", 'Q' },
+              { "bad index register", 'X' },
               { NULL, 0 } };
   int i;
 
@@ -801,57 +803,31 @@ eval1 (astate *a, const char **pp, value_t *v)
 
 /* ---- operand helpers ----------------------------------------------- */
 
-/* B C D E H L M A -> 0..7, else -1 */
+/*
+ * A simple 8-bit register field (INP/OUTP, the CB-prefixed rotates): an
+ * expression whose low three bits are the register code, exactly as for the
+ * `MOV'-class fields (`RLCR 1' == `RLCR C', a register may be written as a
+ * number).  A value outside 0..7 is flagged `Q'.  Returns the code, or -1 on a
+ * malformed (unevaluable) operand.
+ */
 static int
-parse_reg8 (const char **pp)
+parse_reg8 (astate *a, const char **pp)
 {
-  const char *p = skipws (*pp);
-  int r;
+  value_t v;
+  const char *p = *pp;
 
-  switch (toupper ((unsigned char)*p))
-    {
-    case 'B':
-      r = 0;
-      break;
-
-    case 'C':
-      r = 1;
-      break;
-
-    case 'D':
-      r = 2;
-      break;
-
-    case 'E':
-      r = 3;
-      break;
-
-    case 'H':
-      r = 4;
-      break;
-
-    case 'L':
-      r = 5;
-      break;
-
-    case 'M':
-      r = 6;
-      break;
-
-    case 'A':
-      r = 7;
-      break;
-
-    default:
-      return -1;
-    }
-
-  if (idchar ((unsigned char)p[1]))
+  if (eval1 (a, &p, &v))
     return -1;
 
-  *pp = p + 1;
+  if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> `Q' */
+    {
+      a->ppos = line_off (a->cur_line, skipws (p));
+      aerr (a, a->cur_line, "register value range");
+    }
 
-  return r;
+  *pp = p;
+
+  return (int)(v.value & 7U);
 }
 
 /******************************************************************************/
@@ -927,122 +903,104 @@ comma (const char **pp)
 /******************************************************************************/
 
 /*
- * register / memory / index operand:
- *   B C D E H L M A  -> reg 0..7, pfx 0
- *   d(X)             -> reg 6, pfx DD, disp d
- *   d(Y)             -> reg 6, pfx FD, disp d
- * returns 0 on success, -1 on error.
+ * register / memory / index operand.  The register field is an ordinary
+ * expression -- the register letters are predefined values (B=0 ... A=7), so a
+ * bare register, a number, or any expression all reduce to a 3-bit register
+ * code (`MOV 1,2' == `MOV C,D').  An optional `(idxreg)' suffix makes it an
+ * indexed operand whose expression value is the displacement:
+ *   expr             -> reg = expr&7 (`Q' if expr > 7), no index
+ *   d(X)             -> reg 6, pfx DD, disp d, *idx = 1
+ *   d(Y)             -> reg 6, pfx FD, disp d, *idx = 1
+ *   d(H)             -> reg 6, pfx 00, disp d, *idx = 1  (the TDL `0(H)' == M
+ *                       bug: a 0 prefix + displacement byte are emitted)
+ *   d(other)         -> reg 6, pfx 00, disp d, *idx = 1, flags `X'+`Q' (`??')
+ * `(X)' alone is NOT an index -- it is the expression X (== 4), so `INR (X)'
+ * is `INR H' (0x24); a displacement (even `0') must precede the index paren.
+ * `*idx' (set for any `(idxreg)' form) tells the caller to emit the prefix and
+ * displacement bytes even when the prefix value is 0.  Returns 0 on success,
+ * -1 on a malformed operand (the caller then emits a default + diagnostic).
  */
 
 static int
-parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp)
+parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
+             int *idx)
 {
   const char *p = skipws (*pp);
-  int c = toupper ((unsigned char)*p);
+  const char *ip, *cp;
+  value_t v;
+  char t[8];
+  int n;
 
   *pfx = 0;
   *disp = 0;
+  *idx = 0;
 
-  if (('B' == c || 'C' == c || 'D' == c || 'E' == c || 'H' == c || 'L' == c
-       || 'M' == c || 'A' == c)
-      && !idchar ((unsigned char)p[1]) && '(' != p[1])
-    {
-      switch (c)
-        {
-        case 'B':
-          *reg = 0;
-          break;
-
-        case 'C':
-          *reg = 1;
-          break;
-
-        case 'D':
-          *reg = 2;
-          break;
-
-        case 'E':
-          *reg = 3;
-          break;
-
-        case 'H':
-          *reg = 4;
-          break;
-
-        case 'L':
-          *reg = 5;
-          break;
-
-        case 'M':
-          *reg = 6;
-          break;
-
-        default:
-          *reg = 7;
-          break;
-        }
-      *pp = p + 1;
-      return 0;
-    }
-
-  /*
-   * A displacement may precede the `(X)'/`(Y)' index.  It is evaluated unless
-   * the operand is the bare index `(X)'/`(Y)' (displacement 0).  The
-   * displacement itself may be PARENTHESISED -- TDL writes `(expr)(X)', e.g.
-   * `mov a,(curs83 - ldparm)(x)' -- so a leading `(' is not necessarily the
-   * index paren; treat it as the index only when it encloses exactly X or Y.
-   */
-  {
-    int bare = 0;
-
-    if ('(' == *p)
-      {
-        const char *q = skipws (p + 1);
-        int ic = toupper ((unsigned char)*q);
-
-        if ('X' == ic || 'Y' == ic)
-          {
-            q = skipws (q + 1);
-            if (')' == *q)
-              bare = 1;
-          }
-      }
-
-    if (!bare)
-      {
-        value_t v;
-
-        if (eval1 (a, &p, &v))
-          return -1;
-
-        *disp = v.value;
-      }
-  }
+  if (eval1 (a, &p, &v)) /* the register / displacement expression */
+    return -1;
 
   p = skipws (p);
 
-  if ('(' != *p)
-    return -1;
+  if ('(' != *p) /* a plain register field: the low three bits of the value */
+    {
+      *reg = (int)(v.value & 7U);
 
-  p = skipws (p + 1);
-  c = toupper ((unsigned char)*p);
+      if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> `Q' */
+        {
+          a->ppos = line_off (a->cur_line, p);
+          aerr (a, a->cur_line, "register value range");
+        }
 
-  if ('X' == c)
-    *pfx = 0xDD;
-  else if ('Y' == c)
-    *pfx = 0xFD;
+      *pp = p;
+
+      return 0;
+    }
+
+  /* an indexed operand: `(idxreg)' selects the prefix, the value is the disp */
+  ip = skipws (p + 1);
+  n = 0;
+
+  while (n < 7 && isalpha ((unsigned char)ip[n]))
+    {
+      t[n] = (char)toupper ((unsigned char)ip[n]);
+      n++;
+    }
+
+  t[n] = '\0';
+  cp = skipws (ip + n);
+
+  if (')' == *cp && 1 == n && 'X' == t[0])
+    {
+      *pfx = 0xDD;
+      a->idx_pfx = 1;
+    }
+  else if (')' == *cp && 1 == n && 'Y' == t[0])
+    {
+      *pfx = 0xFD;
+      a->idx_pfx = 1;
+    }
+  else if (')' == *cp && 1 == n && 'H' == t[0])
+    {
+      *pfx = 0; /* the `d(H)' == M bug: a 0 prefix, no diagnostic */
+    }
   else
-    return -1;
+    { /* any other register inside the index paren: `X'+`Q' (`??'), prefix 0 */
+      a->ppos = line_off (a->cur_line, ip);
+      aerr (a, a->cur_line, "bad index register"); /* X */
+      aerr (a, a->cur_line, "extra operand");      /* Q (same spot -> `??') */
 
-  a->idx_pfx = 1; /* index (IX/IY) addressing: an index-prefix instruction */
+      cp = ip; /* find the closing paren past the unrecognized index text */
 
-  p = skipws (p + 1);
+      while ('\0' != *cp && ')' != *cp)
+        cp++;
 
-  if (')' != *p)
-    return -1;
+      if (')' != *cp)
+        return -1;
+    }
 
-  *pp = p + 1;
+  *disp = v.value;
   *reg = 6;
+  *idx = 1;
+  *pp = cp + 1;
 
   return 0;
 }
@@ -1206,29 +1164,29 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_MOV:
       {
-        int d, s, dp = 0, sp = 0;
+        int d, s, dp = 0, sp = 0, dx = 0, sx = 0;
         u16 dd = 0, sd = 0;
-        if (parse_regop (a, &p, &d, &dp, &dd) || !comma (&p)
-            || parse_regop (a, &p, &s, &sp, &sd))
+        if (parse_regop (a, &p, &d, &dp, &dd, &dx) || !comma (&p)
+            || parse_regop (a, &p, &s, &sp, &sd, &sx))
           {
             aerr (a, line, "MOV r,r");
             emit (a, 0x40);
             break;
           }
 
-        if (6 == d && 6 == s && !dp && !sp)
+        if (6 == d && 6 == s && !dx && !sx)
           aerr (a, line, "MOV M,M invalid");
 
-        if (dp)
+        if (dx)
           emit (a, (u16)dp);
-        else if (sp)
+        else if (sx)
           emit (a, (u16)sp);
 
         emit (a, (u16)(0x40 | (d << 3) | s));
 
-        if (dp)
+        if (dx)
           emit (a, dd);
-        else if (sp)
+        else if (sx)
           emit (a, sd);
 
         break;
@@ -1236,22 +1194,22 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_DST:
       {
-        int r, pf = 0;
+        int r, pf = 0, ix = 0;
         u16 ds = 0;
 
-        if (parse_regop (a, &p, &r, &pf, &ds))
+        if (parse_regop (a, &p, &r, &pf, &ds, &ix))
           {
             aerr (a, line, "register expected");
             emit (a, in->opcode);
             break;
           }
 
-        if (pf)
+        if (ix)
           emit (a, (u16)pf);
 
         emit (a, (u16)(in->opcode | (r << 3)));
 
-        if (pf)
+        if (ix)
           emit (a, ds);
 
         break;
@@ -1259,10 +1217,10 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_MVI:
       {
-        int r, pf = 0;
+        int r, pf = 0, ix = 0;
         u16 ds = 0;
 
-        if (parse_regop (a, &p, &r, &pf, &ds) || !comma (&p))
+        if (parse_regop (a, &p, &r, &pf, &ds, &ix) || !comma (&p))
           {
             aerr (a, line, "MVI r,data");
             emit (a, in->opcode);
@@ -1270,12 +1228,12 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
             break;
           }
 
-        if (pf)
+        if (ix)
           emit (a, (u16)pf);
 
         emit (a, (u16)(in->opcode | (r << 3)));
 
-        if (pf)
+        if (ix)
           emit (a, ds);
 
         if (eval1 (a, &p, &v))
@@ -1287,21 +1245,21 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_SRC:
       {
-        int r, pf = 0;
+        int r, pf = 0, ix = 0;
         u16 ds = 0;
-        if (parse_regop (a, &p, &r, &pf, &ds))
+        if (parse_regop (a, &p, &r, &pf, &ds, &ix))
           {
             aerr (a, line, "register expected");
             emit (a, in->opcode);
             break;
           }
 
-        if (pf)
+        if (ix)
           emit (a, (u16)pf);
 
         emit (a, (u16)(in->opcode | r));
 
-        if (pf)
+        if (ix)
           emit (a, ds);
 
         break;
@@ -1460,7 +1418,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_EDDST: /* INP/OUTP r : ED + (opcode | reg<<3) */
       {
-        int r = parse_reg8 (&p);
+        int r = parse_reg8 (a, &p);
         if (r < 0)
           {
             aerr (a, line, "register expected");
@@ -1476,7 +1434,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_CBR:
       {
-        int r = parse_reg8 (&p);
+        int r = parse_reg8 (a, &p);
         if (r < 0)
           {
             aerr (a, line, "register expected");
@@ -1493,11 +1451,11 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
     case FMT_CBB:
       {
         value_t b;
-        int reg = -1, pf = 0;
+        int reg = -1, pf = 0, ix = 0;
         u16 ds = 0;
 
         if (eval1 (a, &p, &b) || !comma (&p)
-            || parse_regop (a, &p, &reg, &pf, &ds))
+            || parse_regop (a, &p, &reg, &pf, &ds, &ix))
           {
             aerr (a, line, "bit,reg expected");
             emit (a, 0xCB);
@@ -1505,7 +1463,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
             break;
           }
 
-        if (pf)
+        if (ix)
           { /* BIT/SET/RES b,(IX/IY+d) -> pfx CB d op */
             emit (a, (u16)pf);
             emit (a, 0xCB);

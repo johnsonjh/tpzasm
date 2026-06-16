@@ -241,6 +241,79 @@ idchar (int c)
 
 /******************************************************************************/
 
+/*
+ * The TDL/PSA assemblers predefine the register names as ordinary symbol
+ * values, so they resolve in ANY expression and a number can stand in for a
+ * register everywhere a register is expected (`MOV 1,2' == `MOV C,D',
+ * `.WORD B' == 0, `INR B(X)' == `INR 0(X)', and the bare `INR (X)' == `INR H'
+ * because `(X)' is the expression X == 4).  The 8-bit register letters carry
+ * their 3-bit field codes (B=0 ... A=7); SP/PSW/X/Y carry the originals' fixed
+ * values.  A user cannot redefine these, so the value always wins.  Returns the
+ * value, or -1 for any other identifier.
+ */
+static int
+reg_sym_val (const char *name)
+{
+  char u[4];
+  int n = 0;
+
+  while (n < 3 && '\0' != name[n])
+    {
+      u[n] = (char)toupper ((unsigned char)name[n]);
+      n++;
+    }
+
+  if ('\0' != name[n])
+    return -1; /* longer than three characters: an ordinary symbol */
+
+  u[n] = '\0';
+
+  if (1 == n)
+    switch (u[0])
+      {
+      case 'B':
+        return 0;
+
+      case 'C':
+        return 1;
+
+      case 'D':
+        return 2;
+
+      case 'E':
+        return 3;
+
+      case 'H':
+        return 4;
+
+      case 'L':
+        return 5;
+
+      case 'M':
+        return 6;
+
+      case 'A':
+        return 7;
+
+      case 'X':
+        return 4; /* IX, per the originals' predefined value */
+
+      case 'Y':
+        return 4; /* IY */
+
+      default:
+        break;
+      }
+  else if (2 == n && 'S' == u[0] && 'P' == u[1])
+    return 6; /* SP */
+  else if (3 == n && 'P' == u[0] && 'S' == u[1] && 'W' == u[2])
+    return 6; /* PSW */
+
+  return -1;
+}
+
+/******************************************************************************/
+
 static value_t ev_addsub (ectx *e); /* forward */
 
 /******************************************************************************/
@@ -420,6 +493,13 @@ ev_primary (ectx *e)
 
           return r;
         }
+
+      {
+        int rv = reg_sym_val (name); /* a predefined register name -> its value */
+
+        if (rv >= 0)
+          return mkabs ((u16)rv);
+      }
 
       if ('.' == name[0] && '.' == name[1])
         { /* local: scope-qualify */

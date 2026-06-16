@@ -84,7 +84,7 @@ oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple zap1k dis maclc sall \
 clabel \
 page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
-relmode bios tapelib ssmon turbobs progid goto gotoedge"
+relmode bios tapelib ssmon turbobs progid goto gotoedge regnum"
 
 # Some real-world fixtures read assembly-time '\' console values; their answers
 # (the system options that select the assembled configuration) live in a
@@ -135,7 +135,15 @@ relmode bios tapelib ssmon turbobs progid goto gotoedge"
 # of the first .LOC) carries base 1, as the originals write it.  (Its full
 # LISTING differs in only one place -- the .SALL-collapsed XENTRY call lines
 # show the equate value's low nibble in the originals -- so turbobs is guarded
-# for OBJECT here / vrel, not in tests/test_listing.sh.)
+# for OBJECT here / vrel, not in tests/test_listing.sh.)  regnum exercises the
+# TDL/PSA register-as-number and index-addressing quirks Mark Ogden documented:
+# a register operand may be written as a number (MOV 1,2 == MOV C,D, because the
+# register letters B..A are predefined 0..7 values and the register field is an
+# expression), the d(H) index "bug" (0(H) was meant to be M but emits the three
+# bytes 00 34 00 -- a 0 prefix + displacement), a register/expression used as
+# the index displacement (INR B(X) == INR 0(X)), the bare (X) parsed as the
+# expression X (INR (X) == INR H == 24), and the flagged-but-byte-exact recovery
+# cases (a bad index register -> `X'+`Q', a register value > 7 -> `Q').
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1

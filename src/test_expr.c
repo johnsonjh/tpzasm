@@ -26,7 +26,9 @@ int allow_long_symbols;
 /******************************************************************************/
 
 #include "asm.h"
-#include "platform.h"
+#ifdef __ORACLE_LINT__
+# include "platform.h" /* sysarch(): referenced only in the Oracle lint build */
+#endif
 
 /******************************************************************************/
 
@@ -151,17 +153,24 @@ main (void)
   symtab *t = sym_new ();
   symbol *s;
 
-  s = sym_intern (t, "X"); /* .PROG.-relative (base 1) */
+  /*
+   * Synthetic symbols for the relocation algebra.  Their names deliberately
+   * avoid the register letters (B C D E H L M A SP PSW X Y), which the
+   * assembler reserves as predefined register values -- a register name can
+   * never be a user symbol (see reg_sym_val in expr.c), so it would shadow any
+   * injected entry of the same name.
+   */
+  s = sym_intern (t, "SYMX"); /* .PROG.-relative (base 1) */
   s->defined = 1;
   s->val.value = 0x100;
   s->val.reloc = 1;
   s->val.base = 1;
-  s = sym_intern (t, "Y");
+  s = sym_intern (t, "SYMY");
   s->defined = 1;
   s->val.value = 0x200;
   s->val.reloc = 1;
   s->val.base = 1;
-  s = sym_intern (t, "Z");
+  s = sym_intern (t, "SYMZ");
   s->defined = 1;
   s->val.value = 0x300;
   s->val.reloc = 1;
@@ -181,13 +190,13 @@ main (void)
   s->val.value = 0x10;
   s->val.reloc = 1;
   s->val.base = 3;
-  s = sym_intern (t, "A");
+  s = sym_intern (t, "ABSA");
   s->defined = 1;
   s->val.value = 5;
-  s = sym_intern (t, "B");
+  s = sym_intern (t, "ABSB");
   s->defined = 1;
   s->val.value = 3;
-  s = sym_intern (t, "E");
+  s = sym_intern (t, "EXTE");
   s->external = 1; /* external, undefined */
 
   ENV.radix = 10;
@@ -225,12 +234,12 @@ main (void)
   check ("^O17", 10, 15, 0);
 
   /* symbols + relocation (manual worked examples) */
-  check ("X", 10, 0x100, 1);
-  check ("X+Y-Z", 10, 0x000, 1); /* relocatable */
-  check ("X-Z", 10, 0xFE00, 0);  /* absolute    */
-  check ("X+7", 10, 0x107, 1);
-  check ("3*X-Y-Z", 10, 0xFE00, 1); /* 0x300-0x200-0x300, reloc 3-1-1=1 */
-  check ("A+B", 10, 8, 0);
+  check ("SYMX", 10, 0x100, 1);
+  check ("SYMX+SYMY-SYMZ", 10, 0x000, 1); /* relocatable */
+  check ("SYMX-SYMZ", 10, 0xFE00, 0);     /* absolute    */
+  check ("SYMX+7", 10, 0x107, 1);
+  check ("3*SYMX-SYMY-SYMZ", 10, 0xFE00, 1); /* 0x300-0x200-0x300, reloc 1 */
+  check ("ABSA+ABSB", 10, 8, 0);
   check (".", 10, 0x40, 1); /* location counter */
   check (".+2", 10, 0x42, 1);
 
@@ -239,7 +248,7 @@ main (void)
   check_seg ("D1+5", 0x85, 1, 2);   /* .DATA. + constant        */
   check ("D1-D2", 10, 0xFFF0, 0);   /* same base cancels -> abs */
   check_seg ("BK+1", 0x11, 1, 3);   /* .BLNK.-relative          */
-  check_seg ("X+(D1-D2)", 0xF0, 1, 1); /* T+(V-W): base 1 result */
+  check_seg ("SYMX+(D1-D2)", 0xF0, 1, 1); /* T+(V-W): base 1 result */
 
   /* predefined base symbols resolve to the live per-segment high-water */
   {
@@ -262,23 +271,23 @@ main (void)
   }
 
   /* externals (additive only) */
-  check_ext ("E", 0, "E");
-  check_ext ("E+5", 5, "E");
-  check_ext ("5+E", 5, "E");
+  check_ext ("EXTE", 0, "EXTE");
+  check_ext ("EXTE+5", 5, "EXTE");
+  check_ext ("5+EXTE", 5, "EXTE");
 
   /* illegal combinations */
-  check_err ("X+Y"); /* reloc coeff 2 */
-  check_err ("-X");  /* reloc coeff -1 */
-  check_err ("X*Y"); /* two relocatables multiplied */
-  check_err ("X/2"); /* relocatable divided */
-  check_err ("X&1"); /* relocatable logical */
-  check_err ("E*2"); /* external in multiply */
-  check_err ("E+X"); /* external with relocatable */
-  check_err ("E-E"); /* two externals */
-  check_err ("D1+X"); /* different relocation bases (.DATA. + .PROG.) */
-  check_err ("D1-X"); /* different relocation bases */
-  check_err ("BK+X"); /* different relocation bases (.BLNK. + .PROG.) */
-  check_err ("2*D1"); /* relocatable coefficient 2 */
+  check_err ("SYMX+SYMY"); /* reloc coeff 2 */
+  check_err ("-SYMX");     /* reloc coeff -1 */
+  check_err ("SYMX*SYMY"); /* two relocatables multiplied */
+  check_err ("SYMX/2");    /* relocatable divided */
+  check_err ("SYMX&1");    /* relocatable logical */
+  check_err ("EXTE*2");    /* external in multiply */
+  check_err ("EXTE+SYMX"); /* external with relocatable */
+  check_err ("EXTE-EXTE"); /* two externals */
+  check_err ("D1+SYMX"); /* different relocation bases (.DATA. + .PROG.) */
+  check_err ("D1-SYMX"); /* different relocation bases */
+  check_err ("BK+SYMX"); /* different relocation bases (.BLNK. + .PROG.) */
+  check_err ("2*D1");    /* relocatable coefficient 2 */
 
   {
     symbol *buf[64];

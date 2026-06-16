@@ -85,9 +85,13 @@ asm="${ref}/asm"
 # two-line page heading, long JMP-vector runs, and -- in ssmon -- a stray ^A
 # control byte in a comment that the originals drop from the listing) must match
 # both originals exactly, the listing companion to their test_obj.sh check.
+# regnum is the register-as-number / index-addressing quirk audit (MOV 1,2 ==
+# MOV C,D; the d(H) == M index bug emitting 00 34 00; INR B(X) == INR 0(X); the
+# bare INR (X) == INR H); its listing must reproduce the originals' `?'/`??'
+# error marks (bad index register `X'+`Q', value > 7 `Q') exactly.
 fixtures="macro macro2 mconcat macnest maclc sall sallxl lall clabel page dref \
 go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon \
-goto gotoedge"
+goto gotoedge regnum"
 
 # .GOTO is a PASM/pasm2 directive absent from zasm.com 2.21, so these fixtures
 # are compared under -p (vs pasm.com) only; zasm.com rejects the directive.
