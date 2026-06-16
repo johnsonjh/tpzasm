@@ -126,13 +126,13 @@ done
 ################################################################################
 
 if [ "${fail}" -ne 0 ]; then
-  printf '\n%s\n\n' "FAILURE: macro-listing golden regression detected."
+  printf '%s\n\n' "FAILURE: macro-listing golden regression detected."
   exit 1
 fi
 
 ################################################################################
 
-printf '\n%s\n\n' "SUCCESS: macro-listing golden regression tests passed."
+printf '%s\n\n' "SUCCESS: macro-listing golden regression tests passed."
 exit 0
 
 ################################################################################
