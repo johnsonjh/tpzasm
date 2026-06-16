@@ -212,14 +212,13 @@ Keyword counts:
 ## Coverage
 
 * TPZASM fully covers ZASM 2.21 (`-z`) and PASM 1.02 (`-p`).
-* TPZASM accepts these, but neither zasm.com 2.21 nor pasm.com 1.02 has them:
-  `.COMMO, .DB, .DC, .DS, .DW, .EXTRN, .NAME, .ORG, .PRINT, .PUBLI, .REQUE, .SUBTT, COMMON, DB, DC, DCS, DEFB, DEFW, DS, DSW, DW, END, EXTRN, ORG, PUBLIC`
+* TPZASM accepts these, but neither `zasm.com` `2.21` nor `pasm.com` `1.02` has them:
+  * `.COMMO, .DB, .DC, .DS, .DW, .EXTRN, .NAME, .ORG, .PRINT, .PUBLI, .REQUE, .SUBTT, COMMON, DB, DC, DCS, DEFB, DEFW, DS, DSW, DW, END, EXTRN, ORG, PUBLIC`
 
-> **NOTE:** `DB DW DS DEFB DEFW DS ORG END EXTRN` (and the `.DB/.DW/
-> .DS/.ORG` synonyms) are **`pasm2` `.EPOP` / Intel-M80 form**.  They are NOT in
-> the real `zasm.com` 2.21 / `pasm.com` 1.02 tables, which only know the dotted
-> forms (`.BYTE/.WORD/.BLKB/.LOC/.END`). `zasm.com` flags `ORG` as an `O`
-> (unknown-opcode) error; bare `END` triggers `UNEXPECTED END OF INPUT FILE`.
-> `TPZASM` currently accepts, so on a source using Intel style the we diverge
-> from the originals (it assembles; they error).  Correct fix is to gate these
-> synonyms behind the future `pasm2`/`.EPOP` mode. No tests exercise this (yet!)
+> **NOTE:** `DB/DW/DS/DEFB/DEFW/DS/ORG/END/EXTRN` (and the `.DB/.DW/.DS/.ORG` synonyms)
+> are for **`pasm2` `.EPOP`/Intel-M80 form**.  They are NOT in `zasm.com` 2.21 /
+> `pasm.com` 1.02 tables, which only know the dotted forms (`.BYTE/.WORD/.BLKB/.LOC/.END`).
+> `zasm.com` flags `ORG` as an `O` (unknown-opcode) error; bare `END` triggers
+> `UNEXPECTED END OF INPUT FILE`.  `TPZASM` currently accepts, so on a source using Intel
+> style the we diverge from the originals (it actually assembles; they error).  Correct
+> fix is to gate these synonyms behind the future `pasm2`/`.EPOP` mode. No tests exercise this (yet!)
