@@ -2849,8 +2849,14 @@ print_lst (astate *a, u16 lc0, const char *rawline)
    * still applies to a body line whose rendered text (e.g. the ']'-appended
    * body close) was supplied via mac_src.
    */
-  if (a->mac_active && (a->lst_ctl & LSTC_SALL))
-    {
+  if (a->mac_active && (a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST))
+    { /*
+       * the .SALL collapse applies only when body listing is ON.  Under .XLIST
+       * the collapse is bypassed (expand_macro routes the expansion through the
+       * ordinary fold path instead); the only lines that reach here are the
+       * force-listed errored ones, handled by the mac_src / .XALL branches
+       * below exactly as the originals render them under .XLIST.
+       */
       if (NULL != a->sall_call && !a->sall_done && a->nbytes > 0)
         {
           rawline = a->sall_call;
@@ -4230,12 +4236,15 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
    */
   outer = (2 == a->pass && NULL != callline && !a->mac_active && m->nbody > 0);
 
-  if (outer && (a->lst_ctl & LSTC_SALL))
+  if (outer && (a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST))
     { /*
-       * .SALL: the whole expansion collapses to ONE bare call line.  Assemble
-       * every body line (NOT suppressed, so print_lst runs); the first emitting
-       * statement -- at any nesting depth -- renders the call line via the
-       * sall_call hook in print_lst.  If nothing emits, list the bare call line
+       * .SALL (only while listing is ON -- under .XLIST the collapse is
+       * bypassed for the ordinary fold path below, so force-listed errored
+       * lines render as the originals do): the whole expansion collapses to
+       * ONE bare call line.  Assemble every body line (NOT suppressed, so
+       * print_lst runs); the first emitting statement -- at any nesting depth
+       * -- renders the call line via the sall_call hook in print_lst.  If
+       * nothing emits, list the bare call line
        * (its label's LC, or blank when unlabeled), as for any no-code line.
        */
       u16 lc0 = a->lc;
@@ -4310,7 +4319,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       do_line (a, ln0);
       a->lst_suppress = 0;
 
-      if (a->lst_ctl & LSTC_SALL)
+      if ((a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST))
         (void)xsnprintf (src, sizeof (src), "%s",
                          callline); /* .SALL: the bare call line only */
       else if (a->nbytes > 0)
@@ -4332,6 +4341,22 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
           a->lst_lbase = -1;
         }
 
+      /*
+       * body[0]'s error `?' offsets were recorded against ln0, but the fold
+       * renders it after "callline[" -- shift them into the call line's
+       * coordinate space (as the inline-conditional path does with boff) so a
+       * `?' on the folded body lands correctly: e.g. past the closing ']' at
+       * the line end ("BEQ X[JZ X]?"), as the originals place it.
+       */
+      if (2 == a->pass && a->nbytes > 0 && a->lst_nec > 0)
+        {
+          int boff = (int)strlen (callline) + 1; /* skip "callline[" */
+          int qi;
+
+          for (qi = 0; qi < a->lst_nec; qi++)
+            a->lst_qoff[qi] += boff;
+        }
+
       a->mac_src = src;
       a->mac_plus = 0;
       print_lst (a, lc0, callline);
@@ -4348,10 +4373,12 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
       macro_subst (m, args, nargs, m->body[i], ln);
 
-      if (outer && i == m->nbody - 1 && !(a->lst_ctl & LSTC_SALL))
+      if (outer && i == m->nbody - 1
+          && !((a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST)))
         { /*
            * the body-close: force-list this last line with ']' appended
-           * (under .SALL the body text is suppressed, so fall through)
+           * (under listed .SALL the body text is suppressed, so fall through;
+           * under .XLIST the collapse is bypassed and this fold path runs)
            */
           char src[600];
           (void)xsnprintf (src, sizeof (src), "%s]", ln);
@@ -4370,7 +4397,8 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
    * never appended -- emit the body close on its own '+'-marked line, as the
    * originals do.
    */
-  if (outer && a->macro_exit && 2 == a->pass && !(a->lst_ctl & LSTC_SALL))
+  if (outer && a->macro_exit && 2 == a->pass
+      && !((a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST)))
     {
       a->nbytes = 0;
       a->lst_kind = 0;

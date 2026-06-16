@@ -52,7 +52,12 @@ gold="${here}/tests/golden"
 #              hide a diagnostic), with the body-close ']' and the `?' past it.
 #   macins   - a macro called from an .INSERT'd file: its expansion lines carry
 #              the '+' macro marker, not the '@' inserted-file marker.
-fixtures="macro macro2 mconcat macnest maclc sall salldref macins"
+#   sallxl   - .SALL UNDER .XLIST: the collapse is bypassed (body listing off),
+#              so a force-listed errored body statement renders through the
+#              ordinary fold path -- a non-first body line as a '+' expansion,
+#              an errored body[0] folded inline onto the call line (with its '?'
+#              shifted into the fold).
+fixtures="macro macro2 mconcat macnest maclc sall salldref macins sallxl"
 
 # Normalize a raw listing to the project-standard compare form on stdout: drop
 # CR/form-feed, the per-page header (banner + `.MAIN. -' title line) and the
