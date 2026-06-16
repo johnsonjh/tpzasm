@@ -1,0 +1,29 @@
+                                 .PABS
+   0100                          .LOC    100H
+                         ;
+                         ;       .GOTO mlabel branches within a macro to a macr
+                         o label (`mlabel>').
+                         ;       With a single-line conditional it forms a coun
+                         ted loop -- here the
+                         ;       body is emitted ARG3 times (the classic TDL/PS
+                         A REPT idiom).
+                         ;
+                                 .DEFINE RPT[ARG1,ARG2,ARG3]=[
+                         I=0
+                         MLABEL>
+                                 .WORD   ARG1
+                                 .BYTE   ARG2
+                         I=I+1
+                                 .IFL    I-ARG3,.GOTO MLABEL
+                         ]
+                                 RPT     1234H,56H,3[
+   0100    1234         +        .WORD   1234H
+   0102    56           +        .BYTE   56H
+   0103    1234         +        .WORD   1234H
+   0105    56           +        .BYTE   56H
+   0106    1234         +        .WORD   1234H
+   0108    56           +        .BYTE   56H
+                        +]
+                                 .END
++++++ Symbol Table +++++
+I      0003         .BLNK. 0000:03 X    .DATA. 0000"   X    .PROG. 0000'   X

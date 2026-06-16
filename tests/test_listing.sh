@@ -86,7 +86,12 @@ asm="${ref}/asm"
 # control byte in a comment that the originals drop from the listing) must match
 # both originals exactly, the listing companion to their test_obj.sh check.
 fixtures="macro macro2 mconcat macnest maclc sall sallxl lall clabel page dref \
-go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon"
+go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon \
+goto gotoedge"
+
+# .GOTO is a PASM/pasm2 directive absent from zasm.com 2.21, so these fixtures
+# are compared under -p (vs pasm.com) only; zasm.com rejects the directive.
+pasm_only=" goto gotoedge "
 
 ################################################################################
 
@@ -135,6 +140,12 @@ for c in ${fixtures}; do
   for dc in "-p:pasm" "-z:zasm"; do
     flag=${dc%:*}
     com=${dc#*:}
+
+    # PASM-only fixtures (.GOTO): skip the -z (zasm.com) comparison
+    case "${pasm_only}" in
+    *" ${c} "*) [ "${flag}" = "-z" ] && continue ;;
+    *) : ;;
+    esac
 
     # shellcheck disable=SC2119
     work=$(mktemp -d 2> /dev/null || mktemp_local)

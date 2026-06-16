@@ -84,7 +84,7 @@ oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple zap1k dis maclc sall \
 clabel \
 page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
-relmode bios tapelib ssmon turbobs"
+relmode bios tapelib ssmon turbobs progid goto gotoedge"
 
 # Some real-world fixtures read assembly-time '\' console values; their answers
 # (the system options that select the assembled configuration) live in a

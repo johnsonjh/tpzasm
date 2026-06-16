@@ -1,0 +1,81 @@
+                                 .PABS
+   0100                          .LOC    100H
+                         ;
+                         ;       forward branch: .GOTO skips over the FFH, emit
+                         ting AAH only
+                         ;
+                                 .DEFINE FWD[]=[
+                                 .GOTO   SK
+                                 .BYTE   0FFH
+                         SK>
+                                 .BYTE   0AAH
+                         ]
+                                 FWD[
+   0100    AA           +        .BYTE   0AAH
+                        +]
+                         ;
+                         ;       duplicate labels: the search finds the FIRST `
+                         DL>'
+                         ;
+                                 .DEFINE DUP[N]=[
+                         J=0
+                         DL>
+                                 .BYTE   1
+                         DL>
+                                 .BYTE   2
+                         J=J+1
+                                 .IFL    J-N,.GOTO DL
+                         ]
+                                 DUP     2[
+   0101    01           +        .BYTE   1
+   0102    02           +        .BYTE   2
+   0103    01           +        .BYTE   1
+   0104    02           +        .BYTE   2
+                        +]
+                         ;
+                         ;       the label match is case-insensitive (.GOTO lc
+                         -> LC>)
+                         ;
+                                 .DEFINE CASE[]=[
+                                 .GOTO   lc
+                                 .BYTE   33H
+                         LC>
+                                 .BYTE   44H
+                         ]
+                                 CASE[
+   0105    44           +        .BYTE   44H
+                        +]
+                         ;
+                         ;       error: undefined label is `U', the branch is a
+                         bandoned
+                         ;
+                                 .DEFINE UND[]=[
+                                 .BYTE   11H
+                                 .GOTO   NOPE
+                                 .BYTE   22H
+                         ]
+                                 UND[
+   0106    11           +        .BYTE   11H
+U                       +        .GOTO   NOPE?
+   0107    22           +        .BYTE   22H
+                        +]
+                         ;
+                         ;       error: a missing operand is `Q'
+                         ;
+                                 .DEFINE MISS[]=[
+                         ML>
+                                 .GOTO
+                                 .BYTE   55H
+                         ]
+                                 MISS[
+Q                       +        .GOTO?
+   0108    55           +        .BYTE   55H
+                        +]
+                         ;
+                         ;       error: .GOTO outside any macro is `QQ'
+                         ;
+QQ                               .GOTO   ??FOO
+   0109    77                    .BYTE   77H
+                                 .END
++++++ Symbol Table +++++
+J      0002         .BLNK. 0000:03 X    .DATA. 0000"   X    .PROG. 0000'   X

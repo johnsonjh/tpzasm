@@ -72,7 +72,13 @@ gold="${here}/tests/golden"
 #              ordinary fold path -- a non-first body line as a '+' expansion,
 #              an errored body[0] folded inline onto the call line (with its '?'
 #              shifted into the fold).
-fixtures="macro macro2 mconcat macnest maclc sall salldref macins sallxl lall"
+fixtures="macro macro2 mconcat macnest maclc sall salldref macins sallxl lall \
+goto gotoedge"
+
+# .GOTO is a PASM/pasm2 directive absent from zasm.com 2.21, so the .GOTO
+# fixtures are checked under -p only (their -z behavior diverges from the
+# original, like the other PASM-only directives the clone accepts).
+pasm_only=" goto gotoedge "
 
 ################################################################################
 
@@ -102,6 +108,12 @@ for c in ${fixtures}; do
   for flag_ext in "-p:plst" "-z:zlst"; do
     flag=${flag_ext%:*}
     ext=${flag_ext#*:}
+
+    # PASM-only fixtures (.GOTO): skip the -z dialect
+    case "${pasm_only}" in
+    *" ${c} "*) [ "${flag}" = "-z" ] && continue ;;
+    *) : ;;
+    esac
 
     "${asm}" "${flag}" -l "${tmp}" "${here}/tests/${c}.asm" \
       > /dev/null 2>&1 || :

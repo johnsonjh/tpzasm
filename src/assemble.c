@@ -97,6 +97,12 @@ check_interrupt (void)
                              * in step with MAXCOND so a legitimately deep
                              * recursive fill (PADBYT above) is not cut short */
 
+#define GOTO_ITER_MAX 1000000L /* anti-runaway cap on .GOTO branches within a
+                                * single macro expansion: high enough for any
+                                * real counted loop (e.g. a 64K memory fill),
+                                * finite so an unterminated .GOTO loop fails
+                                * cleanly instead of hanging the assembler */
+
 /*
  * listing-control flag bits (a->lst_ctl); LSTC_DEFAULT
  * reproduces the standard listing exactly, so a source
@@ -290,6 +296,9 @@ typedef struct
   unsigned genctr; /* counter for %-generated local labels */
   int macro_depth; /* recursion guard */
   int macro_exit;  /* .EXIT: terminate the current expansion*/
+  const macrodef *cur_macro; /* macro being expanded (for .GOTO label search) */
+  int macro_goto;  /* .GOTO target body index for this expansion, or -1     */
+  long goto_iters; /* .GOTO body-line iteration guard (anti-runaway-loop)   */
   unsigned scope;  /* local-symbol scope ('..' labels) */
 
   /* macro call whose parenthesized argument spans several lines */
@@ -2880,8 +2889,10 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   else if (NULL != a->mac_src) /* macro listing supplies the rendered source */
     rawline = a->mac_src;
   else if (a->mac_active)
-    { /* .XALL (default) drops the no-code lines, .LALL lists everything */
-      if (0 == a->nbytes && !(a->lst_ctl & LSTC_LALL))
+    { /* .XALL (default) drops the no-code lines, .LALL lists everything --
+       * but an errored statement is ALWAYS listed (the originals never hide a
+       * diagnostic), e.g. a standalone `.GOTO' with an undefined label */
+      if (0 == a->nbytes && 0 == a->lst_nec && !(a->lst_ctl & LSTC_LALL))
         return;
     }
 
@@ -4051,6 +4062,51 @@ paren_depth_of (const char *s)
 
 /******************************************************************************/
 
+/*
+ * A macro-body line is a MACRO LABEL when it is `name>' -- an identifier
+ * followed by `>'.  Macro labels are .GOTO targets; during expansion they
+ * emit nothing and are not listed.  Returns 1 and fills name_out (upper-
+ * cased) when line is such a label.
+ */
+static int
+mac_label (const char *line, char *name_out)
+{
+  const char *p = skipws (line);
+  int n = 0;
+
+  while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p || '%' == *p)
+    {
+      if (n < NAMEBUF - 1)
+        name_out[n++] = (char)toupper ((unsigned char)*p);
+
+      p++;
+    }
+
+  name_out[n] = '\0';
+
+  return (n > 0 && '>' == *p);
+}
+
+/*
+ * The macro-body index of the FIRST macro label `name>' (case-insensitive),
+ * or -1.  .GOTO's search "begins at the start of the macro text", so a
+ * duplicated label resolves to the first.
+ */
+static int
+find_mac_label (const macrodef *m, const char *name)
+{
+  char lab[NAMEBUF];
+  int i;
+
+  for (i = 0; i < m->nbody; i++)
+    if (mac_label (m->body[i], lab) && ci_eq (lab, name))
+      return i;
+
+  return -1;
+}
+
+/******************************************************************************/
+
 static void
 expand_macro (astate *a, const macrodef *m, const char *argstr,
               const char *callline, int labeled)
@@ -4062,6 +4118,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   int saved_mac = a->mac_active; /* restored on exit: a nested macro is also
                                   * "outer" under .LALL (see below) */
   int saved_argc;
+  const macrodef *saved_cur; /* .GOTO context restored on exit (nesting) */
   const char *p = skipws (argstr);
 
   if (a->macro_depth > MACRO_NEST_MAX)
@@ -4079,6 +4136,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
   a->macro_depth++;
   saved_argc = a->mac_argc; /* `&' is per-invocation; restore on exit */
+  saved_cur = a->cur_macro; /* .GOTO context; restored on exit (nesting) */
+  a->cur_macro = m;
+  a->macro_goto = -1;
+  a->goto_iters = 0;
 
   if ('[' == *p)
     p = skipws (p + 1); /* optional [arg,arg] bracketed list */
@@ -4268,7 +4329,11 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       for (bi = 0; bi < m->nbody && !a->macro_exit; bi++)
         {
           char lnb[512];
+          char labbuf[NAMEBUF];
           macro_subst (m, args, nargs, m->body[bi], lnb);
+
+          if (mac_label (skipws (lnb), labbuf))
+            continue; /* macro label `name>': emits nothing, not listed */
 
           if (bi == m->nbody - 1)
             { /* the body-close: an errored last statement that .SALL force-
@@ -4285,6 +4350,25 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
             }
           else
             do_line (a, lnb);
+
+          if (a->macro_goto >= 0)
+            { /* .GOTO branched: resume just after the target label */
+              bi = a->macro_goto;
+              a->macro_goto = -1;
+
+              if (++a->goto_iters > GOTO_ITER_MAX)
+                { /* runaway .GOTO loop: fail cleanly rather than hang */
+                  if (2 == a->pass)
+                    {
+                      (void)fprintf (stderr,
+                                     "  *** .GOTO loop exceeded %ld\n",
+                                     (long)GOTO_ITER_MAX);
+                      a->errors++;
+                    }
+
+                  break;
+                }
+            }
         }
 
       if (2 == a->pass && !a->sall_done)
@@ -4304,6 +4388,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       a->sall_call = NULL;
       a->sall_done = 0;
       a->macro_depth--;
+      a->cur_macro = saved_cur;
       a->mac_argc = saved_argc;
       a->macro_exit = 0;
       a->mac_active = 0;
@@ -4380,6 +4465,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   for (i = start; i < m->nbody; i++)
     {
       char ln[512];
+      char labbuf[NAMEBUF];
       const char *t;
 
       if (a->macro_exit) /* .EXIT terminated this expansion early */
@@ -4387,6 +4473,9 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
       macro_subst (m, args, nargs, m->body[i], ln);
       t = skipws (ln);
+
+      if (mac_label (t, labbuf))
+        continue; /* a macro label `name>' emits nothing and is not listed */
 
       if (outer && i == m->nbody - 1
           && !((a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST)))
@@ -4417,6 +4506,25 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         }
       else
         do_line (a, ln);
+
+      if (a->macro_goto >= 0)
+        { /* .GOTO branched: resume just after the target label `name>' */
+          i = a->macro_goto;
+          a->macro_goto = -1;
+
+          if (++a->goto_iters > GOTO_ITER_MAX)
+            { /* runaway .GOTO loop: fail cleanly rather than hang */
+              if (2 == a->pass)
+                {
+                  (void)fprintf (stderr,
+                                 "  *** .GOTO loop exceeded %ld\n",
+                                 (long)GOTO_ITER_MAX);
+                  a->errors++;
+                }
+
+              break;
+            }
+        }
     }
 
   /*
@@ -4441,6 +4549,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
     }
 
   a->macro_depth--;
+  a->cur_macro = saved_cur; /* restore the enclosing macro's .GOTO context */
   a->mac_argc = saved_argc; /* restore the enclosing invocation's `&' */
   a->macro_exit = 0; /* the .EXIT (if any) terminated only this expansion */
 
@@ -4921,6 +5030,7 @@ do_line (astate *a, const char *line)
        */
       {
         const char *bk = NULL;
+        const char *bare = NULL;
         const char *b1e;
         const char *s;
         int d = 0;
@@ -4947,6 +5057,42 @@ do_line (astate *a, const char *line)
           }
 
         b1e = ((NULL != bk) ? inline_block_end (bk + 1) : NULL);
+
+        /*
+         * Bare inline action `.IFx cond,STMT' (no `[...]'): pasm.com accepts
+         * the action without brackets too -- this is the TDL/PSA .GOTO
+         * counted-loop idiom `.IFL expr,.GOTO label'.  The single-condition
+         * .IFx have a one-token condition, so the first depth-0 comma delimits
+         * the action.  The two-argument string conditionals (.IFIDN/.IFDIF)
+         * carry a comma IN the condition and are excluded (their bracketed
+         * form is unaffected).
+         */
+        if (NULL == bk && 0 != strcmp (op, ".IFIDN")
+            && 0 != strcmp (op, ".IFDIF"))
+          {
+            const char *s2;
+            int d2 = 0;
+
+            for (s2 = L.operands; '\0' != *s2 && ';' != *s2; s2++)
+              {
+                if ('[' == *s2)
+                  d2++;
+                else if (']' == *s2)
+                  {
+                    if (d2 > 0)
+                      d2--;
+                  }
+                else if (',' == *s2 && 0 == d2)
+                  {
+                    const char *act = skipws (s2 + 1);
+
+                    if ('\0' != *act && ';' != *act && '[' != *act)
+                      bare = act;
+
+                    break;
+                  }
+              }
+          }
 
         if (NULL != bk && NULL != b1e)
           { /* INLINE: a matching `]' for the first block lies on this line */
@@ -5036,6 +5182,48 @@ do_line (astate *a, const char *line)
                 a->pend_else = 1;
                 a->pend_else_wt = t;
                 a->pend_else_outer = outer;
+              }
+
+            return;
+          }
+        else if (NULL != bare)
+          { /*
+             * bare inline action `.IFx cond,STMT' (no brackets, no else):
+             * assemble STMT inline when taken -- its bytes list on this
+             * directive's line, like the bracketed form -- else just list the
+             * line.  No block frame is pushed (single-line form).
+             */
+            if (outer && t)
+              {
+                char bbuf[512];
+                size_t bl = strlen (bare);
+
+                if (bl >= sizeof (bbuf))
+                  bl = sizeof (bbuf) - 1;
+
+                (void)memcpy (bbuf, bare, bl);
+                bbuf[bl] = '\0';
+
+                a->lst_suppress = 1;
+                do_line (a, bbuf);
+                a->lst_suppress = 0;
+
+                if (2 == a->pass)
+                  {
+                    int boff = line_off (line, bare);
+                    int i;
+
+                    for (i = 0; i < a->lst_nec; i++)
+                      a->lst_qoff[i] += boff;
+
+                    a->cur_line = line;
+                    print_lst (a, lc0, line);
+                  }
+              }
+            else if (2 == a->pass)
+              { /* not taken (or not outer): list with a blank LC */
+                a->lst_loc = -1;
+                print_lst (a, lc0, line);
               }
 
             return;
@@ -5486,6 +5674,49 @@ do_line (astate *a, const char *line)
     { /* terminate the current macro expansion early */
       if (a->macro_depth > 0)
         a->macro_exit = 1;
+
+      a->lst_loc = -1;
+    }
+  else if (opeq (op, ".GOTO", NULL))
+    { /*
+       * .GOTO mlabel: within a macro expansion, branch to the macro label
+       * `mlabel>' (the FIRST match, case-insensitively); the expansion then
+       * continues there (the loop reposition is done by expand_macro).  With
+       * a single-line conditional this forms a counted loop.  Faithful to
+       * pasm.com (probed): outside any macro -> `QQ' (two `Q', `??' at the
+       * operand); a missing operand -> `Q'; an undefined label -> `U' (`?'
+       * after the name) and the branch is abandoned, the expansion falling
+       * through to the next body line.
+       */
+      char nm[NAMEBUF];
+      const char *os = skipws (L.operands);
+      const char *oe = parse_opname (os, nm);
+
+      if (NULL == a->cur_macro)
+        { /* not inside a macro: pasm.com flags two `Q' at the operand */
+          a->ppos = line_off (line, os);
+          aerr (a, line, "extra operand");
+          aerr (a, line, "extra operand");
+        }
+      else if ('\0' == nm[0])
+        { /* no label operand */
+          a->ppos = line_off (line, os);
+          aerr (a, line, "extra operand");
+        }
+      else
+        {
+          int idx = find_mac_label (a->cur_macro, nm);
+
+          if (idx < 0)
+            { /* undefined macro label: `U', `?' just past the name */
+              a->ppos = line_off (line, oe);
+              a->eval_undef = 1;
+              aerr (a, line, "undefined macro label");
+              a->eval_undef = 0;
+            }
+          else
+            a->macro_goto = idx; /* expand_macro repositions to here */
+        }
 
       a->lst_loc = -1;
     }
@@ -6184,6 +6415,9 @@ init_pass (astate *a, int pass)
   a->genctr = 0;
   a->macro_depth = 0;
   a->macro_exit = 0;
+  a->cur_macro = NULL;
+  a->macro_goto = -1;
+  a->goto_iters = 0;
   a->sall_call = NULL;
   a->sall_done = 0;
   a->scope = 0;
