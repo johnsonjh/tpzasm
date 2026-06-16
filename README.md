@@ -92,7 +92,7 @@ error‑handling semantics, plus user‑configurable control of output padding.
 
 ```
 TPZASM - TDL ZASM / PSA PASM compatible assembler (Linux/x86_64)
-Release 0.77 (Mon Jun 15 02:13:05 2026) https://github.com/johnsonjh/tpzasm
+Release 0.78 (Mon Jun 15 02:13:05 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
   Usage: asm [options] <source[.asm]>
