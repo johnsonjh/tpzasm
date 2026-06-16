@@ -113,6 +113,8 @@ const char *sysarch(void)
       return NULL;
     }
 
+  /*******************************************************************/
+
 #elif !defined(HAVE_UTSNAME_H)
   return NULL;
 #else
