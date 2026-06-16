@@ -495,7 +495,7 @@ ev_primary (ectx *e)
         }
 
       {
-        int rv = reg_sym_val (name); /* a predefined register name -> its value */
+        int rv = reg_sym_val (name); /* a predefined register name->its value */
 
         if (rv >= 0)
           return mkabs ((u16)rv);
