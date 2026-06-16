@@ -181,9 +181,9 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 ### Documentation
 
 * The [`docs/`](docs) directory contains PDF‑format documentation for the
-  assemblers (directly applicable to **TPZASM**) and the book
+  assemblers (directly applicable to **TPZASM**), the book
   “**Z‑80 assembly language under TurboDOS**” by R.&nbsp;Roger&nbsp;Breton
-  (an excellent TDL assembly resource).
+  (an excellent TDL assembly resource), and some reverse engineering notes.
 
 ## License
 
