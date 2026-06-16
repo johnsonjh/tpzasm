@@ -1,0 +1,29 @@
+M  0100    00           DUP?:   NOP
+                                .radix  16
+                        ;
+                        ;       .SALL collapse is BYPASSED under .XLIST:
+                         with body listing off the
+                        ;       per-macro collapse call line is not emit
+                        ted, so a force-listed bad
+                        ;       body statement renders through the ordin
+                        ary fold path, as the
+                        ;       originals do -- a non-first body line as
+                         a '+' continuation, a first
+                        ;       body line folded inline onto the call li
+                        ne.  (DUP is multiply-defined,
+                        ;       so both macro bodies reference a bad sym
+                        bol.)
+                        ;
+                                .DEFINE MVIB$[X,Y] = [MVI       A,Y
+                                STA     X]
+                                .DEFINE BEQ$[X] = [JZ   X]
+   0100                         .LOC    100H
+   0200                 DUP     =       200H
+M  0100    00           DUP?:   NOP
+D  0103    32 0200     +        STA     DUP]?
+D  0106    CA 0200              BEQ$    DUP[JZ  DUP]?
+                                .END
++++++ SYMBOL TABLE +++++
+DUP    0200     M   .BLNK. 0000:03 X    .DATA. 0000*   X
+.PROG. 0000'   X
+3 ERRORS WERE DETECTED *****
