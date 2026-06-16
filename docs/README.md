@@ -3,14 +3,14 @@
 <!-- SPDX-License-Identifier: MIT-0 -->
 <!-- scspell-id: 23fe5cac-64f0-11f1-9d0c-80ee73e9b8e7 -->
 
-* This directory contains the original documentation for the
-  **TDL&nbsp;ZASM&nbsp;2.2** and **PSA&nbsp;PASM&nbsp;1.0** assemblers, and
-  the book “**Z‑80 assembly language under TurboDOS**” (4th&nbsp;ed.)
-  by R.&nbsp;Roger&nbsp;Breton (an excellent TDL assembly resource).
+This directory contains the original documentation for the
+**TDL&nbsp;ZASM&nbsp;2.2** and **PSA&nbsp;PASM&nbsp;1.0** assemblers, and
+the book “**Z‑80 assembly language under TurboDOS**” (4th&nbsp;ed.)
+by R.&nbsp;Roger&nbsp;Breton (an excellent TDL assembly resource).
 
-* The [`re/`](re) subdirectory contains reverse engineering notes.
+The [`re/`](re) subdirectory contains reverse engineering notes.
 
-|                                                                                                         File \| Description \| View \|
+|                                                                                                         File |                                                                                                                  Description |                                                                                                    View |
 |-------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------|
 | [**`TDL_ZASM.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/TDL_ZASM.pdf) | `TDL ZASM 2.2 Manual`&nbsp;(10/15/1977)                                                                                      | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/TDL_ZASM.pdf) |
 | [**`PSA_PASM.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/PSA_PASM.pdf) | `PSA PASM 1.0 Manual`&nbsp;(02/01/1980)                                                                                      | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/PSA_PASM.pdf) |
