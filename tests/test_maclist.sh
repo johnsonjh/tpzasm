@@ -25,7 +25,11 @@
 # Unlike test_listing.sh this needs no oracle, so it runs in the default `test'
 # target and gives a fast, deterministic safety net for changes to that model.
 
+################################################################################
+
 set -eu
+
+################################################################################
 
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 export CPE1704TKS=1
@@ -34,8 +38,12 @@ export CPE1704TKS=1
 export FIND_COMMAND_FATAL=1
 find_command diff rm sed tr
 
+################################################################################
+
 asm="${here}/asm"
 gold="${here}/tests/golden"
+
+################################################################################
 
 # The macro-listing-model fixtures (each is also guarded vs the originals in
 # tests/test_listing.sh):
@@ -59,7 +67,14 @@ gold="${here}/tests/golden"
 #              shifted into the fold).
 #   lall     - .LALL (list-all) does NOT flatten: every nesting level lists its
 #              own call line + body-close, and a ';;' comment lists blank.
+#   sallxl   - .SALL UNDER .XLIST: the collapse is bypassed (body listing off),
+#              so a force-listed errored body statement renders through the
+#              ordinary fold path -- a non-first body line as a '+' expansion,
+#              an errored body[0] folded inline onto the call line (with its '?'
+#              shifted into the fold).
 fixtures="macro macro2 mconcat macnest maclc sall salldref macins sallxl lall"
+
+################################################################################
 
 # Normalize a raw listing to the project-standard compare form on stdout: drop
 # CR/form-feed, the per-page header (banner + `.MAIN. -' title line) and the
@@ -77,6 +92,8 @@ normalize()
       -e '/^[0-9][0-9]* [Ee]rror/d' \
       -e '/^[[:space:]]*$/d'
 }
+
+################################################################################
 
 fail=0
 tmp="${here}/maclist.tmp"
@@ -106,10 +123,14 @@ for c in ${fixtures}; do
   done
 done
 
+################################################################################
+
 if [ "${fail}" -ne 0 ]; then
   printf '\n%s\n\n' "FAILURE: macro-listing golden regression detected."
   exit 1
 fi
+
+################################################################################
 
 printf '\n%s\n\n' "SUCCESS: macro-listing golden regression tests passed."
 exit 0

@@ -35,21 +35,31 @@
 #
 # Skips cleanly (success) when tnylpo is not installed, like make longtest.
 
+################################################################################
+
 set -u
+
+################################################################################
 
 export CPE1704TKS=1
 here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 # shellcheck disable=SC1091
 . "${here}/.common.sh"
 
+################################################################################
+
 if ! command -v tnylpo > /dev/null 2>&1; then
   printf '%s\n' "SKIP: tnylpo not found; skipping macro-listing regression."
   exit 0
 fi
 
+################################################################################
+
 export FIND_COMMAND_FATAL=1
 find_command awk basename cp diff env mkdir rm sed timeout tnylpo tr \
   || exit 1
+
+################################################################################
 
 ref=${ASM_REF:-${here}}
 asm="${ref}/asm"
@@ -78,10 +88,14 @@ asm="${ref}/asm"
 fixtures="macro macro2 mconcat macnest maclc sall sallxl lall clabel page dref \
 go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon"
 
+################################################################################
+
 have_expect=0
 if command -v expect > /dev/null 2>&1; then
   have_expect=1
 fi
+
+################################################################################
 
 # Normalize a raw listing to the project-standard parity form on stdout: drop
 # CR/form-feed, page headers, the error-count line and the console error tally,
@@ -185,10 +199,14 @@ for c in ${fixtures}; do
   done
 done
 
+################################################################################
+
 if [ "${fail}" -ne 0 ]; then
   printf '\n%s\n\n' "FAILURE: macro-listing regression detected."
   exit 1
 fi
+
+################################################################################
 
 printf '\n%s\n\n' "SUCCESS: macro-listing regression tests passed."
 exit 0
