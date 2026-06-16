@@ -182,8 +182,8 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 * The [`docs/`](docs) directory contains PDF‑format documentation for the
   assemblers (directly applicable to **TPZASM**) and the book
-  **Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS** by
-  R.&nbsp;Roger&nbsp;Breton (an excellent TDL assembly resource).
+  “**Z‑80 assembly language under TurboDOS**” by R.&nbsp;Roger&nbsp;Breton
+  (an excellent TDL assembly resource).
 
 ## License
 
@@ -207,9 +207,9 @@ The following third‑party materials are provided under their own licenses:
   with all rights acquired by
   [DRDOS,&nbsp;Inc.&nbsp;dba&nbsp;DeviceLogics&nbsp;LLC.](https://en.wikipedia.org/wiki/DeviceLogics)
 
-* The book **Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS**
-  is © 1984, 1987, 1990, 2003, 2009 R.&nbsp;Roger&nbsp;Breton and distributed
-  with permission under the terms and conditions of the
+* The book “**Z‑80 assembly language under TurboDOS**” is © 1984, 1987, 1990,
+  2003, 2009 R.&nbsp;Roger&nbsp;Breton and distributed with permission under
+  the terms and conditions of the
   [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
 
 <!--
