@@ -119,12 +119,17 @@ const char *sysarch(void)
 
   /*******************************************************************/
 
-# if defined(__DJGPP__)
-  return "x86";
-# elif defined(_AIX)
+# if defined(__SICORTEX__) && defined(__mips64)
+  return "mips64";
 
   /*******************************************************************/
 
+# elif defined(__DJGPP__)
+  return "x86";
+
+  /*******************************************************************/
+
+# elif defined(_AIX)
 #  if defined(_ARCH_PPC64) || defined(__PPC64__)
   return "powerpc64";
 
@@ -168,7 +173,15 @@ const char *platform_name (void)
 
   /*******************************************************************/
 
-#if defined(__linux__) || defined(__linux)
+#if defined(__SICORTEX__) && (defined(__linux__) || defined(__linux))
+# ifndef HAVE_SIGNAL_H
+#  define HAVE_SIGNAL_H
+# endif
+  return "Linux/SiCortex";
+
+  /*******************************************************************/
+
+#elif defined(__linux__) || defined(__linux)
 # ifndef HAVE_SIGNAL_H
 #  define HAVE_SIGNAL_H
 # endif
