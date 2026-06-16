@@ -284,6 +284,8 @@ reg_sym_val (const char *name)
         return 3;
 
       case 'H':
+      case 'X': /* IX, per the originals' predefined value */
+      case 'Y': /* IY */
         return 4;
 
       case 'L':
@@ -294,12 +296,6 @@ reg_sym_val (const char *name)
 
       case 'A':
         return 7;
-
-      case 'X':
-        return 4; /* IX, per the originals' predefined value */
-
-      case 'Y':
-        return 4; /* IY */
 
       default:
         break;

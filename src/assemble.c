@@ -980,7 +980,7 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
     }
   else if (')' == *cp && 1 == n && 'H' == t[0])
     {
-      *pfx = 0; /* the `d(H)' == M bug: a 0 prefix, no diagnostic */
+      /* the `d(H)' == M bug: a 0 prefix, no diagnostic */
     }
   else
     { /* any other register inside the index paren: `X'+`Q' (`??'), prefix 0 */
