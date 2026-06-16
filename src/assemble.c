@@ -4056,6 +4056,8 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   char *args[8];
   int nargs = 0, i, j = 0;
   int outer = 0, start = 0;
+  int saved_mac = a->mac_active; /* restored on exit: a nested macro is also
+                                  * "outer" under .LALL (see below) */
   int saved_argc;
   const char *p = skipws (argstr);
 
@@ -4233,8 +4235,14 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
    * list with a '+' continuation marker; control-flow inside a macro
    * (conditionals, nested call lines, brackets, skipped lines) is suppressed
    * (driven by mac_active/lst_suppress in print_lst).
+   *
+   * .LALL (list-all) does NOT flatten: every nesting level lists its own call
+   * line ('+ INNER[') and body-close ('+ ]'), so a nested macro is treated as
+   * "outer" too -- mac_active is saved/restored (not cleared) so the enclosing
+   * expansion keeps its '+' marking.
    */
-  outer = (2 == a->pass && NULL != callline && !a->mac_active && m->nbody > 0);
+  outer = (2 == a->pass && NULL != callline && m->nbody > 0
+           && (!a->mac_active || (a->lst_ctl & LSTC_LALL)));
 
   if (outer && (a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST))
     { /*
@@ -4358,20 +4366,24 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         }
 
       a->mac_src = src;
-      a->mac_plus = 0;
+      a->mac_plus = saved_mac; /* a NESTED call line (.LALL) carries '+'; the
+                                * top-level call line does not (saved_mac==0) */
       print_lst (a, lc0, callline);
       a->mac_src = NULL;
+      a->mac_plus = 0;
       start = 1;
     }
 
   for (i = start; i < m->nbody; i++)
     {
       char ln[512];
+      const char *t;
 
       if (a->macro_exit) /* .EXIT terminated this expansion early */
         break;
 
       macro_subst (m, args, nargs, m->body[i], ln);
+      t = skipws (ln);
 
       if (outer && i == m->nbody - 1
           && !((a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST)))
@@ -4383,6 +4395,18 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
           char src[600];
           (void)xsnprintf (src, sizeof (src), "%s]", ln);
           a->mac_src = src;
+          a->mac_plus = 1;
+          do_line (a, ln);
+          a->mac_src = NULL;
+          a->mac_plus = 0;
+        }
+      else if ((a->lst_ctl & LSTC_LALL) && ';' == t[0] && ';' == t[1])
+        { /*
+           * a ';;' macro-body comment lists as a BLANK '+' line under .LALL:
+           * the originals suppress its text but keep the line (mac_src="" gives
+           * the blank source, mac_plus the '+')
+           */
+          a->mac_src = "";
           a->mac_plus = 1;
           do_line (a, ln);
           a->mac_src = NULL;
@@ -4418,7 +4442,8 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   a->macro_exit = 0; /* the .EXIT (if any) terminated only this expansion */
 
   if (outer)
-    a->mac_active = 0;
+    a->mac_active = saved_mac; /* 0 for the top-level call; 1 keeps an enclosing
+                                * .LALL expansion active after a nested one */
 }
 
 /******************************************************************************/

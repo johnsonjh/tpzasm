@@ -57,7 +57,9 @@ gold="${here}/tests/golden"
 #              ordinary fold path -- a non-first body line as a '+' expansion,
 #              an errored body[0] folded inline onto the call line (with its '?'
 #              shifted into the fold).
-fixtures="macro macro2 mconcat macnest maclc sall salldref macins sallxl"
+#   lall     - .LALL (list-all) does NOT flatten: every nesting level lists its
+#              own call line + body-close, and a ';;' comment lists blank.
+fixtures="macro macro2 mconcat macnest maclc sall salldref macins sallxl lall"
 
 # Normalize a raw listing to the project-standard compare form on stdout: drop
 # CR/form-feed, the per-page header (banner + `.MAIN. -' title line) and the

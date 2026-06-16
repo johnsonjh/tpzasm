@@ -75,7 +75,7 @@ asm="${ref}/asm"
 # two-line page heading, long JMP-vector runs, and -- in ssmon -- a stray ^A
 # control byte in a comment that the originals drop from the listing) must match
 # both originals exactly, the listing companion to their test_obj.sh check.
-fixtures="macro macro2 mconcat macnest maclc sall sallxl clabel page dref \
+fixtures="macro macro2 mconcat macnest maclc sall sallxl lall clabel page dref \
 go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon"
 
 have_expect=0

@@ -1,0 +1,56 @@
+                                .RADIX  16
+                        ;
+                        ;       .LALL (list-all) does NOT flatten a macr
+                        o expansion: every nesting
+                        ;       level lists its own call line (invocatio
+                        n + body-open '[') and its
+                        ;       body-close ']', and every body line list
+                        s with a '+' marker -- EXCEPT
+                        ;       a ';;' double-semi comment, whose text t
+                        he originals suppress (it
+                        ;       lists as a blank '+' line).  A single ';
+                        ' comment lists verbatim.
+                        ;
+                                .DEFINE INNER[] = [
+                                NOP
+                                ]
+                                .DEFINE OUTER[] = [
+                        ;;      this double-semi comment lists BLANK
+                                INNER
+                                RET
+                                ]
+                                .DEFINE A[] = [
+                                NOP
+                                ]
+                                .DEFINE B[] = [
+                                A
+                        ;       this single-semi comment lists verbatim
+                                INR     C
+                                ]
+                                .DEFINE C3[] = [
+                                B
+                                RET
+                                ]
+   0100                         .LOC    100H
+                                OUTER                   ;two-level nest
+                        + a ';;' comment[
+                       +
+                       +        INNER[
+   0100    00          +        NOP
+                       +        ]
+   0101    C9          +        RET
+                       +        ]
+                                C3                      ;three-level nes
+                        t + a ';' comment[
+                       +        B[
+                       +        A[
+   0102    00          +        NOP
+                       +        ]
+                       +;       this single-semi comment lists verbatim
+   0103    0C          +        INR     C
+                       +        ]
+   0104    C9          +        RET
+                       +        ]
+                                .END
++++++ SYMBOL TABLE +++++
+.BLNK. 0000:03 X    .DATA. 0000*   X    .PROG. 0000'   X
