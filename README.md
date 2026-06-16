@@ -138,7 +138,8 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
     of assembly; additional features include line numbers, cross‑reference
     compressed PRN files, form feeds, page parity, additional pseudo‑ops,
     internal setting of time and date, and expanded assembly‑time data entry".
-    At least one new pseudo‑op, `.SETWID`, has been identified.
+    At least one new pseudo‑op, `.SETWID`, has been definitively identified
+    by reviewing listings.
 
   Unfortunately, no copies of these CDL assemblers are known to be archived,
   but **TPZASM** successfully assembles several program sources written for
@@ -150,13 +151,15 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
   *likely a beta release*), is also known, though no documentation for it
   seems to have survived.  Its assembly output seems to be byte‑for‑byte
   identical to **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding
-  and the same relocatable object output) for all test inputs, but the listing
-  format was completely overhauled.  It also exhibits several behaviors that
+  and the same relocatable object output) for all our TDL‑style test inputs.
+  This release completely overhauls the listing format and adds a completely
+  new mode, activated with the `.EPOP` and `.ZOP` pseudo-ops, allowing the
+  use of Zilog‑style pseudo-ops.  It also exhibits several behaviors that
   are clearly bugs, such as sometimes omitting the symbol table from listings
   when certain macros are defined.
 
-  Support for emulation of its improved listing style (without the bugs) may
-  be offered in a future release.
+  Support for emulation of this assembler and its improved listing style
+  (but without the bugs) may be offered in a future release.
 
 * An optional *extended error checking* mode may be added in a future release,
   enabling new features such as classifying errors or warnings by severity,
