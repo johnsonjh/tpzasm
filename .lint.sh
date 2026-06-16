@@ -889,6 +889,7 @@ esac
 if [ "${rc}" = 0 ]; then
   "${MAKE:-make}" distclean > /dev/null 2>&1 || :
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> lint SUCCESSFUL <<<<<<<<<<<<<<<<"
+  # shellcheck disable=SC2065
   test -x ./.timestamp.sh > /dev/null 2>&1 \
     && ./.timestamp.sh > /dev/null 2>&1 || :
 else
