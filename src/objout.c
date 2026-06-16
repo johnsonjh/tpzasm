@@ -414,9 +414,9 @@ obj_module (FILE *f, const objspec *s)
       int i;
 
       rb_begin (&r, f, s->ascii, '+');
-      rb_name (&r, "      "); /* blank (6-space) program id */
-      rb_bin (&r, 0);   /* version  */
-      rb_bin (&r, 0);   /* revision */
+      rb_name (&r, (NULL != s->progid) ? s->progid : "      "); /* .PROGID id */
+      rb_bin (&r, s->progid_ver & 0xFFu); /* version  */
+      rb_bin (&r, s->progid_rev & 0xFFu); /* revision */
 
       for (i = 0; i < 12; i++)
         rb_lit (&r, ' '); /* date (MMDDYY) + time (HHMMSS): unavailable */

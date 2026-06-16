@@ -254,6 +254,9 @@ typedef struct
   int emit_progid;    /* 1 = emit the `+' program-id record (PASM)        */
   int xlink;          /* 1 = .XLINK: omit the `!'/`\\' link records       */
   const char *modname; /* `!' module name (.IDENT, default ".MAIN.")      */
+  const char *progid;  /* `+' program id (.PROGID); NULL -> 6 blanks       */
+  unsigned progid_ver; /* `+' program-id version byte (.PROGID)            */
+  unsigned progid_rev; /* `+' program-id revision byte (.PROGID)           */
   const objsym *exts;  /* external bases for the `\\' record (size 0)     */
   int nexts;
   const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for `#'       */

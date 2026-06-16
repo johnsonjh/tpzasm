@@ -158,6 +158,9 @@ typedef struct
   int next_decl;   /* next .INTERN/.ENTRY declaration sequence number      */
   int next_defseq; /* next symbol definition-order number (for `&' .PSYM)   */
   char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
+  char progid[8];  /* `+' program id (.PROGID); empty -> 6 blanks         */
+  unsigned progid_ver; /* `+' record version byte (.PROGID)               */
+  unsigned progid_rev; /* `+' record revision byte (.PROGID)              */
   int errors;      /* error count of the CURRENT pass (pass-2 = the total) */
   int errs_hdr;    /* prior-pass error total, shown in the PASM page header */
   int errs_mdef;   /* multiply-defined (`M') count: drives the leading page   */
@@ -5423,6 +5426,26 @@ do_line (astate *a, const char *line)
 
       a->lst_loc = -1;
     }
+  else if (opeq (op, ".PROGID", NULL))
+    { /*
+       * program id, version, revision -> the `+' object record (PASM).
+       * `.PROGID id,ver,rev': the id (<=6 chars) fills the record's name
+       * field; ver/rev are 8-bit values.  No bytes emitted (blank LC).
+       */
+      char nm[NAMEBUF];
+      const char *q = parse_opname (L.operands, nm);
+      value_t v;
+
+      (void)xstrlcpy (a->progid, nm, sizeof (a->progid));
+
+      if (comma (&q) && !eval1 (a, &q, &v))
+        a->progid_ver = (unsigned)(v.value & 0xFFu);
+
+      if (comma (&q) && !eval1 (a, &q, &v))
+        a->progid_rev = (unsigned)(v.value & 0xFFu);
+
+      a->lst_loc = -1;
+    }
   else if (opeq (op, ".REMARK", NULL))
     { /* a remark listed in the source body; emits no bytes.  Its argument is
        * a generic string value (a delimiter then text up to the matching
@@ -6128,6 +6151,9 @@ init_pass (astate *a, int pass)
   a->next_ebase = 4;
   a->next_decl = 1;
   (void)xstrlcpy (a->modname, ".MAIN.", sizeof (a->modname));
+  a->progid[0] = '\0';
+  a->progid_ver = 0;
+  a->progid_rev = 0;
   /* clear the page heading: a page header emitted before the source reaches
    * its .TITLE/.SBTTL (e.g. page 1, whose header precedes the first listed
    * line) shows it blank, exactly as the originals do */
@@ -6491,6 +6517,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             os.start = a.obj_start;
             os.start_reloc = a.obj_start_rel;
             os.emit_progid = (DIALECT_PASM == dialect);
+            os.progid = ('\0' != a.progid[0]) ? a.progid : NULL;
+            os.progid_ver = a.progid_ver;
+            os.progid_rev = a.progid_rev;
             os.xlink = a.obj_xlink;
 
             if (NULL != relf)
