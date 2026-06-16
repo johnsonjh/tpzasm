@@ -21,6 +21,12 @@ SPDX-FileCopyrightText = "2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>"
 SPDX-License-Identifier = "MIT-0"
 
 [[annotations]]
+path = "docs/re/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>"
+SPDX-License-Identifier = "MIT-0"
+
+[[annotations]]
 path = "docs/Z80_Assm.zip"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2009 R. Roger Breton"
