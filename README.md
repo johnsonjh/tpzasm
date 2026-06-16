@@ -91,8 +91,8 @@ error‑handling semantics, plus user‑configurable control of output padding.
 ## Usage
 
 ```
-TPZASM - TDL ZASM / PSA PASM compatible assembler (AIX/powerpc64)
-Release 0.71 (Sun Jun 14 18:45:55 2026) https://github.com/johnsonjh/tpzasm
+TPZASM - TDL ZASM / PSA PASM compatible assembler (Linux/x86_64)
+Release 0.77 (Mon Jun 15 02:13:05 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
   Usage: asm [options] <source[.asm]>
