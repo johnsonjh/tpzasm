@@ -1,8 +1,8 @@
 # TDL / PSA assembler keyword tables
 
-* `zasm.com` (TDL Z80 v2.21),
-* `pasm.com` (PSA PASM 1.02),
-* `pasm2.com` (PSA PASM 2.00G).
+* `zasm.com` (TDL ZASM `2.21`),
+* `pasm.com` (PSA PASM `1.02`),
+* `pasm2.com` (PSA PASM `2.00G`).
 
 All three share one keyword-table format.
 
@@ -17,29 +17,36 @@ Each keyword is a **10-byte record**:
   RAD40 words** (bytes [0:2] and [2:4]), 3 chars each. Each word =
   `c0*1600 + c1*40 + c2`. Alphabet: `0`=pad, `1..10`=`'0'..'9'`,
   `11..36`=`'A'..'Z'`, `37`=`$`, `39`=`.`  (letter code = ASCII−'A'+11).
-  (Confirmed by Mark Ogden's note that TDL stores the first 6 chars; round-
-  trip verified — every stored key re-encodes exactly.)
+
+  (Confirmed by Mark Ogden disassembly and email to me about how TDL stores
+  the first 6 chars; round-trip verified; every stored key re-encodes exactly.)
+
 * **TYPE/IDX** = the operand-format / encoding class.
+
 * **ATTR** = the opcode / prefix bytes, e.g. `ed57`=`LD A,I`, `cb40`=`BIT 0,B`,
   `ed4a`=`ADC HL,BC`, `dd09`=`ADD IX,BC`, `eda0`/`edb0`=`LDI`/`LDIR`.
 
 Table locations:
 
 * `zasm.com` @ `0x2a02` (239 recs),
+
 * `pasm.com` @ `0x2fba` (242 recs),
+
 * `pasm2.com` @ `0x40c1` (350 recs).
 
 Keyword counts:
 
-* **`zasm.com` 2.21 = 239**,
-* **`pasm.com` 1.02 = 242**,
-* **`pasm2.com` 2.00G = 311** (= 242 + 69 pasm2-only).
+* **`zasm.com` `2.21` = 239**,
 
-The unified table holds the 8080 set, the TDL Z80 extensions,
-the standard Zilog set (pasm2), all directives, the Intel/M80 pseudo-ops
-(pasm2 `.EPOP`), and operand keywords (`A`..`L`,`M`,`PSW`,`SP`,`X`,`Y`,`$`,`.`).
+* **`pasm.com` `1.02` = 242**,
 
-## `zasm.com` (TDL v2.21) - 239 keywords
+* **`pasm2.com` `2.00G` = 311** (= 242 + 69 `pasm2`-only).
+
+  The unified `pasm2` table holds the 8080 set, the TDL Z80 extensions,
+  the standard Zilog set (pasm2), all directives, the Intel/M80 pseudo-ops
+  (pasm2 `.EPOP`), and operand keywords (`A`..`L`,`M`,`PSW`,`SP`,`X`,`Y`,`$`,`.`).
+
+## `zasm.com` (TDL `2.21`) - 239 keywords
 
 ```
   .        .ASCII   .ASCIS   .ASCIZ   .BLKB    .BLKW
@@ -84,7 +91,7 @@ the standard Zilog set (pasm2), all directives, the Intel/M80 pseudo-ops
   XRI      XTHL     XTIX     XTIY     Y
 ```
 
-## `pasm.com` (PSA PASM 1.02) - 242 keywords
+## `pasm.com` (PSA PASM `1.02`) - 242 keywords
 
 ```
   .        .ASCII   .ASCIS   .ASCIZ   .BLKB    .BLKW
@@ -130,7 +137,7 @@ the standard Zilog set (pasm2), all directives, the Intel/M80 pseudo-ops
   XTIY     Y
 ```
 
-## `pasm2.com` (PSA PASM 2.00G) - 311 keywords
+## `pasm2.com` (PSA PASM `2.00G`) - 311 keywords
 
 ```
   $        .        .ASCII   .ASCIS   .ASCIZ   .BLKB
@@ -189,26 +196,26 @@ the standard Zilog set (pasm2), all directives, the Intel/M80 pseudo-ops
 
 ## Cross-version differences
 
-**pasm2-only (vs 1.02/2.21), 69** = the 2.00G `.ZOP`/`.EPOP` scope:
+* **`pasm2`-only (vs `1.02`/`2.21`), 69** = the `2.00G` `.ZOP`/`.EPOP` scope:
 
-```
-  $        .COMME   .CREF    .EPOP    .IOP     .LIBRE
-  .LIF     .XEPOP   .XIF     .ZOP     AND      ASEG
-  CCF      COMMON   COND     CPD      CPDR     CPIR
-  CPL      CSEG     DB       DC       DEC      DEFB
-  DEFM     DEFS     DEFW     DS       DSEG     DW
-  ELSE     END      ENDC     ENDIF    ENTRY    EX
-  EXT      EXTERN   EXTRN    GLOBAL   HALT     IF
-  IFE      IFF      IFT      IM       INC      JR
-  LD       OR       ORG      OTDR     OTIR     PAGE
-  PUBLIC   RL       RLA      RLCA     RR       RRA
-  RRCA     SBC      SCF      SLA      SRA      SRL
-  SUBTTL   TITLE    XOR
-```
+  ```
+    $        .COMME   .CREF    .EPOP    .IOP     .LIBRE
+    .LIF     .XEPOP   .XIF     .ZOP     AND      ASEG
+    CCF      COMMON   COND     CPD      CPDR     CPIR
+    CPL      CSEG     DB       DC       DEC      DEFB
+    DEFM     DEFS     DEFW     DS       DSEG     DW
+    ELSE     END      ENDC     ENDIF    ENTRY    EX
+    EXT      EXTERN   EXTRN    GLOBAL   HALT     IF
+    IFE      IFF      IFT      IM       INC      JR
+    LD       OR       ORG      OTDR     OTIR     PAGE
+    PUBLIC   RL       RLA      RLCA     RR       RRA
+    RRCA     SBC      SCF      SLA      SRA      SRL
+    SUBTTL   TITLE    XOR
+  ```
 
-* **In pasm.com 1.02 but not zasm.com 2.21:** ['.GOTO', '.PROGI', '.TEMPS']
+* **In `pasm.com` 1.02 but not `zasm.com` 2.21:** [ `.GOTO`, `.PROGI`, `.TEMPS` ]
 
-* **In zasm.com 2.21 but not pasm.com 1.02:** None
+* **In `zasm.com` 2.21 but not `pasm.com` 1.02:** *None*!
 
 ## Coverage
 
