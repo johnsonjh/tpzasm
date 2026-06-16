@@ -601,7 +601,7 @@ command -v "${SHELLCHECK_CMD:-shellcheck}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHELLCHECK_CMD:-shellcheck}" -o any,all \
-      ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
+      ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
   ); then
     :
   else
@@ -617,7 +617,7 @@ command -v "${SHFMT_CMD:-shfmt}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHFMT_CMD:-shfmt}" -bn -sr -fn -i 2 -s -d \
-      ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
+      ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
   ); then
     :
   else
@@ -889,6 +889,8 @@ esac
 if [ "${rc}" = 0 ]; then
   "${MAKE:-make}" distclean > /dev/null 2>&1 || :
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> lint SUCCESSFUL <<<<<<<<<<<<<<<<"
+  test -x ./.timestamp.sh > /dev/null 2>&1 \
+    && ./.timestamp.sh > /dev/null 2>&1 || :
 else
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> lint FAILED!!!! <<<<<<<<<<<<<<<<"
 fi
