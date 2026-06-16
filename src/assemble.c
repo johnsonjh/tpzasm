@@ -977,7 +977,7 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
     {
       *pfx = 0xFD;
       a->idx_pfx = 1;
-    }
+    } /*LINTED E_NOP_IF_STMT*/
   else if (')' == *cp && 1 == n && 'H' == t[0])
     {
       /* the `d(H)' == M bug: a 0 prefix, no diagnostic */
