@@ -39,10 +39,10 @@ static size_t imagesz;
 
 /******************************************************************************/
 
-static unsigned first_addr;  /* lowest address loaded                    */
-static unsigned last_addr;   /* highest address loaded                   */
-static unsigned total_bytes; /* count of data bytes actually loaded      */
-static int have_first;       /* set once the first data record is seen   */
+static unsigned first_addr;       /* lowest address loaded                  */
+static unsigned last_addr;        /* highest address loaded                 */
+static unsigned long total_bytes; /* count of data bytes actually loaded    */
+static int have_first;            /* set once the first data record is seen */
 
 /******************************************************************************/
 
@@ -79,8 +79,11 @@ hexval (int c)
 
 /******************************************************************************/
 
-/* Read one byte (two hex digits) from f.  *ok is cleared on a bad digit/EOF.
+/*
+ * Read one byte (two hex digits) from f.
+ * *ok is cleared on a bad digit/EOF.
  */
+
 static int
 rd_byte (FILE *f, int *ok)
 {
@@ -244,7 +247,7 @@ main (int argc, char **argv)
   FILE *src;
   FILE *out;
   unsigned char data[256] = { 0 };
-  unsigned span, records;
+  unsigned long span, records;
   unsigned long try_size;
 
   image = NULL;
@@ -252,35 +255,28 @@ main (int argc, char **argv)
 
   try_size = ADDRSP;
 
-  /* cppcheck-suppress knownConditionTrueFalse */
-  if ((unsigned long)(size_t)try_size == try_size)
+  for (;;)
     {
-      imagesz = (size_t)try_size;
-      image = (unsigned char *)calloc (1, imagesz);
-    }
-
-  if (NULL == image)
-    {
-      try_size = 0xFFFFUL;
-      imagesz = (size_t)try_size;
-      image = (unsigned char *)calloc (1, imagesz);
-    }
-
-  if (NULL == image)
-    {
-      while (try_size > 0x1000UL)
+      if ((unsigned long)(size_t)try_size == try_size)
         {
-          try_size -= 0x400UL;
           imagesz = (size_t)try_size;
           image = (unsigned char *)calloc (1, imagesz);
 
           if (NULL != image)
             break;
         }
+
+      if (ADDRSP == try_size)
+        try_size = 0xFFFFUL;
+      else if (try_size > 0x1000UL)
+        try_size -= 0x400UL;
+      else
+        break;
     }
 
   if (NULL == image)
-    fatal_load ("MEMORY FULL ERROR", TPA);
+    fatal_load ("OUT OF MEMORY", TPA);
+
 
   (void)printf ("HEXCOM\tVERS: 3.00\n");
 
@@ -462,8 +458,8 @@ main (int argc, char **argv)
 
   (void)printf ("FIRST ADDRESS %04X\n", first_addr);
   (void)printf ("LAST  ADDRESS %04X\n", last_addr);
-  (void)printf ("BYTES READ    %04X\n", total_bytes & 0xFFFF);
-  (void)printf ("RECORDS WRITTEN %02X\n\n", records & 0xFFu);
+  (void)printf ("BYTES READ    %04X\n", (unsigned)(total_bytes & 0xFFFFU));
+  (void)printf ("RECORDS WRITTEN %02X\n\n", (unsigned)(records & 0xFFU));
 
   (void)fflush (stdout);
   (void)fflush (stderr);
