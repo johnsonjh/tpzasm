@@ -417,6 +417,11 @@ aCFLAGS="${aCFLAGS:?} -U_FORTIFY_SOURCE"
 aCFLAGS="${aCFLAGS:?} -D_FORTIFY_SOURCE=${FORTIFY_LEVEL:-3}"
 aCFLAGS="${aCFLAGS:?} -DGCC_ANALYZER -fanalyzer"
 
+/usr/bin/uname -V 2> /dev/null | grep -q AIX > /dev/null 2>&1 && {
+  export OBJECT_MODE=64
+  aCFLAGS="${aCFLAGS:?} -maix64"
+} || :
+
 command -v "${GCC_CMD:-gcc}" > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> gcc analyzer <<<<<<<<<<<<<<<<"
   "${MAKE:-make}" distclean > /dev/null 2>&1 || :
