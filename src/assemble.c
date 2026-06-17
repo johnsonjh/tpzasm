@@ -41,7 +41,11 @@ fatal_oom (void)
 
 #if defined(HAVE_SIGNAL_H) && defined(SIGINT)
 
-static volatile sig_atomic_t g_interrupted = 0;
+static volatile
+# ifndef _CH_
+sig_atomic_t
+# endif
+g_interrupted = 0;
 
 /******************************************************************************/
 
