@@ -26,7 +26,7 @@
 /******************************************************************************/
 
 #include "asm.h"
-#include "platform.h" /* HAVE_SIGNAL_H (and <signal.h>) when available */
+#include "platform.h"
 
 /******************************************************************************/
 
@@ -3272,9 +3272,13 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
   *nexts = ne;
   *nints = ni;
   *nents = nt;
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (all);
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (es);
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (is);
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (ts);
 }
 
@@ -3355,8 +3359,11 @@ collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
     }
 
   *nps = n;
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (all);
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (es);
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (ds);
 }
 
@@ -3453,6 +3460,7 @@ lst_symtab (astate *a)
 
   if (0 == total)
     { /* nothing to show: the originals emit no symbol-table page at all */
+      /*LINTED E_CONSTANT_CONDITION*/
       FREE (all);
       return;
     }
@@ -3539,6 +3547,7 @@ lst_symtab (astate *a)
         }
     }
 
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (all);
 }
 
@@ -3640,7 +3649,10 @@ macro_addbody (macrodef *m, char *s)
   if (m->nbody < 64)
     m->body[m->nbody++] = s;
   else
-    FREE (s);
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (s);
+    }
 }
 
 /******************************************************************************/
@@ -3670,18 +3682,29 @@ macro_free_all (astate *a)
       nx = m->next;
 
       for (i = 0; i < m->nbody; i++)
-        FREE (m->body[i]);
+        {
+          /*LINTED E_CONSTANT_CONDITION*/
+          FREE (m->body[i]);
+        }
 
       for (i = 0; i < 8; i++)
         {
           if (NULL != m->params[i])
-            FREE (m->params[i]);
+            {
+              /*LINTED E_CONSTANT_CONDITION*/
+              FREE (m->params[i]);
+            }
 
           if (NULL != m->defval[i])
-            FREE (m->defval[i]);
+            {
+              /*LINTED E_CONSTANT_CONDITION*/
+              FREE (m->defval[i]);
+            }
         }
 
+      /*LINTED E_CONSTANT_CONDITION*/
       FREE (m->name);
+      /*LINTED E_CONSTANT_CONDITION*/
       FREE (m);
     }
 
@@ -3725,6 +3748,7 @@ macro_capture (astate *a, const char *p)
 
       if ('[' != *p)
         {
+          /*LINTED E_CONSTANT_CONDITION*/
           FREE (m);
           a->defining = NULL;
           return;
@@ -6726,9 +6750,13 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
                 obj_module (hexf, &os);
               }
 
+            /*LINTED E_CONSTANT_CONDITION*/
             FREE (exts);
+            /*LINTED E_CONSTANT_CONDITION*/
             FREE (ints);
+            /*LINTED E_CONSTANT_CONDITION*/
             FREE (ents);
+            /*LINTED E_CONSTANT_CONDITION*/
             FREE (psyms);
           }
 
@@ -6765,9 +6793,15 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   /* with -l to a real file, also report the count on the console */
   if (NULL != lf)
-    (void)fprintf (stderr, "*** %d %s were detected; review %s.\n",
-                   a.errors, (1 == a.errors ? "error" : "errors"),
-                   (lstpath ? lstpath : "listing"));
+    {
+      if (a.errors > 0)
+        (void)fprintf (stderr, "*** %d %s were detected; review %s.\n",
+                       a.errors, (1 == a.errors ? "error" : "errors"),
+                       (lstpath ? lstpath : "listing"));
+      else
+        (void)fprintf (stderr, "*** %d %s were detected.\n",
+                       a.errors, (1 == a.errors ? "error" : "errors"));
+    }
 
   /*
    * -o absolute image: the object records were already streamed per module
@@ -6800,6 +6834,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             }
         }
 
+      /*LINTED E_CONSTANT_CONDITION*/
       FREE (a.image);
     }
 
@@ -6810,22 +6845,40 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
    */
 
   if (NULL != a.em_byte)
-    FREE (a.em_byte); /* cppcheck-suppress doubleFree */
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (a.em_byte); /* cppcheck-suppress doubleFree */
+    }
 
   if (NULL != a.em_rel)
-    FREE (a.em_rel); /* cppcheck-suppress doubleFree */
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (a.em_rel); /* cppcheck-suppress doubleFree */
+    }
 
   if (NULL != a.em_tbase)
-    FREE (a.em_tbase); /* cppcheck-suppress doubleFree */
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (a.em_tbase); /* cppcheck-suppress doubleFree */
+    }
 
   if (NULL != a.span_a)
-    FREE (a.span_a); /* cppcheck-suppress doubleFree */
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (a.span_a); /* cppcheck-suppress doubleFree */
+    }
 
   if (NULL != a.span_n)
-    FREE (a.span_n); /* cppcheck-suppress doubleFree */
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (a.span_n); /* cppcheck-suppress doubleFree */
+    }
 
   if (NULL != a.span_seg)
-    FREE (a.span_seg); /* cppcheck-suppress doubleFree */
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (a.span_seg); /* cppcheck-suppress doubleFree */
+    }
 
   {
     int e = a.errors;

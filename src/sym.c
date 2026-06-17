@@ -427,13 +427,17 @@ sym_free (symtab *t)
       while (NULL != s)
         {
           nx = s->next;
+          /*LINTED E_CONSTANT_CONDITION*/
           FREE (s->name);
+          /*LINTED E_CONSTANT_CONDITION*/
           FREE (s);
           s = nx;
         }
     }
 
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (t->bucket);
+  /*LINTED E_CONSTANT_CONDITION*/
   FREE (t);
 }
 /******************************************************************************/

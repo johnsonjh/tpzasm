@@ -34,7 +34,8 @@
 
 /******************************************************************************/
 
-static unsigned char image[ADDRSP];
+static unsigned char *image;
+static size_t imagesz;
 
 /******************************************************************************/
 
@@ -42,6 +43,22 @@ static unsigned first_addr;  /* lowest address loaded                    */
 static unsigned last_addr;   /* highest address loaded                   */
 static unsigned total_bytes; /* count of data bytes actually loaded      */
 static int have_first;       /* set once the first data record is seen   */
+
+/******************************************************************************/
+
+#ifdef FREE
+# undef FREE
+#endif
+
+#ifndef __ORACLE_LINT__
+# define FREE(p) \
+ do {            \
+   free((p));    \
+   (p) = NULL;   \
+ } while (0)
+#else
+# define FREE(p) free(p)
+#endif
 
 /******************************************************************************/
 
@@ -138,6 +155,12 @@ fatal_load (const char *msg, unsigned addr)
 {
   (void)printf ("ERROR: %s\nLOAD  ADDRESS %04X", msg, addr);
 
+  if (NULL != image)
+    {
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (image);
+    }
+
   exit (1);
 }
 
@@ -158,6 +181,9 @@ record_error (const char *msg, unsigned recaddr, unsigned erraddr,
   (void)printf ("BYTES READ    \n");
 
   dump_record (recaddr, data, n);
+
+  /*LINTED E_CONSTANT_CONDITION*/
+  FREE (image);
 
   exit (1);
 }
@@ -219,7 +245,42 @@ main (int argc, char **argv)
   FILE *out;
   unsigned char data[256] = { 0 };
   unsigned span, records;
-  size_t write_size;
+  unsigned long try_size;
+
+  image = NULL;
+  imagesz = 0;
+
+  try_size = ADDRSP;
+
+  /* cppcheck-suppress knownConditionTrueFalse */
+  if ((unsigned long)(size_t)try_size == try_size)
+    {
+      imagesz = (size_t)try_size;
+      image = (unsigned char *)calloc (1, imagesz);
+    }
+
+  if (NULL == image)
+    {
+      try_size = 0xFFFFUL;
+      imagesz = (size_t)try_size;
+      image = (unsigned char *)calloc (1, imagesz);
+    }
+
+  if (NULL == image)
+    {
+      while (try_size > 0x1000UL)
+        {
+          try_size -= 0x400UL;
+          imagesz = (size_t)try_size;
+          image = (unsigned char *)calloc (1, imagesz);
+
+          if (NULL != image)
+            break;
+        }
+    }
+
+  if (NULL == image)
+    fatal_load ("MEMORY FULL ERROR", TPA);
 
   (void)printf ("HEXCOM\tVERS: 3.00\n");
 
@@ -236,6 +297,9 @@ main (int argc, char **argv)
         "\n"
         "Set 'HEXCOM_NO_PAD=1' in the environment to disable record padding.\n"
         "\n");
+
+      /*LINTED E_CONSTANT_CONDITION*/
+      FREE (image);
 
       return 1;
     }
@@ -348,7 +412,14 @@ main (int argc, char **argv)
                       (addr + (unsigned)ll) & 0xFFFF, data, ll);
 
       for (i = 0; i < ll; i++)
-        image[(addr + (unsigned)i) & 0xFFFF] = data[i];
+        {
+          unsigned addr_masked = (addr + (unsigned)i) & 0xFFFF;
+
+          if (addr_masked >= (unsigned)imagesz)
+            fatal_load ("LOAD ADDRESS TOO HIGH", addr_masked);
+
+          image[addr_masked] = data[i];
+        }
 
       if (ll > 0 && (addr + (unsigned)ll - 1) > last_addr)
         last_addr = addr + (unsigned)ll - 1;
@@ -359,7 +430,8 @@ main (int argc, char **argv)
   if (ferror (src))
     {
       (void)fclose (src);
-      fatal_load ("DISK READ", (have_first ? first_addr : (unsigned)TPA));
+      fatal_load ("DISK READ ERROR",
+                  (have_first ? first_addr : (unsigned)TPA));
     }
 
   (void)fclose (src);
@@ -376,14 +448,16 @@ main (int argc, char **argv)
   /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
   if (NULL == getenv ("HEXCOM_NO_PAD"))
     {
-      size_t pad_start = (size_t)first_addr + span;
-      size_t pad_end = (size_t)first_addr + (size_t)records * RECSZ;
+      unsigned long pad_start = (unsigned long)first_addr + (unsigned long)span;
+      unsigned long pad_end = (unsigned long)first_addr +
+                              (unsigned long)records * RECSZ;
 
-      if (pad_end > (size_t)0x10000UL)
-        pad_end = (size_t)0x10000UL;
+      if (pad_end > (unsigned long)imagesz)
+        pad_end = (unsigned long)imagesz;
 
       if (pad_start < pad_end)
-        (void)memset (image + pad_start, 0x1A, pad_end - pad_start);
+        (void)memset (image + (size_t)pad_start, 0x1A,
+                      (size_t)(pad_end - pad_start));
     }
 
   (void)printf ("FIRST ADDRESS %04X\n", first_addr);
@@ -394,19 +468,37 @@ main (int argc, char **argv)
   (void)fflush (stdout);
   (void)fflush (stderr);
 
-  /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
-  write_size = ((NULL == getenv ("HEXCOM_NO_PAD"))
-                 ? (size_t)records * RECSZ
-                 : (size_t)span);
+  {
+    unsigned long ul_write_size;
 
-  if (fwrite (image + first_addr, 1, write_size, out) != write_size)
-    {
-      (void)fclose (out);
-      fatal_load ("DISK WRITE", first_addr);
-    }
+    /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
+    ul_write_size = ((NULL == getenv ("HEXCOM_NO_PAD"))
+                     ? (unsigned long)records * RECSZ
+                     : (unsigned long)span);
+
+    if (ul_write_size > 0)
+      {
+        size_t write_size;
+
+        if (ul_write_size >
+            ((unsigned long)imagesz - (unsigned long)first_addr))
+          fatal_load ("IMAGE TOO LARGE", first_addr);
+
+        write_size = (size_t)ul_write_size;
+
+        if (fwrite (image + first_addr, 1, write_size, out) != write_size)
+          {
+            (void)fclose (out);
+            fatal_load ("DISK WRITE ERROR", first_addr);
+          }
+      }
+  }
 
   if (0 != fclose (out))
     fatal_load ("CANNOT CLOSE FILE", first_addr);
+
+  /*LINTED E_CONSTANT_CONDITION*/
+  FREE (image);
 
   return 0;
 }

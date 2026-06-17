@@ -27,7 +27,7 @@ int allow_long_symbols;
 
 #include "asm.h"
 #ifdef __ORACLE_LINT__
-# include "platform.h" /* sysarch(): referenced only in the Oracle lint build */
+# include "platform.h"
 #endif
 
 /******************************************************************************/
@@ -146,8 +146,10 @@ int
 main (void)
 {
 #ifdef __ORACLE_LINT__
+# ifdef HAVE_SYSARCH
   /*LINTED: E_FUNC_SET_NOT_USED*/
   const char *arch = sysarch (); /* cppcheck-suppress unreadVariable */
+# endif
 #endif
 
   symtab *t = sym_new ();

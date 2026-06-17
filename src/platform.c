@@ -27,9 +27,10 @@
 
 /******************************************************************************/
 
+#ifdef HAVE_SYSARCH
 const char *sysarch(void)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+# if defined(_WIN32) && !defined(__CYGWIN__)
   SYSTEM_INFO si;
 
   GetSystemInfo (&si);
@@ -39,73 +40,73 @@ const char *sysarch(void)
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_INTEL
+#  ifdef PROCESSOR_ARCHITECTURE_INTEL
     case PROCESSOR_ARCHITECTURE_INTEL:
       return "x86";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_AMD64
+#  ifdef PROCESSOR_ARCHITECTURE_AMD64
     case PROCESSOR_ARCHITECTURE_AMD64:
       return "x64";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_ARM
+#  ifdef PROCESSOR_ARCHITECTURE_ARM
     case PROCESSOR_ARCHITECTURE_ARM:
       return "ARM";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_ARM64
+#  ifdef PROCESSOR_ARCHITECTURE_ARM64
     case PROCESSOR_ARCHITECTURE_ARM64:
       return "ARM64";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_IA64
+#  ifdef PROCESSOR_ARCHITECTURE_IA64
     case PROCESSOR_ARCHITECTURE_IA64:
       return "IA64";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_ALPHA
+#  ifdef PROCESSOR_ARCHITECTURE_ALPHA
     case PROCESSOR_ARCHITECTURE_ALPHA:
       return "AXP";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_ALPHA64
+#  ifdef PROCESSOR_ARCHITECTURE_ALPHA64
     case PROCESSOR_ARCHITECTURE_ALPHA64:
       return "AXP64";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_MIPS
+#  ifdef PROCESSOR_ARCHITECTURE_MIPS
     case PROCESSOR_ARCHITECTURE_MIPS:
       return "MIPS";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_PPC
+#  ifdef PROCESSOR_ARCHITECTURE_PPC
     case PROCESSOR_ARCHITECTURE_PPC:
       return "PowerPC";
-# endif
+#  endif
 
   /*******************************************************************/
 
-# ifdef PROCESSOR_ARCHITECTURE_SHX
+#  ifdef PROCESSOR_ARCHITECTURE_SHX
     case PROCESSOR_ARCHITECTURE_SHX:
       return "SH";
-# endif
+#  endif
 
   /*******************************************************************/
 
@@ -115,40 +116,40 @@ const char *sysarch(void)
 
   /*******************************************************************/
 
-#elif !defined(HAVE_UTSNAME_H)
+# elif !defined(HAVE_UTSNAME_H)
   return NULL;
-#else
+# else
 
   /*******************************************************************/
 
-# if defined(__SICORTEX__) && defined(__mips64)
+#  if defined(__SICORTEX__) && defined(__mips64)
   return "mips64";
 
   /*******************************************************************/
 
-# elif defined(__DJGPP__)
+#  elif defined(__DJGPP__)
   return "x86";
 
   /*******************************************************************/
 
-# elif defined(_AIX)
-#  if defined(_ARCH_PPC64) || defined(__PPC64__)
+#  elif defined(_AIX)
+#   if defined(_ARCH_PPC64) || defined(__PPC64__)
   return "powerpc64";
 
   /*******************************************************************/
 
-#  elif defined(_ARCH_PPC) || defined(__PPC__)
+#   elif defined(_ARCH_PPC) || defined(__PPC__)
   return "powerpc";
 
   /*******************************************************************/
 
-#  else
+#   else
   return NULL;
-#  endif
+#   endif
 
   /*******************************************************************/
 
-# else
+#  else
   static char buf[1024];
   struct utsname u;
 
@@ -164,9 +165,10 @@ const char *sysarch(void)
 
   /*******************************************************************/
 
+#  endif
 # endif
-#endif
 }
+#endif
 
 /******************************************************************************/
 
