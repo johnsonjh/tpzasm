@@ -415,7 +415,7 @@ aCFLAGS="-std=c89 -pedantic -ansi -Wall -Werror -Wpedantic -Wextra -O3"
 aCFLAGS="${aCFLAGS:?} -Wsign-conversion${GCCW}"
 aCFLAGS="${aCFLAGS:?} -U_FORTIFY_SOURCE"
 aCFLAGS="${aCFLAGS:?} -D_FORTIFY_SOURCE=${FORTIFY_LEVEL:-3}"
-aCFLAGS="${aCFLAGS:?} -DGCC_ANALYZER -march=native -fanalyzer"
+aCFLAGS="${aCFLAGS:?} -DGCC_ANALYZER -fanalyzer"
 
 command -v "${GCC_CMD:-gcc}" > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> gcc analyzer <<<<<<<<<<<<<<<<"
