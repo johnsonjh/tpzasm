@@ -155,8 +155,8 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
   identical to **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding
   and the same relocatable object output) for all our TDL‑style test inputs.
   This release completely overhauls the listing format and adds some
-  completely new modes, activated by the `.EPOP` and `.ZOP` pseudo-ops,
-  allowing the use of Intel MACRO‑80‑style pseudo-ops and Zilog mnemonics.
+  completely new modes, activated by the `.EPOP` and `.ZOP` pseudo‑ops,
+  allowing the use of Intel MACRO‑80‑style pseudo‑ops and Zilog mnemonics.
   It also exhibits several behaviors that are clearly bugs, such as sometimes
   omitting the symbol table from listings when certain macros are defined.
 
