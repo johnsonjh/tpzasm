@@ -139,7 +139,7 @@ static const char *osinfo(void)
     (void)strncat (buf, name, sizeof (buf) - strlen (buf) - 1);
 
 #ifdef HAVE_SYSARCH
-  if (NULL != arch)
+  if (NULL != arch && 1 < strlen (arch))
     {
       if (NULL != name)
         (void)strncat (buf, "/", sizeof (buf) - strlen (buf) - 1);

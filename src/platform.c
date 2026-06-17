@@ -371,17 +371,7 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #elif defined(_CH_)
-  struct utsname chname;
-
-  if (-1 == uname (&chname))
-    return "SoftIntegration Ch";
-
-  string_t buf; /* Ch dynamic string */
-  /* cppcheck-suppress legacyUninitvar */
-  buf += "Ch/";
-  buf += chname.sysname;
-
-  return buf; /* legal for Ch */
+  return "SoftIntegration Ch";
 
   /*******************************************************************/
 
