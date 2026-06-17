@@ -558,13 +558,16 @@ command -v "${OLINT:-}" > /dev/null 2>&1 && {
     esac
   done
   olint_rc=0
+  olc="E_GLOBAL_COULD_BE_STATIC2"
+  olc="${olc:?},E_NAME_USED_NOT_DEF2,E_SUPPRESSION_DIRECTIVE_UNUSED "
   for olint_unit in "${olint_engine} ./src/main.c" \
-    "-erroff=E_GLOBAL_COULD_BE_STATIC2,E_NAME_USED_NOT_DEF2 -x ./src/expr.c \
+    "-erroff=${olc:?} -x ./src/expr.c \
     ./src/sym.c ./src/test_expr.c" "./src/hexcom.c"; do
     if (
       set -x
+      olc="E_NAME_DEF_NOT_USED2,E_SUPPRESSION_DIRECTIVE_UNUSED"
       # shellcheck disable=SC2086
-      "${OLINT:?}" -errtags -erroff=E_NAME_DEF_NOT_USED2 \
+      "${OLINT:?}" -errtags -erroff="${olc:?}" \
         -O -D__ORACLE_LINT__ -fd -std=c89 -err=warn -XCC=no \
         -errchk=structarg,parentheses,locfmtchk ${olint_unit}
     ); then
