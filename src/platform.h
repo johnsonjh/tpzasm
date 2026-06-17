@@ -55,10 +55,12 @@
 
 # ifndef __CPPCHECK__
 #  ifndef _CH_
-#   if HAS_INCLUDE(<signal.h>)
-#    include <signal.h>
-#    ifndef HAVE_SIGNAL_H
-#     define HAVE_SIGNAL_H
+#   ifndef __IA16_SYS_MSDOS
+#    if HAS_INCLUDE(<signal.h>)
+#     include <signal.h>
+#     ifndef HAVE_SIGNAL_H
+#      define HAVE_SIGNAL_H
+#     endif
 #    endif
 #   endif
 #  endif
