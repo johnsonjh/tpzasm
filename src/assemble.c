@@ -6765,7 +6765,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   /* with -l to a real file, also report the count on the console */
   if (NULL != lf)
-    (void)fprintf (stderr, "%d error(s)\n", a.errors);
+    (void)fprintf (stderr, "*** %d %s were detected; review %s.\n",
+                   a.errors, (1 == a.errors ? "error" : "errors"),
+                   (lstpath ? lstpath : "listing"));
 
   /*
    * -o absolute image: the object records were already streamed per module
