@@ -62,6 +62,22 @@ static int have_first;            /* set once the first data record is seen */
 
 /******************************************************************************/
 
+#ifdef HEXCOM_NORETURN
+# undef HEXCOM_NORETURN
+#endif
+
+#if defined(__ORACLE_LINT__)
+# define HEXCOM_NORETURN
+#elif defined(__GNUC__) || defined(__clang__)
+# define HEXCOM_NORETURN __attribute__ ((noreturn))
+#elif defined(_MSC_VER)
+# define HEXCOM_NORETURN __declspec (noreturn)
+#else
+# define HEXCOM_NORETURN
+#endif
+
+/******************************************************************************/
+
 static int
 hexval (int c)
 {
@@ -153,7 +169,7 @@ dump_record (unsigned recaddr, const unsigned char *data, int n)
  * trailing newline (verified by disassembly at 0x0412 in orig/hexcom.com).
  */
 
-static void
+static HEXCOM_NORETURN void
 fatal_load (const char *msg, unsigned addr)
 {
   (void)printf ("ERROR: %s\nLOAD  ADDRESS %04X", msg, addr);
@@ -173,7 +189,7 @@ fatal_load (const char *msg, unsigned addr)
  * Record-data error (invalid hex digit / bad checksum) with the byte dump.
  */
 
-static void
+static HEXCOM_NORETURN void
 record_error (const char *msg, unsigned recaddr, unsigned erraddr,
               const unsigned char *data, int n)
 {
@@ -411,7 +427,7 @@ main (int argc, char **argv)
         {
           unsigned addr_masked = (addr + (unsigned)i) & 0xFFFF;
 
-          if (addr_masked >= (unsigned)imagesz)
+          if ((size_t)addr_masked >= imagesz)
             fatal_load ("LOAD ADDRESS TOO HIGH", addr_masked);
 
           image[addr_masked] = data[i];

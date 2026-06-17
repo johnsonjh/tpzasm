@@ -28,14 +28,18 @@
 
 /******************************************************************************/
 
+# if defined ASM_NORETURN
+#  undef ASM_NORETURN
+# endif
+
 # if defined(__ORACLE_LINT__)
-#  define ASM_NORETURN /* nothing */
+#  define ASM_NORETURN
 # elif defined(__GNUC__) || defined(__clang__)
 #  define ASM_NORETURN __attribute__ ((noreturn))
 # elif defined(_MSC_VER)
 #  define ASM_NORETURN __declspec (noreturn)
 # else
-#  define ASM_NORETURN /* nothing */
+#  define ASM_NORETURN
 # endif
 
 /******************************************************************************/
