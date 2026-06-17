@@ -6799,8 +6799,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
                        a.errors, (1 == a.errors ? "error" : "errors"),
                        (lstpath ? lstpath : "listing"));
       else
-        (void)fprintf (stderr, "*** %d %s were detected.\n",
-                       a.errors, (1 == a.errors ? "error" : "errors"));
+        (void)fprintf (stderr, "*** %d errors were detected.\n", a.errors);
     }
 
   /*
