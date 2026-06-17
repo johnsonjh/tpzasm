@@ -18,7 +18,7 @@
 
 /******************************************************************************/
 
-# define ASM_VERSION "Release 0.79"
+# define ASM_VERSION "Release 0.80-dev"
 # define ASM_URL " https://github.com/johnsonjh/tpzasm\n"
 
 /******************************************************************************/
