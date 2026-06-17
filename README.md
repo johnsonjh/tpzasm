@@ -25,8 +25,9 @@ tool, is also included.
 - [Future](#future)
 - [Notes](#notes)
 - [Reference](#reference)
-  * [Binaries](#binaries)
-  * [Documentation](#documentation)
+  * [Original binaries](#original-binaries)
+  * [Original documentation](#original-documentation)
+- [Security](#security)
 - [License](#license)
   * [Third‑party materials](#third%E2%80%91party-materials)
 
@@ -175,16 +176,28 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 ## Reference
 
-### Binaries
+### Original binaries
 
 * The [`orig/`](orig) directory contains the original CP/M‑80 executables.
 
-### Documentation
+### Original documentation
 
 * The [`docs/`](docs) directory contains PDF‑format documentation for the
   assemblers (directly applicable to **TPZASM**), the book
   “**Z‑80 assembly language under TurboDOS**” by R.&nbsp;Roger&nbsp;Breton
   (an excellent TDL assembly resource), and some reverse engineering notes.
+
+## Security
+
+* The canonical home of this software is
+  [`https://github.com/johnsonjh/tpzasm`](https://github.com/johnsonjh/tpzasm),
+  with a mirror on [GitLab](https://gitlab.com/johnsonjh/tpzasm).
+* This software is intended to be **secure** 🛡️.
+* If you find any security‑related problems, please don’t hesitate to
+  [open a GitHub Issue](https://github.com/johnsonjh/tpzasm/issues/new/choose)
+  (or send an
+  [email](mailto:incoming+johnsonjh-tpzasm-83023857-issue-@incoming.gitlab.com)
+  to the author).
 
 ## License
 
