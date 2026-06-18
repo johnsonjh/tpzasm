@@ -260,6 +260,7 @@ main (int argc, char **argv)
   char srcname[300];
   char dstname[300];
   char *dot;
+  const char *hnp;
   FILE *src;
   FILE *out;
   unsigned char data[256] = { 0 };
@@ -270,6 +271,13 @@ main (int argc, char **argv)
   imagesz = 0;
 
   try_size = ADDRSP;
+
+#ifndef __CPM__
+  /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
+  hnp = getenv ("HEXCOM_NO_PAD");
+#else
+  hnp = "1";
+#endif
 
   for (;;)
     {
@@ -306,8 +314,10 @@ main (int argc, char **argv)
         "\n"
         "Usage:\n"
         "  hexcom <basename>  (Reads basename.hex, writes basename.com)\n"
+#ifndef __CPM__
         "\n"
         "Set 'HEXCOM_NO_PAD=1' in the environment to disable record padding.\n"
+#endif
         "\n");
 
       /*LINTED E_CONSTANT_CONDITION*/
@@ -358,23 +368,29 @@ main (int argc, char **argv)
 
       ll = rd_byte (src, &ok);
 
+#ifdef IHD
+# undef IHD
+#endif
+
+#define IHD "INVALID HEX DIGIT"
+
       if (!ok)
-        record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
+        record_error (IHD, 0, 0, data, 0);
 
       addr = (unsigned)rd_byte (src, &ok) << 8;
 
       if (!ok)
-        record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
+        record_error (IHD, 0, 0, data, 0);
 
       addr |= (unsigned)rd_byte (src, &ok);
 
       if (!ok)
-        record_error ("INVALID HEX DIGIT", 0, 0, data, 0);
+        record_error (IHD, 0, 0, data, 0);
 
       tt = rd_byte (src, &ok);
 
       if (!ok)
-        record_error ("INVALID HEX DIGIT", addr, addr, data, 0);
+        record_error (IHD, addr, addr, data, 0);
 
       if (0x01 == tt)
         break; /* end-of-file record */
@@ -404,8 +420,7 @@ main (int argc, char **argv)
           int b = rd_byte (src, &ok);
 
           if (!ok)
-            record_error ("INVALID HEX DIGIT", addr,
-                          (addr + (unsigned)i) & 0xFFFF, data, i);
+            record_error (IHD, addr, (addr + (unsigned)i) & 0xFFFF, data, i);
 
           data[i] = (unsigned char)b;
           sum += b;
@@ -414,8 +429,7 @@ main (int argc, char **argv)
       cc = rd_byte (src, &ok);
 
       if (!ok)
-        record_error ("INVALID HEX DIGIT", addr,
-                      (addr + (unsigned)ll) & 0xFFFF, data, ll);
+        record_error (IHD, addr, (addr + (unsigned)ll) & 0xFFFF, data, ll);
 
       sum += cc;
 
@@ -434,7 +448,7 @@ main (int argc, char **argv)
         }
 
       if (ll > 0 && (addr + (unsigned)ll - 1) > last_addr)
-        last_addr = addr + (unsigned)ll - 1;
+        last_addr = (addr + (unsigned)ll - 1);
 
       total_bytes += (unsigned)ll;
     }
@@ -457,10 +471,11 @@ main (int argc, char **argv)
   span = ((last_addr >= first_addr) ? (last_addr - first_addr + 1) : 0);
   records = (span + RECSZ - 1) / RECSZ;
 
-  /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
-  if (NULL == getenv ("HEXCOM_NO_PAD"))
+  if (NULL == hnp)
     {
-      unsigned long pad_start = (unsigned long)first_addr + (unsigned long)span;
+      unsigned long pad_start = (unsigned long)first_addr +
+                                (unsigned long)span;
+
       unsigned long pad_end = (unsigned long)first_addr +
                               (unsigned long)records * RECSZ;
 
@@ -483,10 +498,8 @@ main (int argc, char **argv)
   {
     unsigned long ul_write_size;
 
-    /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
-    ul_write_size = ((NULL == getenv ("HEXCOM_NO_PAD"))
-                     ? (unsigned long)records * RECSZ
-                     : (unsigned long)span);
+    ul_write_size = ((NULL == hnp) ? (unsigned long)records * RECSZ
+                                   : (unsigned long)span);
 
     if (ul_write_size > 0)
       {
