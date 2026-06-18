@@ -2,17 +2,78 @@
 # TPZASM: TDL ZASM / PSA PASM compatible assembler - .bindist.sh
 # Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 # SPDX-License-Identifier: MIT-0
-# scspell-id: ff19430a-6ac3-11f1-8ca0-80ee73e9b8e7
+# scspell-id: d8b0be40-6ac4-11f1-97f2-80ee73e9b8e7
 
 ##############################################################################
 
 # TODO: Use .common.sh tool detection framework
 
-##############################################################################
+################################################################################
 
-set -eux
+# For use by the maintainer only - not the general public.
+# This script requires GNU coreutils `du` to work correctly.
 
-##############################################################################
+################################################################################
+
+if [ -n "${ZSH_VERSION-}" ]; then
+  emulate sh
+  setopt sh_word_split
+fi
+
+################################################################################
+
+test -d "/opt/freeware/bin" && {
+  export PATH="/opt/freeware/bin:${PATH:-}"
+}
+
+################################################################################
+
+test -d "/usr/pkg/gnu/bin" && {
+  export PATH="${PATH:-}:/usr/pkg/gnu/bin"
+}
+
+################################################################################
+
+set -eu
+
+################################################################################
+
+cd "$(dirname "$0")"
+
+################################################################################
+
+# shellcheck disable=SC2065
+test -f "./${0##*/}" > /dev/null 2>&1 || {
+  printf '%s\n' "ERROR: Could not locate script in current directory."
+  exit 1
+}
+
+################################################################################
+
+# shellcheck disable=SC2065
+test -f "./.common.sh" > /dev/null 2>&1 || {
+  printf '%s\n' "ERROR: Could not locate .common.sh in current directory."
+  exit 1
+}
+
+################################################################################
+
+export CPE1704TKS=1
+
+# shellcheck disable=SC1091
+. ./.common.sh
+
+################################################################################
+
+if [ "${DU:-}x" = "x" ]; then
+  DU="$(command -v du 2> /dev/null || printf '%s\n' 'du')"
+fi
+
+################################################################################
+
+export FIND_COMMAND_FATAL=1
+
+################################################################################
 
 MAKE="${MAKE:-make}"
 command -v "${MAKE:?}"
@@ -29,6 +90,42 @@ test -x "${EXE2COFF:?}"
 WATCOM="${WATCOM:-/opt/watcom}"
 test -d "${WATCOM:?}"
 export WATCOM
+
+##############################################################################
+
+find_command "${AWK:-awk}" "${DU:?}" "${DJGPPGCC:?}" "${EXE2COFF:?}" \
+  "${MAKE:?}" "${WATCOM:?}/binl64/owcc" advzip cat grep i686-w64-mingw32-gcc \
+  mkdir musl-gcc mv pigz rm sed sstrip strip tar upx \
+  x86_64-w64-mingw32ucrt-gcc zip ./asm
+
+################################################################################
+
+"${DU:?}" --version 2>&1 | grep -q 'GNU coreutils' 2> /dev/null \
+  || {
+    printf '%s\n' "ERROR: '${DU:?}' is not GNU coreutils du."
+    exit 1
+  }
+
+################################################################################
+
+if [ ! -d "bindist" ] || [ ! -f "README.md" ]; then
+  printf '%s\n' "ERROR: No bindist/ and/or README.md found!" >&2
+  exit 1
+fi
+
+################################################################################
+
+SIZES="$("${DU:?}" -Sh --block-size=KiB bindist/*)"
+USAGE="$(./asm -h 2>&1)"
+
+################################################################################
+
+# shellcheck disable=SC2119
+TMP_README="$(mktemp 2> /dev/null || mktemp_local)"
+
+##############################################################################
+
+set -eux
 
 ##############################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
@@ -205,6 +302,79 @@ mv -f ./tpzasm-linux64.tar.gz ./bindist
 mv -f ./tpzasm-linux32.tar.gz ./bindist
 
 ##############################################################################
+
+################################################################################
+
+# shellcheck disable=SC2016
+"${AWK:-awk}" -v sizes_raw="${SIZES}" -v usage_raw="${USAGE}" '
+BEGIN {
+  FS = "|"
+  OFS = "|"
+
+  n = split(sizes_raw, lines, "\n")
+
+  for (i = 1; i <= n; i++) {
+    if (lines[i] == "") continue
+
+    split(lines[i], parts, /[ \t]+/)
+    sz = parts[1]
+    pth = parts[2]
+
+    fname = pth
+    sub(/.*\//, "", fname)
+
+    sub(/KiB/, "\\&nbsp;KiB", sz)
+
+    file_sizes[fname] = sz
+  }
+}
+
+{
+  if ($0 ~ /^```$/) {
+    if (in_block == 0 && usage_done == 0) {
+      in_block = 1
+      print $0
+      print usage_raw
+      next
+    } else if (in_block == 1) {
+      in_block = 0
+      print $0
+      usage_done = 1
+      next
+    }
+  }
+
+  if (in_block == 1) {
+    next
+  }
+
+  if ($0 ~ /^\|.*\[.*\]\(.*\).*\|.*\|/) {
+    m_start = index($2, "[")
+    m_end = index($2, "]")
+
+    if (m_start > 0 && m_end > m_start) {
+        current_fname = substr($2, m_start + 1, m_end - m_start - 1)
+
+        if (current_fname in file_sizes) {
+            $3 = " " file_sizes[current_fname] " "
+        }
+    }
+  }
+
+  print $0
+}
+' "README.md" > "${TMP_README:?}"
+
+################################################################################
+
+mv -f "${TMP_README:?}" "README.md"
+
+################################################################################
+
+printf '%s\n' \
+  "Successfully updated README.md with archive sizes and usage information."
+
+################################################################################
 
 # Local Variables:
 # mode: shell

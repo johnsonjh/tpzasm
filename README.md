@@ -19,14 +19,17 @@ tool, is also included.
 
 <!-- toc -->
 
-- [Portability](#portability)
 - [Status](#status)
 - [Usage](#usage)
+- [Downloads](#downloads)
+- [Building from source](#building-from-source)
+  * [Portability](#portability)
 - [Future](#future)
 - [Notes](#notes)
 - [Reference](#reference)
   * [Original binaries](#original-binaries)
   * [Original documentation](#original-documentation)
+- [Developer notes](#developer-notes)
 - [Security](#security)
 - [License](#license)
   * [Third‑party materials](#third%E2%80%91party-materials)
@@ -77,8 +80,8 @@ error‑handling semantics, plus user‑configurable control of output padding.
 ## Usage
 
 ```
-TPZASM - TDL ZASM / PSA PASM compatible assembler (AIX/powerpc64)
-Release 0.80 (Wed Jun 17 21:49:46 2026) https://github.com/johnsonjh/tpzasm
+TPZASM - TDL ZASM / PSA PASM compatible assembler (Linux/x86_64)
+Release 0.80 (Wed Jun 17 20:31:30 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
   Usage: asm [options] <source[.asm]>
@@ -99,6 +102,17 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 NOTE: Invoking the assembler as `zasm` explicitly selects the **TDL ZASM 2.21**
 emulation, and invoking it as `pasm` selects the **PSA PASM 1.02 emulation**.
+
+## Downloads
+
+|                                                                                                            File  | Size         | Platform                              |
+|-----------------------------------------------------------------------------------------------------------------:|:-------------|:--------------------------------------|
+| [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                   | 188&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)     |
+| [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                   | 60&nbsp;KiB  | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
+| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                   | 64&nbsp;KiB  | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
+| [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                   | 68&nbsp;KiB  | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
+| [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz) | 56&nbsp;KiB  | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
+| [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz) | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)   |
 
 ## Building from source
 
@@ -216,7 +230,7 @@ ANSI&nbsp;C89 compiler.
   “**Z‑80 assembly language under TurboDOS**” by R.&nbsp;Roger&nbsp;Breton
   (an excellent TDL assembly resource), and some reverse engineering notes.
 
-### Developer notes
+## Developer notes
 
 * `make lint` needs only a POSIX shell to run (plus whichever linters and
   static analysis tools it invokes).  You'll be informed of any missing
