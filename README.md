@@ -11,7 +11,7 @@
 targeting the Intel&nbsp;**8080**, Zilog&nbsp;**Z80**, and other
 equivalent processors.
 
-An enhanced clone of **`HEXCOM`** 3.00, the DRI
+An enhanced clone of **HEXCOM 3.00**, the DRI
 [Intel&nbsp;HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
 tool, is also included.
 
@@ -26,12 +26,12 @@ tool, is also included.
 - [Downloads](#downloads)
 - [Building from source](#building-from-source)
   * [Portability](#portability)
-- [Future](#future)
 - [Notes](#notes)
+  * [Developer notes](#developer-notes)
+  * [Future](#future)
 - [Reference](#reference)
   * [Original binaries](#original-binaries)
   * [Original documentation](#original-documentation)
-- [Developer notes](#developer-notes)
 - [Security](#security)
 - [License](#license)
   * [Third‑party materials](#third%E2%80%91party-materials)
@@ -75,7 +75,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
   flag, *i.e.*, `.PHEX`), all of which is *byte‑for‑byte identical* to the
   object output of the reference software.
 
-**`HEXCOM`** is **100%** complete and produces byte‑for‑byte identical
+**HEXCOM** is **100%** complete and produces byte‑for‑byte identical
 output to the original reference tool, with matching messages and identical
 error‑handling semantics, plus user‑configurable control of output padding.
 
@@ -102,8 +102,9 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
     -h, --help         Show this help text and exit
 ```
 
-NOTE: Invoking the assembler as `zasm` explicitly selects the **TDL ZASM 2.21**
-emulation, and invoking it as `pasm` selects the **PSA PASM 1.02 emulation**.
+**NOTE**: Invoking the assembler as `zasm` explicitly selects the
+**TDL ZASM 2.21** emulation, and invoking it as `pasm` selects the
+**PSA PASM 1.02** emulation.
 
 ## Downloads
 
@@ -158,7 +159,33 @@ ANSI&nbsp;C89 compiler.
   Microsoft&nbsp;Visual&nbsp;C/C++, IBM&nbsp;Open&nbsp;XL&nbsp;C/C++,
   Open&nbsp;Watcom&nbsp;V2, and МЦСТ&nbsp;LCC compilers are regularly tested.
 
-## Future
+## Notes
+
+**TPZASM** is ***not*** related to the similarly named
+[Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM or
+[Megatokio](https://github.com/Megatokio) ZASM assemblers.
+
+### Developer notes
+
+* `make lint` needs only a POSIX shell to run (plus whichever linters and
+  static analysis tools it invokes).  You'll be informed of any missing
+  prerequisites as well as any optional tools when you invoke `make lint`.
+
+* `make longtest` requires *Georg Brein*'s
+  [`tnylpo`](https://gitlab.com/gbrein/tnylpo) emulator available in your PATH.
+
+* If you would like to contribute to **TPZASM** development, it is *extremely*
+  *important* that you have ***all*** of the optional linters, static analysis
+  tools, emulators, and cross‑toolchains installed, and that `make lint`,
+  `make test`, and `make longtest` all pass completely clean, as this is a
+  prerequisite for any change.  Every linter has, at some point, caught real
+  bugs in the code.
+
+* Usage of AI (artificial intelligence) tools by contributors is permitted,
+  subject to the same terms and conditions as the
+  [LLVM AI Tool Use Policy](https://llvm.org/docs/AIToolPolicy.html).
+
+### Future
 
 * In 1979, after the closure of TDL/Xitan, Neil J. Colvin formed **Phoenix
   Software Associates** (PSA), and Carl Galletti and Roger Amidon formed
@@ -213,12 +240,6 @@ ANSI&nbsp;C89 compiler.
   and emitting new diagnostics the originals never supported, for example,
   warning when symbols longer than six characters would be silently truncated.
 
-## Notes
-
-**TPZASM** is ***not*** related to the similarly named
-[Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM or
-[Megatokio](https://github.com/Megatokio) ZASM assemblers.
-
 ## Reference
 
 ### Original binaries
@@ -231,26 +252,6 @@ ANSI&nbsp;C89 compiler.
   assemblers (directly applicable to **TPZASM**), the book
   “**Z‑80 assembly language under TurboDOS**” by R.&nbsp;Roger&nbsp;Breton
   (an excellent TDL assembly resource), and some reverse engineering notes.
-
-## Developer notes
-
-* `make lint` needs only a POSIX shell to run (plus whichever linters and
-  static analysis tools it invokes).  You'll be informed of any missing
-  prerequisites as well as any optional tools when you invoke `make lint`.
-
-* `make longtest` requires *Georg Brein*'s
-  [`tnylpo`](https://gitlab.com/gbrein/tnylpo) emulator available in your PATH.
-
-* If you would like to contribute to **TPZASM** development, it is *extremely*
-  *important* that you have ***all*** of the optional linters, static analysis
-  tools, emulators, and cross‑toolchains installed, and that `make lint`,
-  `make test`, and `make longtest` all pass completely clean, as this is a
-  prerequisite for any change.  Every linter has, at some point, caught real
-  bugs in the code.
-
-* Usage of AI (artificial intelligence) tools by contributors is permitted,
-  subject to the same terms and conditions as the
-  [LLVM AI Tool Use Policy](https://llvm.org/docs/AIToolPolicy.html).
 
 ## Security
 
@@ -266,8 +267,8 @@ ANSI&nbsp;C89 compiler.
 
 ## License
 
-* The **TPZASM** software is distributed under the terms of the permissive
-  [**MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0)** License](LICENSE).
+The **TPZASM** software is distributed under the terms of the permissive
+[**MIT&nbsp;No&nbsp;Attribution&nbsp;(MIT‑0) License**](LICENSE).
 
 ### Third‑party materials
 
