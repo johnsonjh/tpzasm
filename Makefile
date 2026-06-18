@@ -243,9 +243,11 @@ tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 
 fixtimes: tools/git-restore-mtime.py ./.timestamp.sh
 	@git rev-parse --is-inside-work-tree > /dev/null 2>&1 && \
-		{ ./tools/git-restore-mtime.py -q > /dev/null 2>&1 || :; } || :
+		{ env TZ=UTC LC_ALL=C ./tools/git-restore-mtime.py -q \
+			> /dev/null 2>&1 || :; } || :
 	@git rev-parse --is-inside-work-tree > /dev/null 2>&1 && \
-		{ ./.timestamp.sh > /dev/null 2>&1 || :; } || :
+		{ env TZ=UTC LC_ALL=C ./.timestamp.sh \
+			> /dev/null 2>&1 || :; } || :
 
 ################################################################################
 

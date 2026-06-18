@@ -40,45 +40,6 @@ tool, is also included.
 
 ---
 
-## Status
-
-**TPZASM** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
-and **PSA&nbsp;PASM&nbsp;1.02**.
-
-* It is a fully faithful reimplementation of *both* assemblers (including
-  their quirks and bugs) and can assemble many substantial historic codebases
-  (which also serve as [test cases](tests)), including:
-
-  | Codebase                                                                                                  |               Size |
-  |:----------------------------------------------------------------------------------------------------------|-------------------:|
-  | [Plu\*Perfect High-BIOS for Advent Kaypro Turbo ROM](tests/turbobs.asm)                                   |    \~900&nbsp;SLOC |
-  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[1K&nbsp;Monitor&nbsp;2.0](tests/zap1k.asm)   |  \~1,000&nbsp;SLOC |
-  | [TAPELIB](tests/tapelib.asm)                                                                              |  \~1,500&nbsp;SLOC |
-  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor&nbsp;2.1R](tests/ssmon.asm)  |  \~1,900&nbsp;SLOC |
-  | [Burke&nbsp;Z80&nbsp;Disassembler](tests/dis.asm)                                                         |  \~2,200&nbsp;SLOC |
-  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor&nbsp;1.11](tests/zapple.asm) |  \~2,500&nbsp;SLOC |
-  | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm)               |  \~2,800&nbsp;SLOC |
-  | [SARGON](tests/sargon.asm)                                                                                |  \~3,500&nbsp;SLOC |
-  | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                              | \~10,000&nbsp;SLOC |
-  | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                                          | \~30,000&nbsp;SLOC |
-
-* In every case, **TPZASM** produces *identical* listings and
-  *byte‑for‑byte identical* object output when compared to the reference
-  TDL/PSA assemblers.  The only differences are when processing certain
-  deliberately malformed or specially crafted inputs (that cause the
-  reference assemblers to abort or crash).
-
-* **TPZASM** can write the assembled output as a raw binary image, or as a
-  **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or absolute
-  Intel&nbsp;HEX module (`.PABS`) formats, serialized either as raw binary
-  (using the `-R` flag, *i.e.*, `.PBIN`) or as ASCII‑hex text (using the `-X`
-  flag, *i.e.*, `.PHEX`), all of which is *byte‑for‑byte identical* to the
-  object output of the reference software.
-
-**HEXCOM** is **100%** complete and produces byte‑for‑byte identical
-output to the original reference tool, with matching messages and identical
-error‑handling semantics, plus user‑configurable control of output padding.
-
 ## Usage
 
 ```
@@ -158,6 +119,45 @@ ANSI&nbsp;C89 compiler.
   PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP,
   Microsoft&nbsp;Visual&nbsp;C/C++, IBM&nbsp;Open&nbsp;XL&nbsp;C/C++,
   Open&nbsp;Watcom&nbsp;V2, and МЦСТ&nbsp;LCC compilers are regularly tested.
+
+## Status
+
+**TPZASM** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
+and **PSA&nbsp;PASM&nbsp;1.02**.
+
+* It is a fully faithful reimplementation of *both* assemblers (including
+  their quirks and bugs) and can assemble many substantial historic codebases
+  (which also serve as [test cases](tests)), including:
+
+  | Codebase                                                                                                  |               Size |
+  |:----------------------------------------------------------------------------------------------------------|-------------------:|
+  | [Plu\*Perfect High-BIOS for Advent Kaypro Turbo ROM](tests/turbobs.asm)                                   |    \~900&nbsp;SLOC |
+  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[1K&nbsp;Monitor&nbsp;2.0](tests/zap1k.asm)   |  \~1,000&nbsp;SLOC |
+  | [TAPELIB](tests/tapelib.asm)                                                                              |  \~1,500&nbsp;SLOC |
+  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor&nbsp;2.1R](tests/ssmon.asm)  |  \~1,900&nbsp;SLOC |
+  | [Burke&nbsp;Z80&nbsp;Disassembler](tests/dis.asm)                                                         |  \~2,200&nbsp;SLOC |
+  | [Zapple](https://en.wikipedia.org/wiki/Zapple_Monitor)&nbsp;[2K&nbsp;Monitor&nbsp;1.11](tests/zapple.asm) |  \~2,500&nbsp;SLOC |
+  | [Alloy](tests/ittl.asm)&nbsp;[Engineering](tests/atu4.asm)&nbsp;[Utilities](tests/mtu4.asm)               |  \~2,800&nbsp;SLOC |
+  | [SARGON](tests/sargon.asm)                                                                                |  \~3,500&nbsp;SLOC |
+  | [DMS/3&nbsp;&amp;&nbsp;DMS/4&nbsp;HiNet&nbsp;CP/M&nbsp;BIOS](tests/bios.asm)                              | \~10,000&nbsp;SLOC |
+  | [VEDIT‑PLUS](https://github.com/johnsonjh/VEDIT)                                                          | \~30,000&nbsp;SLOC |
+
+* In every case, **TPZASM** produces *identical* listings and
+  *byte‑for‑byte identical* object output when compared to the reference
+  TDL/PSA assemblers.  The only differences are when processing certain
+  deliberately malformed or specially crafted inputs (that cause the
+  reference assemblers to abort or crash).
+
+* **TPZASM** can write the assembled output as a raw binary image, or as a
+  **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or absolute
+  Intel&nbsp;HEX module (`.PABS`) formats, serialized either as raw binary
+  (using the `-R` flag, *i.e.*, `.PBIN`) or as ASCII‑hex text (using the `-X`
+  flag, *i.e.*, `.PHEX`), all of which is *byte‑for‑byte identical* to the
+  object output of the reference software.
+
+**HEXCOM** is **100%** complete and produces byte‑for‑byte identical
+output to the original reference tool, with matching messages and identical
+error‑handling semantics, plus user‑configurable control of output padding.
 
 ## Notes
 
