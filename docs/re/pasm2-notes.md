@@ -1,0 +1,8 @@
+- Line-number column added at the far left (decimal, right-justified: `1...nn`)
+- Truncates long lines at the right margin and does not wrap (1.02 wraps at 79 and re-indents)
+- `=` flag on the address column for `=/equate` lines (`0005  =`)
+- Tighter page header (2 leading blanks vs. 3)
+- The 2-word `.WORD` overstrike bug/quirk is fixed; `2.00G` prints `00FF  1234` cleanly (1.02 overstrikes the source)
+- Symbol table reformatted with tighter columns
+- `.BLNK.` flag `:03` -> `#`; `.PROG.` class letter `X` -> `S`
+- `.REL` record packing: 2.00G emits fewer/larger `;` data records (`~0x4B`) vs 1.02's ~24-byte (`0x18`) chunks; identical content
