@@ -226,6 +226,9 @@ The following third‑party materials are provided under their own licenses:
   the terms and conditions of the
   [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
 
+* The [git-restore-mtime](tools/git-restore-mtime.py) script is © 2012 Rodrigo
+  Silva and licensed under the terms of the GNU GPL version 3 or later.
+
 <!--
 Local Variables:
 mode: markdown

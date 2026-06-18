@@ -27,7 +27,7 @@ all: $(PROG) $(LINKS) hexcom
 
 ################################################################################
 
-$(PROG): $(OBJ)
+$(PROG): fixtimes $(OBJ)
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" -o $@ $(OBJ) \
 		"$${LDFLAGS:-$(XLDFLAGS)}"
@@ -43,57 +43,57 @@ $(LINKS): $(PROG)
 
 ################################################################################
 
-$(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h $(SRCDIR)/platform.h \
-	$(SRCDIR)/version.h
+$(SRCDIR)/main.o: fixtimes $(SRCDIR)/main.c $(SRCDIR)/asm.h \
+	$(SRCDIR)/platform.h $(SRCDIR)/version.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/main.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/main.c
-$(SRCDIR)/expr.o: $(SRCDIR)/expr.c $(SRCDIR)/asm.h
+$(SRCDIR)/expr.o: fixtimes $(SRCDIR)/expr.c $(SRCDIR)/asm.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/expr.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/expr.c
-$(SRCDIR)/sym.o: $(SRCDIR)/sym.c $(SRCDIR)/asm.h
+$(SRCDIR)/sym.o: fixtimes $(SRCDIR)/sym.c $(SRCDIR)/asm.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/sym.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/sym.c
-$(SRCDIR)/lex.o: $(SRCDIR)/lex.c $(SRCDIR)/asm.h
+$(SRCDIR)/lex.o: fixtimes $(SRCDIR)/lex.c $(SRCDIR)/asm.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/lex.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/lex.c
-$(SRCDIR)/insn.o: $(SRCDIR)/insn.c $(SRCDIR)/asm.h
+$(SRCDIR)/insn.o: fixtimes $(SRCDIR)/insn.c $(SRCDIR)/asm.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/insn.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/insn.c
-$(SRCDIR)/assemble.o: $(SRCDIR)/assemble.c $(SRCDIR)/asm.h
+$(SRCDIR)/assemble.o: fixtimes $(SRCDIR)/assemble.c $(SRCDIR)/asm.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/assemble.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/assemble.c
-$(SRCDIR)/objout.o: $(SRCDIR)/objout.c $(SRCDIR)/asm.h
+$(SRCDIR)/objout.o: fixtimes $(SRCDIR)/objout.c $(SRCDIR)/asm.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/objout.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/objout.c
-$(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
+$(SRCDIR)/platform.o: fixtimes $(SRCDIR)/platform.c $(SRCDIR)/platform.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/platform.c
@@ -169,7 +169,7 @@ $(SRCDIR)/test_expr.o: $(SRCDIR)/test_expr.c $(SRCDIR)/asm.h
 
 # Build with DMD ImportC
 # Works on Linux, some platforms might need "-inline -betterC" removed
-dmd:
+dmd: fixtimes
 	dmd -inline -betterC -nothrow -fPIC -fPIE -O -release -check=off \
 		-boundscheck=off \
 		$$(ls -1 src/*.c | grep -Ev '(test_expr\.c|hexcom\.c)')
@@ -241,8 +241,16 @@ tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 
 ################################################################################
 
+fixtimes: tools/git-restore-mtime.py ./.timestamp.sh
+	@git rev-parse --is-inside-work-tree > /dev/null 2>&1 && \
+		{ ./tools/git-restore-mtime.py -q > /dev/null 2>&1 || :; } || :
+	@git rev-parse --is-inside-work-tree > /dev/null 2>&1 && \
+		{ ./.timestamp.sh > /dev/null 2>&1 || :; } || :
+
+################################################################################
+
 .PHONY: all clean distclean test longtest tags etags ctags gtags TAGS GPATH \
-		GRTAGS GTAGS cscope cscope.out tag lint dmd
+		GRTAGS GTAGS cscope cscope.out tag lint dmd fixtimes
 
 ################################################################################
 
