@@ -164,27 +164,27 @@ typedef struct
     int reloc;
   } loc_stk[LOC_STK_DEPTH];
   int loc_sp;
-  int next_ebase;  /* next external relocation-base number to assign (>=4) */
-  int next_decl;   /* next .INTERN/.ENTRY declaration sequence number      */
-  int next_defseq; /* next symbol definition-order number (for `&' .PSYM)   */
-  char modname[8]; /* `!' module name (.IDENT), default ".MAIN."          */
-  char progid[8];  /* `+' program id (.PROGID); empty -> 6 blanks         */
-  unsigned progid_ver; /* `+' record version byte (.PROGID)               */
-  unsigned progid_rev; /* `+' record revision byte (.PROGID)              */
-  int errors;      /* error count of the CURRENT pass (pass-2 = the total) */
-  int errs_hdr;    /* prior-pass error total, shown in the PASM page header */
-  int errs_mdef;   /* multiply-defined (`M') count: drives the leading page   */
+  int next_ebase;   /* next external relocation-base number to assign (>=4)   */
+  int next_decl;    /* next .INTERN/.ENTRY declaration sequence number        */
+  int next_defseq;  /* next symbol definition-order number (for `&' .PSYM)    */
+  char modname[8];  /* `!' module name (.IDENT), default ".MAIN."             */
+  char progid[8];   /* `+' program id (.PROGID); empty -> 6 blanks            */
+  unsigned progid_ver; /* `+' record version byte (.PROGID)                   */
+  unsigned progid_rev; /* `+' record revision byte (.PROGID)                  */
+  int errors;       /* error count of the CURRENT pass (pass-2 = the total)   */
+  int errs_hdr;     /* prior-pass error total, shown in the PASM page header  */
+  int errs_mdef;    /* multiply-defined (`M') count: drives the leading page  */
   int errs_finsert; /* nested-.INSERT (`F') count: also drives the leading pg */
-  int count_only;  /* error-counting pre-pass: tally errs_hdr, list nothing   */
-  int mdef_page;   /* leading-page pass: list only `M'/`F' (report) lines     */
-  int cur_mdef;    /* this line redefines a multiply-defined label: on the
-                    * report page its operand forward refs render undefined */
-  char lst_ec[2];  /* up to two error-code letters for this line's column 1 */
-  int lst_nec;     /* number of error codes recorded for this line          */
-  int lst_qoff[2]; /* per-error `?' marker offsets into the line (one each)  */
-  const char *cur_line; /* the source line currently being assembled        */
-  int ppos;        /* current parse offset into cur_line, for the `?' marker */
-  int eval_undef;  /* the last eval failed on an undefined symbol (-> `U')   */
+  int count_only;   /* error-counting pre-pass: tally errs_hdr, list nothing  */
+  int mdef_page;    /* leading-page pass: list only `M'/`F' (report) lines    */
+  int cur_mdef;     /* this line redefines a multiply-defined label: on the
+                     * report page its operand forward refs render undefined  */
+  char lst_ec[2];   /* up to two error-code letters for this line's column 1  */
+  int lst_nec;      /* number of error codes recorded for this line           */
+  int lst_qoff[2];  /* per-error `?' marker offsets into the line (one each)  */
+  const char *cur_line; /* the source line currently being assembled          */
+  int ppos;         /* current parse offset into cur_line, for the `?' marker */
+  int eval_undef;   /* the last eval failed on an undefined symbol (-> `U')   */
   int ended;
   u8 bytes[64];
   int nbytes;
@@ -247,17 +247,17 @@ typedef struct
   u16 img_min, img_max;
   int img_any;
 
-  int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default) */
-  int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0) */
-  int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)  */
-  int obj_psym;      /* .PSYM: append the `&' symbol-table record(s)        */
-  int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning */
-  int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn       */
-  value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'    */
-  int ntemps;        /* number of .TEMPS elements currently allocated       */
+  int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default)    */
+  int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0)    */
+  int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)     */
+  int obj_psym;      /* .PSYM: append the `&' symbol-table record(s)          */
+  int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning   */
+  int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn         */
+  value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'      */
+  int ntemps;        /* number of .TEMPS elements currently allocated         */
   int mac_argc;      /* `&': arg count of the macro invocation being expanded */
-  u16 obj_start;     /* start address from `.END expr' (0 if none) */
-  int obj_start_rel; /* relocation base of the start address */
+  u16 obj_start;     /* start address from `.END expr' (0 if none)            */
+  int obj_start_rel; /* relocation base of the start address                  */
 
   /*
    * object output records the emitted byte stream in EMISSION order
@@ -271,15 +271,15 @@ typedef struct
    */
 
   u8 *em_byte;      /* emitted byte values, emission order (NULL=no record) */
-  u8 *em_rel;       /* REL_ABS/REL_LO/REL_HI per emitted byte */
-  u8 *em_tbase;     /* target relocation base of each REL_LO 16-bit datum */
-  long em_n;        /* number of emitted bytes recorded */
+  u8 *em_rel;       /* REL_ABS/REL_LO/REL_HI per emitted byte               */
+  u8 *em_tbase;     /* target relocation base of each REL_LO 16-bit datum   */
+  long em_n;        /* number of emitted bytes recorded                     */
   long em_cap;
   int em_pending;   /* emit_word: 2 -> next byte REL_LO, then 1 -> REL_HI */
-  int em_pend_base; /* target base of the reloc16 emit_word is emitting */
-  u16 *span_a;      /* span start addresses */
-  u16 *span_n;      /* span lengths */
-  u8 *span_seg;     /* active relocation base per span */
+  int em_pend_base; /* target base of the reloc16 emit_word is emitting   */
+  u16 *span_a;      /* span start addresses                               */
+  u16 *span_n;      /* span lengths                                       */
+  u8 *span_seg;     /* active relocation base per span                    */
   int nspans;
   int span_cap;
   long emit_prev;   /* last address emitted this pass, or -1 */
@@ -297,13 +297,13 @@ typedef struct
   char subtitle[64];
 
   /* macro support */
-  unsigned genctr; /* counter for %-generated local labels */
-  int macro_depth; /* recursion guard */
-  int macro_exit;  /* .EXIT: terminate the current expansion*/
+  unsigned genctr; /* counter for %-generated local labels                    */
+  int macro_depth; /* recursion guard                                         */
+  int macro_exit;  /* .EXIT: terminate the current expansion                  */
   const macrodef *cur_macro; /* macro being expanded (for .GOTO label search) */
-  int macro_goto;  /* .GOTO target body index for this expansion, or -1     */
-  long goto_iters; /* .GOTO body-line iteration guard (anti-runaway-loop)   */
-  unsigned scope;  /* local-symbol scope ('..' labels) */
+  int macro_goto;  /* .GOTO target body index for this expansion, or -1       */
+  long goto_iters; /* .GOTO body-line iteration guard (anti-runaway-loop)     */
+  unsigned scope;  /* local-symbol scope ('..' labels)                        */
 
   /* macro call whose parenthesized argument spans several lines */
   int pending;
@@ -314,24 +314,24 @@ typedef struct
   u16 lc_stmt; /* statement-start LC, for '.' in operands */
 
   /* listing format (TDL ZASM vs PSA PASM) */
-  dialect_t dialect; /* selects the TDL vs PSA listing layout */
-  unsigned lst_ctl;  /* listing-control flags (LSTC_*) */
-  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack */
-  int lst_nsave; /* number of saved entries on that stack */
-  int lst_ctlstmt; /* this line is a listing-control statement */
-  int lst_kind; /* this line: 0 insn, 1 data bytes, 2 words */
-  int lst_opw; /* insn operand width (0/1/2) for value-form */
-  long lst_loc; /* LOC-column value: -1 blank, -2 use lc0 */
-  long lst_line; /* listing line counter, for pagination */
-  int lst_page; /* current listing page number */
+  dialect_t dialect; /* selects the TDL vs PSA listing layout   */
+  unsigned lst_ctl;  /* listing-control flags (LSTC_*)          */
+  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack      */
+  int lst_nsave;   /* number of saved entries on that stack     */
+  int lst_ctlstmt; /* this line is a listing-control statement  */
+  int lst_kind;    /* this line: 0 insn, 1 data bytes, 2 words  */
+  int lst_opw;     /* insn operand width (0/1/2) for value-form */
+  long lst_loc;    /* LOC-column value: -1 blank, -2 use lc0    */
+  long lst_line;   /* listing line counter, for pagination      */
+  int lst_page;    /* current listing page number               */
   int lst_pending; /* the first body page's heading is owed: emit it (without a
                     * form-feed) before the first listed line, so a .TITLE or
                     * .SBTTL ahead of that line already shows in it */
   int lst_pagelen; /* lines per page (PASM `.PAGE width,length' 2nd arg); the
                     * width->wrap (1st arg) is not yet implemented */
   int lst_lbase; /* LC relocation base: -1 derive from lc_reloc/base, else # */
-  int lst_obase; /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext) */
-  u8 wreloc[32]; /* per-.WORD-value relocation base (0 abs, 1/2/3/ext) */
+  int lst_obase; /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext)   */
+  u8 wreloc[32]; /* per-.WORD-value relocation base (0 abs, 1/2/3/ext)       */
 
   /*
    * .LIMAGE multi-line byte image: source-line offsets at which the source
@@ -347,9 +347,9 @@ typedef struct
    */
 
   const char *mac_src; /* override source text for this listing line, or NULL */
-  int mac_plus; /* place the '+' macro-continuation marker */
-  int mac_active; /* inside the outermost macro expansion's listing */
-  int lst_suppress; /* assemble a line but emit no listing output */
+  int mac_plus;        /* place the '+' macro-continuation marker             */
+  int mac_active;      /* inside the outermost macro expansion's listing      */
+  int lst_suppress;    /* assemble a line but emit no listing output          */
   /*
    * .SALL macro-collapse: the whole expansion lists as ONE bare call line that
    * carries the first emitting statement's LC + value-form bytes.  sall_call is
@@ -631,22 +631,22 @@ err_letter (const char *msg)
   {
     const char *msg;
     char code;
-  } map[] = { { "unknown operator", 'O' },
-              { "user .ERROR", '*' },
-              { "phase error", 'P' },
-              { "multiply-defined symbol", 'M' },
-              { "8-bit relocation illegal", 'R' },
-              { "8-bit external out of range", 'R' },
-              { "8-bit external illegal", 'R' },
-              { "size must be absolute", 'R' },
+  } map[] = { { "unknown operator",             'O' },
+              { "user .ERROR",                  '*' },
+              { "phase error",                  'P' },
+              { "multiply-defined symbol",      'M' },
+              { "8-bit relocation illegal",     'R' },
+              { "8-bit external out of range",  'R' },
+              { "8-bit external illegal",       'R' },
+              { "size must be absolute",        'R' },
               { "z80 instruction in 8080 mode", 'Z' },
-              { "nested .INSERT", 'F' },
-              { "multiply-defined reference", 'D' },
-              { "subscript", 'S' },
-              { "extra operand", 'Q' },
-              { "register value range", 'Q' },
-              { "bad index register", 'X' },
-              { NULL, 0 } };
+              { "nested .INSERT",               'F' },
+              { "multiply-defined reference",   'D' },
+              { "subscript",                    'S' },
+              { "extra operand",                'Q' },
+              { "register value range",         'Q' },
+              { "bad index register",           'X' },
+              { NULL,                             0 } };
   int i;
 
   for (i = 0; NULL != map[i].msg; i++)
@@ -672,7 +672,8 @@ aerr (astate *a, const char *line, const char *msg)
 
       /* `M' (multiply-defined) and `F' (nested .INSERT) both get reproduced
        * on the leading report page; tally each so its pass runs only when
-       * such an error exists */
+       * such an error exists
+       */
       {
         char ec = err_letter (msg);
 
@@ -2090,7 +2091,7 @@ canon_dir (char *op)
   } tab[] = { { ".DEFIN", ".DEFINE" }, { ".EXTER", ".EXTERN" },
               { ".INSER", ".INSERT" }, { ".INTER", ".INTERN" },
               { ".REMAR", ".REMARK" }, { ".IFNDE", ".IFNDEF" },
-              { ".PRGEN", ".PRGEND" }, { NULL, NULL } };
+              { ".PRGEN", ".PRGEND" }, {     NULL,      NULL } };
   int i;
 
   if ('.' != op[0] || strlen (op) < 6)
@@ -2122,6 +2123,8 @@ casm (const astate *a)
 
   return 1;
 }
+
+/******************************************************************************/
 
 /*
  * Count the conditional block(s) a statement line closes: ']' tokens with no
@@ -2160,6 +2163,8 @@ is_string_dir (const char *s)
       || 0 == strcmp (op, ".ASCIS") || 0 == strcmp (op, ".DC")
       || 0 == strcmp (op, "DCS");
 }
+
+/******************************************************************************/
 
 static int
 count_block_closes (const char *s)
@@ -2205,6 +2210,8 @@ is_conditional (const char *op)
       || 0 == strcmp (op, ".IFB") || 0 == strcmp (op, ".IFNB")
       || 0 == strcmp (op, ".IF1") || 0 == strcmp (op, ".IF2");
 }
+
+/******************************************************************************/
 
 /*
  * Given S pointing just past a block-opening `[', return the matching `]'
@@ -2318,6 +2325,8 @@ rstrip (char *s)
   while (n > 0 && (' ' == s[n - 1] || '\t' == s[n - 1]))
     s[--n] = '\0';
 }
+
+/******************************************************************************/
 
 static int
 str_cond_test (const char *op, const char *operands)
@@ -3205,6 +3214,8 @@ cmp_decl (const void *pa, const void *pb)
   return ((x > y) - (x < y));
 }
 
+/******************************************************************************/
+
 /*
  * Collect the external/internal/entry symbols into objsym arrays (each sized
  * sym_count(t)) for the `\'/`#'/`@' object records, in the originals' emission
@@ -3643,7 +3654,9 @@ dupstr (const char *s)
  * Routing every dupstr() result through this transfer-of-ownership helper
  * makes the pointer's escape explicit; an older gcc -fanalyzer otherwise
  * reports a spurious leak where the allocation and the array store share
- * one statement. */
+ * one statement.
+ */
+
 static void
 macro_addbody (macrodef *m, char *s)
 {
@@ -4072,6 +4085,8 @@ mac_label (const char *line, char *name_out)
 
   return (n > 0 && '>' == *p);
 }
+
+/******************************************************************************/
 
 /*
  * The macro-body index of the FIRST macro label `name>' (case-insensitive),

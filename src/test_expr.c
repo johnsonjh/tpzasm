@@ -16,8 +16,6 @@
 
 #include "asm.h"
 
-int allow_long_symbols;
-
 /******************************************************************************/
 
 #include <stdio.h>
@@ -25,10 +23,13 @@ int allow_long_symbols;
 
 /******************************************************************************/
 
-#include "asm.h"
 #ifdef __ORACLE_LINT__
 # include "platform.h"
 #endif
+
+/******************************************************************************/
+
+int allow_long_symbols;
 
 /******************************************************************************/
 
@@ -211,46 +212,46 @@ main (void)
   ENV.scope = 0;
 
   /* constants */
-  check ("0", 10, 0, 0);
-  check ("0FFH", 10, 255, 0);
-  check ("1010B", 10, 10, 0);
-  check ("2+3*4", 10, 14, 0);
-  check ("2*3&6", 10, 4, 0);
-  check ("1<2+3", 10, 7, 0);
-  check ("100H-1", 10, 255, 0);
-  check ("10", 16, 0x10, 0);
+  check ("0",      10, 0,    0);
+  check ("0FFH",   10, 255,  0);
+  check ("1010B",  10, 10,   0);
+  check ("2+3*4",  10, 14,   0);
+  check ("2*3&6",  10, 4,    0);
+  check ("1<2+3",  10, 7,    0);
+  check ("100H-1", 10, 255,  0);
+  check ("10",     16, 0x10, 0);
 
   /* TDL/PSA logical operators: ^ XOR, # unary NOT, & AND, ! OR, < > shifts */
-  check ("5^3", 10, 6, 0);     /* exclusive OR                     */
-  check ("#5", 10, 0xFFFA, 0); /* unary NOT (one's complement)     */
-  check ("#0", 10, 0xFFFF, 0);
+  check ("5^3",  10, 6,      0); /* exclusive OR                     */
+  check ("#5",   10, 0xFFFA, 0); /* unary NOT (one's complement)     */
+  check ("#0",   10, 0xFFFF, 0);
   check ("#5+1", 10, 0xFFFB, 0); /* # binds tighter than + : (#5)+1 */
   check ("1+#0", 10, 0x0000, 0); /* 1 + 0xFFFF, truncated           */
-  check ("5^#0", 10, 0xFFFA, 0); /* 5 XOR 0xFFFF                     */
-  check ("5!2", 10, 7, 0);       /* inclusive OR                     */
-  check ("5&3", 10, 1, 0);       /* AND                              */
+  check ("5^#0", 10, 0xFFFA, 0); /* 5 XOR 0xFFFF                    */
+  check ("5!2",  10, 7,      0); /* inclusive OR                    */
+  check ("5&3",  10, 1,      0); /* AND                             */
 
   /* ^X radix prefix: the number must begin with a numeral (^H0FF, not ^HFF) */
   check ("^H0FF", 10, 0x00FF, 0);
-  check ("^B101", 10, 5, 0);
-  check ("^O17", 10, 15, 0);
+  check ("^B101", 10, 5,      0);
+  check ("^O17",  10, 15,     0);
 
   /* symbols + relocation (manual worked examples) */
-  check ("SYMX", 10, 0x100, 1);
-  check ("SYMX+SYMY-SYMZ", 10, 0x000, 1); /* relocatable */
-  check ("SYMX-SYMZ", 10, 0xFE00, 0);     /* absolute    */
-  check ("SYMX+7", 10, 0x107, 1);
+  check ("SYMX",             10, 0x100,  1);
+  check ("SYMX+SYMY-SYMZ",   10, 0x000,  1); /* relocatable */
+  check ("SYMX-SYMZ",        10, 0xFE00, 0); /* absolute    */
+  check ("SYMX+7",           10, 0x107,  1);
   check ("3*SYMX-SYMY-SYMZ", 10, 0xFE00, 1); /* 0x300-0x200-0x300, reloc 1 */
-  check ("ABSA+ABSB", 10, 8, 0);
-  check (".", 10, 0x40, 1); /* location counter */
-  check (".+2", 10, 0x42, 1);
+  check ("ABSA+ABSB",        10, 8,      0);
+  check (".",                10, 0x40,   1); /* location counter */
+  check (".+2",              10, 0x42,   1);
 
   /* multi-segment relocation bases (.DATA. base 2, .BLNK. base 3) */
-  check_seg ("D1", 0x80, 1, 2);     /* .DATA.-relative          */
-  check_seg ("D1+5", 0x85, 1, 2);   /* .DATA. + constant        */
-  check ("D1-D2", 10, 0xFFF0, 0);   /* same base cancels -> abs */
-  check_seg ("BK+1", 0x11, 1, 3);   /* .BLNK.-relative          */
-  check_seg ("SYMX+(D1-D2)", 0xF0, 1, 1); /* T+(V-W): base 1 result */
+  check_seg ("D1",           0x80, 1,      2); /* .DATA.-relative          */
+  check_seg ("D1+5",         0x85, 1,      2); /* .DATA. + constant        */
+  check ("D1-D2",            10,   0xFFF0, 0); /* same base cancels -> abs */
+  check_seg ("BK+1",         0x11, 1,      3); /* .BLNK.-relative          */
+  check_seg ("SYMX+(D1-D2)", 0xF0, 1,      1); /* T+(V-W): base 1 result   */
 
   /* predefined base symbols resolve to the live per-segment high-water */
   {
@@ -273,23 +274,23 @@ main (void)
   }
 
   /* externals (additive only) */
-  check_ext ("EXTE", 0, "EXTE");
+  check_ext ("EXTE",   0, "EXTE");
   check_ext ("EXTE+5", 5, "EXTE");
   check_ext ("5+EXTE", 5, "EXTE");
 
   /* illegal combinations */
-  check_err ("SYMX+SYMY"); /* reloc coeff 2 */
-  check_err ("-SYMX");     /* reloc coeff -1 */
-  check_err ("SYMX*SYMY"); /* two relocatables multiplied */
-  check_err ("SYMX/2");    /* relocatable divided */
-  check_err ("SYMX&1");    /* relocatable logical */
-  check_err ("EXTE*2");    /* external in multiply */
-  check_err ("EXTE+SYMX"); /* external with relocatable */
-  check_err ("EXTE-EXTE"); /* two externals */
-  check_err ("D1+SYMX"); /* different relocation bases (.DATA. + .PROG.) */
-  check_err ("D1-SYMX"); /* different relocation bases */
-  check_err ("BK+SYMX"); /* different relocation bases (.BLNK. + .PROG.) */
-  check_err ("2*D1");    /* relocatable coefficient 2 */
+  check_err ("SYMX+SYMY"); /* reloc coeff 2                                */
+  check_err ("-SYMX");     /* reloc coeff -1                               */
+  check_err ("SYMX*SYMY"); /* two relocatables multiplied                  */
+  check_err ("SYMX/2");    /* relocatable divided                          */
+  check_err ("SYMX&1");    /* relocatable logical                          */
+  check_err ("EXTE*2");    /* external in multiply                         */
+  check_err ("EXTE+SYMX"); /* external with relocatable                    */
+  check_err ("EXTE-EXTE"); /* two externals                                */
+  check_err ("D1+SYMX");   /* different relocation bases (.DATA. + .PROG.) */
+  check_err ("D1-SYMX");   /* different relocation bases                   */
+  check_err ("BK+SYMX");   /* different relocation bases (.BLNK. + .PROG.) */
+  check_err ("2*D1");      /* relocatable coefficient 2                    */
 
   {
     symbol *buf[64];
@@ -314,6 +315,7 @@ main (void)
   }
 
   sym_free (t);
+
   (void)printf ("\n%s (%d failure%s)\n",
                 (fails ? "TESTS FAILED" : "ALL TESTS PASSED"), fails,
                 (1 == fails ? "" : "s"));

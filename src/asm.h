@@ -73,9 +73,10 @@ struct symbol; /* forward */
 /******************************************************************************/
 
 /*
- * A 16-bit assembly-time value with relocation attributes.  At load time the
- * effective value is  value + reloc*r.  A complete expression is legal only if
- * reloc is 0 (absolute) or 1 (relocatable), or references a single external.
+ * A 16-bit assembly-time value with relocation attributes.
+ * At load time the effective value is  value + reloc*r.
+ * A complete expression is legal only if reloc is 0 (absolute)
+ * or 1 (relocatable), or references a single external.
  */
 
 typedef struct
@@ -83,7 +84,7 @@ typedef struct
   u16 value;
   long reloc;         /* relocation coefficient n             */
   int base;           /* relocation base: 0 abs, 1 .PROG.,    */
-                      /* 2 .DATA., 3 .BLNK., >=4 external      */
+                      /* 2 .DATA., 3 .BLNK., >=4 external     */
   struct symbol *ext; /* external symbol referenced, or NULL  */
 } value_t;
 
@@ -95,15 +96,15 @@ typedef struct symbol
   value_t val;
   unsigned defined : 1;
   unsigned external : 1;
-  unsigned internal : 1; /* .INTERN: emit an internal-symbol (`#') record */
-  unsigned entry : 1;    /* .ENTRY: also an entry point (`@' record) */
-  unsigned mdef : 1;     /* multiply-defined (listing `M' class flag) */
-  unsigned udef : 1;     /* referenced but undefined (listing `U' flag) */
-  unsigned seen : 3;     /* pass # in which last defined as a label: holds
-                          * 1, 2, 3 (count-only) and 4 (mdef report page),
-                          * so it needs 3 bits -- 2 would truncate pass 4 to
-                          * 0 and break multiply-defined detection on that
-                          * pass (a spurious phase error, lost `M' line) */
+  unsigned internal : 1;  /* .INTERN: emit an internal-symbol (`#') record  */
+  unsigned entry : 1;     /* .ENTRY: also an entry point (`@' record)       */
+  unsigned mdef : 1;      /* multiply-defined (listing `M' class flag)      */
+  unsigned udef : 1;      /* referenced but undefined (listing `U' flag)    */
+  unsigned seen : 3;      /* pass # in which last defined as a label: holds
+                           * 1, 2, 3 (count-only) and 4 (mdef report page),
+                           * so it needs 3 bits, 2 would truncate pass 4 to
+                           * 0 and break multiply-defined detection on that
+                           * pass (a spurious phase error, lost `M' line)   */
   unsigned short decl;    /* .INTERN/.ENTRY declaration order (for records) */
   unsigned short defseq;  /* definition order (for & .PSYM record), 0=unset */
   struct symbol *next;
@@ -240,37 +241,39 @@ typedef struct
 
 typedef struct
 {
-  const u8 *em_byte;  /* emitted byte values, in emission order           */
-  const u8 *em_rel;   /* parallel REL_* class per emitted byte            */
-  const u8 *em_tbase; /* parallel target base of each REL_LO 16-bit datum */
-  const u16 *span_a;  /* emission-order span start addresses              */
-  const u16 *span_n;  /* emission-order span lengths                      */
-  const u8 *span_seg; /* parallel active relocation base per span         */
-  int nspans;         /* number of emission spans                         */
-  unsigned prog_size; /* .PROG. segment size (LC high-water)              */
-  unsigned data_size; /* .DATA. segment size                              */
-  unsigned blnk_size; /* .BLNK. segment size                              */
-  int abs_mode;       /* 1 = .PABS (Intel `:' records), 0 = .PREL (`;')   */
-  int data_base;      /* data-record relocation base (1 .PROG., 0 pinned) */
-  unsigned start;     /* program start address (EOF record)               */
-  int start_reloc;    /* start-address relocation base (0 abs, 1 .PROG.)  */
-  int ascii;          /* 1 = ASCII (.PHEX), 0 = binary (.PBIN)            */
-  int emit_progid;    /* 1 = emit the `+' program-id record (PASM)        */
-  int xlink;          /* 1 = .XLINK: omit the `!'/`\\' link records       */
-  const char *modname; /* `!' module name (.IDENT, default ".MAIN.")      */
+  const u8 *em_byte;   /* emitted byte values, in emission order           */
+  const u8 *em_rel;    /* parallel REL_* class per emitted byte            */
+  const u8 *em_tbase;  /* parallel target base of each REL_LO 16-bit datum */
+  const u16 *span_a;   /* emission-order span start addresses              */
+  const u16 *span_n;   /* emission-order span lengths                      */
+  const u8 *span_seg;  /* parallel active relocation base per span         */
+  int nspans;          /* number of emission spans                         */
+  unsigned prog_size;  /* .PROG. segment size (LC high-water)              */
+  unsigned data_size;  /* .DATA. segment size                              */
+  unsigned blnk_size;  /* .BLNK. segment size                              */
+  int abs_mode;        /* 1 = .PABS (Intel `:' records), 0 = .PREL (`;')   */
+  int data_base;       /* data-record relocation base (1 .PROG., 0 pinned) */
+  unsigned start;      /* program start address (EOF record)               */
+  int start_reloc;     /* start-address relocation base (0 abs, 1 .PROG.)  */
+  int ascii;           /* 1 = ASCII (.PHEX), 0 = binary (.PBIN)            */
+  int emit_progid;     /* 1 = emit the `+' program-id record (PASM)        */
+  int xlink;           /* 1 = .XLINK: omit the `!'/`\\' link records       */
+  const char *modname; /* `!' module name (.IDENT, default ".MAIN.")       */
   const char *progid;  /* `+' program id (.PROGID); NULL -> 6 blanks       */
   unsigned progid_ver; /* `+' program-id version byte (.PROGID)            */
   unsigned progid_rev; /* `+' program-id revision byte (.PROGID)           */
-  const objsym *exts;  /* external bases for the `\\' record (size 0)     */
+  const objsym *exts;  /* external bases for the `\\' record (size 0)      */
   int nexts;
-  const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for `#'       */
+  const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for `#'        */
   int nints;
-  const objsym *ents;  /* entry points (.ENTRY) for the `@' record        */
+  const objsym *ents;  /* entry points (.ENTRY) for the `@' record         */
   int nents;
   int psym;            /* 1 = .PSYM: append the `&' symbol-table record(s) */
   const objsym *psyms; /* all global symbols for `&' (segs, exts, defs)    */
   int npsyms;
 } objspec;
+
+/******************************************************************************/
 
 /*
  * Stream the TDL Object Module (or Intel-hex absolute module) for one or more
