@@ -611,7 +611,8 @@ command -v "${SHELLCHECK_CMD:-shellcheck}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHELLCHECK_CMD:-shellcheck}" -o any,all \
-      ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
+      ./.bindist.sh ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh \
+      ./tests/*.sh
   ); then
     :
   else
@@ -627,7 +628,8 @@ command -v "${SHFMT_CMD:-shfmt}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHFMT_CMD:-shfmt}" -bn -sr -fn -i 2 -s -d \
-      ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
+      ./.bindist.sh ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh \
+      ./tests/*.sh
   ); then
     :
   else
