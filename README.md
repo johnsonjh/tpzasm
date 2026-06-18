@@ -15,6 +15,8 @@ An enhanced clone of **`HEXCOM`** 3.00, the DRI
 [Intel&nbsp;HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
 tool, is also included.
 
+[Precompiled binaries for many systems are available for download.](#downloads)
+
 ---
 
 <!-- toc -->
