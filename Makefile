@@ -219,6 +219,7 @@ lint:
 
 distclean: clean
 	rm -f tags cscope.out GPATH GRTAGS GTAGS TAGS
+	rm -f tools/fmtime tools/fmtime.com tools/fmtime.exe
 	rm -f -r ./pvsreport core ./*.core core-* 2> /dev/null
 	command -v git > /dev/null 2>&1 && git clean -ndx 2> /dev/null || :
 

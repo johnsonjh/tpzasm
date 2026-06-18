@@ -60,6 +60,7 @@ symtab.txt
 /test_expr
 *.tmp
 *.TMP
+/tools/fmtime
 /*UME.md
 *.unittest
 /work/

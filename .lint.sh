@@ -319,7 +319,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
       ${CPPCHECK_FLAGS:?} --platform=unix64 \
-      ./src/*.c
+      ./tools/fmtime.c ./src/*.c
   ); then
     :
   else
@@ -337,7 +337,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
       ${CPPCHECK_FLAGS:?} --platform=unix32 \
-      ./src/*.c
+      ./tools/fmtime.c ./src/*.c
   ); then
     :
   else
@@ -360,7 +360,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
       ${CPPCHECK_FLAGS:?} --platform=win64 \
-      ./src/*.c
+      ./tools/fmtime.c ./src/*.c
   ); then
     :
   else
@@ -383,7 +383,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
       ${CPPCHECK_FLAGS:?} --platform=avr8 \
-      ./src/*.c
+      ./tools/fmtime.c ./src/*.c
   ); then
     :
   else
@@ -549,6 +549,8 @@ command -v "${CH_CMD:-ch}" > /dev/null 2>&1 && {
   rm -f src/_chtmp.c
   # shellcheck disable=SC2310
   (cd src && ch_check ./hexcom.c) || rc=1
+  # shellcheck disable=SC2310
+  (cd tools && ch_check ./fmtime.c) || rc=1
 }
 
 ################################################################################
@@ -797,6 +799,15 @@ case "$(uname -s 2> /dev/null || :)" in
 NetBSD)
   if command -p -v lint > /dev/null 2>&1; then
     printf '\n%s\n\n' ">>>>>>>>>>>>>>>> NetBSD lint <<<<<<<<<<<<<<<<"
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./tools/fmtime.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
     if (
       set -x
       lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/lex.c

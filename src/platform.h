@@ -94,7 +94,9 @@
 
 /******************************************************************************/
 
+# ifndef NO_PLATFORM_NAME
 const char *platform_name (void);
+# endif
 # ifdef HAVE_SYSARCH
 const char *sysarch (void);
 # endif
