@@ -1,6 +1,6 @@
 /*
  * TPZASM: TDL ZASM / PSA PASM compatible assembler - main.c
- * Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
+ * Copyright (c) 2025-2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
  * SPDX-License-Identifier: MIT-0
  * scspell-id: 528d6ba6-6335-11f1-a96f-246e96298730
  */
@@ -15,6 +15,7 @@
 /******************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /******************************************************************************/
@@ -58,7 +59,7 @@ dialect_from_name (const char *argv0)
 
 /******************************************************************************/
 
-#if defined(__TIMESTAMP__) || defined(__DATE__) || defined(__TIME__)
+#if defined(__DATE__) || defined(__TIME__)
 
 # define TRIMSTR_SLOTS 3
 
@@ -160,55 +161,73 @@ static void
 usage (const char *prog, dialect_t dialect, int version)
 {
   (void)fprintf (stderr,
-                 "TPZASM - TDL ZASM / PSA PASM compatible assembler %s\n"
+                 "TPZASM - TDL ZASM / PSA PASM compatible Z80 assembler %s\n"
                  "%s%s%s%s%s%s"
                  "Copyright (c) 2026 Jeffrey H. Johnson"
                  " <johnsonjh.dev@gmail.com>\n",
                  (osinfo () ? osinfo () : ""), ASM_VERSION,
-#ifdef __TIMESTAMP__
-                 " (",
-# ifndef __clang__
-                 ((*(__TIMESTAMP__)) ? trimstr (__TIMESTAMP__) : ""), "", "",
-                 ")"
-# else
-                 trimstr (__TIMESTAMP__), "", "", ")"
-# endif
+#if defined(__DATE__)
+                 " (Built ",
+                 ((*(__DATE__)) ? trimstr (__DATE__) : ""), "", "", ")"
 #else
-# if defined(__DATE__) && defined(__TIME__)
-                 " (", ((*(__DATE__)) ? trimstr (__DATE__) : ""), " ",
-                 ((*__TIME__) ? trimstr (__TIME__) : ""), ")"
-# elif defined(__DATE__)
-                 " (", ((*(__DATE__)) ? trimstr (__DATE__) : ""), "", "", ")"
-# else
                  "", "", "", "", " -"
-# endif
 #endif
   ASM_URL);
 
   if (0 == version)
     {
       (void)fprintf (stderr,
-      "\n"
-      "  Usage: %s [options] <source[.asm]>\n\n"
-      "    -z, --zasm         Emulate TDL ZASM 2.21 behavior%s\n"
-      "    -p, --pasm         Emulate PSA PASM 1.02 behavior%s\n"
-      "    -o, --out <file>   Write the assembled binary image to file\n"
-      "    -P, --pad          Pad output to full CP/M record boundary\n"
-      "    -l, --list <file>  Write the listing to file"
-      " [default: stderr]\n",
-      prog,
-      (DIALECT_ZASM == dialect ? " [default]" : ""),
-      (DIALECT_PASM == dialect ? " [default]" : ""));
-
+"\n"
+"Usage: %s [options] <source[.asm]>"
+"\n"
+"\n"
+"  Options:\n"
+"    -z, --zasm            Emulate TDL ZASM 2.21 behavior%s"
+"\n"
+"    -p, --pasm            Emulate PSA PASM 1.02 behavior%s"
+"\n"
+"    -o, --out <file>      Write the assembled binary image to <file>"
+"\n"
+"    -P, --pad             Pad output to full CP/M record boundary"
+"\n"
+"    -l, --list <file>     Write the listing to <file> [default: stderr]"
+"\n",
+      prog, (DIALECT_ZASM == dialect ? " [default]" : ""),
+            (DIALECT_PASM == dialect ? " [default]" : ""));
       (void)fprintf (stderr,
-      "    -R, --pbin <file>  Write the object module as binary TDL REL\n"
-      "    -X, --phex <file>  Write the object module as ASCII-hex REL\n"
-      "    -L, --long         Allow long (>6 character) symbol names\n"
-      "    -r, --read <file>  Answer assembly-time prompts from file\n"
-      "    -e, --expr <expr>  Evaluate single expression and exit\n"
-      "    -v, --version      Show version information and exit\n"
-      "    -h, --help         Show this help text and exit\n"
-      "\n");
+"    -R, --pbin <file>     Write the object module as binary TDL REL to <file>"
+"\n"
+"    -X, --phex <file>     Write the object module as ASCII-hex REL to <file>"
+"\n"
+"    -L, --long            Allow long (>6 character, non-standard) symbol names"
+"\n"
+"    -r, --read <file>     Answer assembly-time prompts from <file>"
+"\n");
+      (void)fprintf (stderr,
+"    -i, --include <file>  Include <file> before processing <source[.asm]>"
+"\n"
+"    -a, --prefix <expr>   Evaluate <expr> before processing <source[.asm]>"
+"\n"
+"    -e, --expr <expr>     Evaluate only expression <expr> and exit"
+"\n"
+"    -v, --version         Display version information and exit"
+"\n"
+"    -h, --help            Display this help text and exit"
+"\n"
+"\n");
+    }
+}
+
+/******************************************************************************/
+
+static void
+free_preops (asm_preop *preops)
+{
+  while (preops)
+    {
+      asm_preop *p = preops;
+      preops = p->next;
+      FREE (p);
     }
 }
 
@@ -224,6 +243,8 @@ main (int argc, char **argv)
   const char *lstpath = NULL;
   const char *relpath = NULL;
   const char *hexpath = NULL;
+  asm_preop *preops = NULL;
+  asm_preop *pretail = NULL;
   int pad = 0;
   int i;
 
@@ -247,6 +268,7 @@ main (int argc, char **argv)
                   {  "pad", 'P' }, { "list", 'l' }, {    "pbin", 'R' },
                   { "phex", 'X' }, { "long", 'L' }, {    "read", 'r' },
                   { "expr", 'e' }, { "help", 'h' }, { "version", 'v' },
+                  { "include", 'i' }, { "prefix", 'a' },
                 };
           int li;
 
@@ -261,6 +283,7 @@ main (int argc, char **argv)
             {
               (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
               usage (prog, dialect, 0);
+              free_preops (preops);
 
               return 2;
             }
@@ -290,11 +313,13 @@ main (int argc, char **argv)
 
             case 'v':
               usage (prog, dialect, 1);
+              free_preops (preops);
 
               return 0;
 
             case 'h':
               usage (prog, dialect, 0);
+              free_preops (preops);
 
               return 0;
 
@@ -302,6 +327,7 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -o needs a filename\n", prog);
+                  free_preops (preops);
 
                   return 2;
                 }
@@ -313,6 +339,7 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -l needs a filename\n", prog);
+                  free_preops (preops);
 
                   return 2;
                 }
@@ -326,6 +353,7 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -R needs a filename\n", prog);
+                  free_preops (preops);
 
                   return 2;
                 }
@@ -339,6 +367,7 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -X needs a filename\n", prog);
+                  free_preops (preops);
 
                   return 2;
                 }
@@ -355,6 +384,7 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -r needs a filename\n", prog);
+                  free_preops (preops);
 
                   return 2;
                 }
@@ -364,11 +394,49 @@ main (int argc, char **argv)
                   (void)fprintf (stderr,
                                  "%s: cannot open response file '%s'\n", prog,
                                  argv[i]);
+                  free_preops (preops);
 
                   return 2;
                 }
 
               break;
+
+            case 'i':
+            case 'a':
+              {
+                asm_preop *p;
+
+                if (i + 1 >= argc)
+                  {
+                    (void)fprintf (stderr, "%s: -%c needs an argument\n",
+                                   prog, opt);
+                    free_preops (preops);
+
+                    return 2;
+                  }
+
+                p = (asm_preop *)malloc (sizeof (asm_preop));
+
+                if (NULL == p)
+                  {
+                    (void)fprintf (stderr, "%s: out of memory\n", prog);
+                    free_preops (preops);
+
+                    return 2;
+                  }
+
+                p->type = opt;
+                p->arg = argv[++i];
+                p->next = NULL;
+
+                if (NULL == pretail)
+                  preops = p;
+                else
+                  pretail->next = p;
+
+                pretail = p;
+                break;
+              }
 
             case 'e':
               {
@@ -380,6 +448,7 @@ main (int argc, char **argv)
                   {
                     (void)fprintf (stderr, "%s: -e needs an expression\n",
                                    prog);
+                    free_preops (preops);
 
                     return 2;
                   }
@@ -396,12 +465,15 @@ main (int argc, char **argv)
                 if (expr_eval (argv[++i], &env, &v, &eerr))
                   {
                     (void)fprintf (stderr, "%s: -e: %s\n", prog, eerr);
+                    free_preops (preops);
+
                     return 1;
                   }
 
                 (void)printf ("%u (0x%04X)%s\n", (unsigned)v.value,
                               (unsigned)v.value,
                               (v.reloc ? " [relocatable]" : ""));
+                free_preops (preops);
 
                 return 0;
               }
@@ -409,6 +481,7 @@ main (int argc, char **argv)
             default:
               (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
               usage (prog, dialect, 0);
+              free_preops (preops);
 
               return 2;
             }
@@ -420,12 +493,19 @@ main (int argc, char **argv)
   if (NULL == src)
     {
       usage (prog, dialect, 0);
+      free_preops (preops);
 
       return 2;
     }
 
-  return asm_source (src, dialect, outpath, lstpath, relpath, hexpath, pad,
-                     allow_long_symbols);
+  {
+    int res = asm_source (src, dialect, outpath, lstpath, relpath, hexpath, pad,
+                          allow_long_symbols, preops);
+
+    free_preops (preops);
+
+    return res;
+  }
 }
 
 /******************************************************************************/

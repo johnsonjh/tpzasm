@@ -6441,10 +6441,30 @@ init_pass (astate *a, int pass)
 
 /******************************************************************************/
 
+static void
+process_preops (astate *a, const asm_preop *pre)
+{
+  const asm_preop *p;
+
+  a->lst_suppress = 1;
+
+  for (p = pre; NULL != p; p = p->next)
+    {
+      if ('i' == p->type)
+        process_file (a, p->arg);
+      else if ('a' == p->type)
+        do_line (a, p->arg);
+    }
+
+  a->lst_suppress = 0;
+}
+
+/******************************************************************************/
+
 int
 asm_source (const char *path, dialect_t dialect, const char *outpath,
             const char *lstpath, const char *relpath, const char *hexpath,
-            int pad, int long_symbols)
+            int pad, int long_symbols, const asm_preop *preops)
 {
   astate a;
   const char *slash, *base;
@@ -6629,6 +6649,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           }
 
         init_pass (&a, 1);
+        process_preops (&a, preops);
         process_module (&a, srcpath, modidx);
 
         /*
@@ -6644,6 +6665,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         a.errs_finsert = 0;
         init_pass (&a, 3);
         a.count_only = 1;
+        process_preops (&a, preops);
         process_module (&a, srcpath, modidx);
         a.count_only = 0;
 
@@ -6663,6 +6685,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             init_pass (&a, 4);
             a.mdef_page = 1;
             lst_header (&a);
+            process_preops (&a, preops);
             process_module (&a, srcpath, modidx);
             a.mdef_page = 0;
           }
@@ -6685,6 +6708,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
           a.obj_xlink = xlsave;
         }
         a.lst_pending = 1;
+        process_preops (&a, preops);
         process_module (&a, srcpath, modidx);
 
         /* this module's object records (-R binary REL, -X ASCII REL) */

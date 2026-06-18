@@ -48,16 +48,6 @@ trim_trailing_whitespace = true
 
 ################################################################################
 
-[tools/git-restore-mtime.py]
-charset = utf-8
-end_of_line = lf
-indent_style = space
-insert_final_newline = true
-max_line_length = 100
-trim_trailing_whitespace = true
-
-################################################################################
-
 [*.asm]
 charset = utf-8
 end_of_line = lf

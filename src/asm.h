@@ -208,13 +208,23 @@ void lex_line (const char *line, line_t *out);
 
 /******************************************************************************/
 
+typedef struct asm_preop
+{
+  int type; /* 'i' or 'a' */
+  const char *arg;
+  struct asm_preop *next;
+} asm_preop;
+
+/******************************************************************************/
+
 /* ---- two-pass driver (src/assemble.c) ------------------------------ */
 
 int asm_source (const char *path, dialect_t dialect, const char *outpath,
                 const char *lstpath, const char *relpath, /* -R: binary REL */
                 const char *hexpath, /* -X: ASCII REL  */
                 int pad, /* pad: 1=pad .com to next 128B boundary with 0x1A */
-                int long_symbols);
+                int long_symbols,
+                const asm_preop *preops);
 
 /******************************************************************************/
 
