@@ -108,10 +108,10 @@ emulation, and invoking it as `pasm` selects the **PSA PASM 1.02 emulation**.
 |                                                                                                            File  | Size         | Platform                              |
 |-----------------------------------------------------------------------------------------------------------------:|:-------------|:--------------------------------------|
 | [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                   | 188&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)     |
-| [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                   | 60&nbsp;KiB  | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
-| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                   | 64&nbsp;KiB  | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
-| [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                   | 68&nbsp;KiB  | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
-| [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz) | 56&nbsp;KiB  | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
+| [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                   | 60&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
+| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                   | 64&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
+| [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                   | 68&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
+| [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz) | 56&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
 | [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz) | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)   |
 
 ## Building from source
