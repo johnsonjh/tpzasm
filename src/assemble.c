@@ -33,7 +33,7 @@
 static ASM_NORETURN void
 fatal_oom (void)
 {
-  (void)fprintf (stderr, "\n*** Out of memory\n");
+  (void)fprintf (stderr, "\n*** Out of memory!\n");
   exit (2);
 }
 

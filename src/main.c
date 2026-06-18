@@ -168,7 +168,12 @@ usage (const char *prog, dialect_t dialect, int version)
                  (osinfo () ? osinfo () : ""), ASM_VERSION,
 #if defined(__DATE__)
                  " (Built ",
-                 ((*(__DATE__)) ? trimstr (__DATE__) : ""), "", "", ")"
+# ifdef __clang__
+                 trimstr (__DATE__),
+# else
+                 ((*(__DATE__)) ? trimstr (__DATE__) : ""),
+# endif
+                 "", "", ")"
 #else
                  "", "", "", "", " -"
 #endif
@@ -419,7 +424,7 @@ main (int argc, char **argv)
 
                 if (NULL == p)
                   {
-                    (void)fprintf (stderr, "%s: out of memory\n", prog);
+                    (void)fprintf (stderr, "%s: Out of memory!\n", prog);
                     free_preops (preops);
 
                     return 2;

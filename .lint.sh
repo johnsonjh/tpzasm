@@ -318,8 +318,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=unix64 \
-      ./tools/fmtime.c ./src/*.c
+      ${CPPCHECK_FLAGS:?} --platform=unix64 ./src/*.c
   ); then
     :
   else
@@ -336,8 +335,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=unix32 \
-      ./tools/fmtime.c ./src/*.c
+      ${CPPCHECK_FLAGS:?} --platform=unix32 ./src/*.c
   ); then
     :
   else
@@ -359,8 +357,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=win64 \
-      ./tools/fmtime.c ./src/*.c
+      ${CPPCHECK_FLAGS:?} --platform=win64 ./src/*.c
   ); then
     :
   else
@@ -382,8 +379,7 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=avr8 \
-      ./tools/fmtime.c ./src/*.c
+      ${CPPCHECK_FLAGS:?} --platform=avr8 ./src/*.c
   ); then
     :
   else
@@ -549,8 +545,6 @@ command -v "${CH_CMD:-ch}" > /dev/null 2>&1 && {
   rm -f src/_chtmp.c
   # shellcheck disable=SC2310
   (cd src && ch_check ./hexcom.c) || rc=1
-  # shellcheck disable=SC2310
-  (cd tools && ch_check ./fmtime.c) || rc=1
 }
 
 ################################################################################
@@ -611,8 +605,7 @@ command -v "${SHELLCHECK_CMD:-shellcheck}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHELLCHECK_CMD:-shellcheck}" -o any,all \
-      ./.bindist.sh ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh \
-      ./tests/*.sh
+      ./.bindist.sh ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
   ); then
     :
   else
@@ -628,8 +621,7 @@ command -v "${SHFMT_CMD:-shfmt}" > /dev/null 2>&1 && {
   if (
     set -x
     "${SHFMT_CMD:-shfmt}" -bn -sr -fn -i 2 -s -d \
-      ./.bindist.sh ./.timestamp.sh ./.common.sh ./.lint.sh ./tools/*.sh \
-      ./tests/*.sh
+      ./.bindist.sh ./.common.sh ./.lint.sh ./tools/*.sh ./tests/*.sh
   ); then
     :
   else
@@ -801,15 +793,6 @@ case "$(uname -s 2> /dev/null || :)" in
 NetBSD)
   if command -p -v lint > /dev/null 2>&1; then
     printf '\n%s\n\n' ">>>>>>>>>>>>>>>> NetBSD lint <<<<<<<<<<<<<<<<"
-    if (
-      set -x
-      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./tools/fmtime.c
-    ); then
-      :
-    else
-      printf '%s\n' "****** FAILURE DETECTED ******"
-      rc=1
-    fi
     if (
       set -x
       lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/lex.c

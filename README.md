@@ -21,14 +21,16 @@ tool, is also included.
 
 <!-- toc -->
 
-- [Status](#status)
 - [Usage](#usage)
 - [Downloads](#downloads)
 - [Building from source](#building-from-source)
   * [Portability](#portability)
+- [Status](#status)
 - [Notes](#notes)
   * [Developer notes](#developer-notes)
-  * [Future](#future)
+  * [Future plans](#future-plans)
+    + [CDL MACRO emulation](#cdl-macro-emulation)
+    + [PSA PASM 2.0 emulation](#psa-pasm-20-emulation)
 - [Reference](#reference)
   * [Original binaries](#original-binaries)
   * [Original documentation](#original-documentation)
@@ -43,24 +45,27 @@ tool, is also included.
 ## Usage
 
 ```
-TPZASM - TDL ZASM / PSA PASM compatible assembler (Linux/x86_64)
-Release 0.82 (Thu Jun 18 03:57:54 2026) https://github.com/johnsonjh/tpzasm
+TPZASM - TDL ZASM / PSA PASM compatible Z80 assembler (Linux/x86_64)
+Release 0.83 (Built Jun 18 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
-  Usage: asm [options] <source[.asm]>
+Usage: asm [options] <source[.asm]>
 
-    -z, --zasm         Emulate TDL ZASM 2.21 behavior [default]
-    -p, --pasm         Emulate PSA PASM 1.02 behavior
-    -o, --out <file>   Write the assembled binary image to file
-    -P, --pad          Pad output to full CP/M record boundary
-    -l, --list <file>  Write the listing to file [default: stderr]
-    -R, --pbin <file>  Write the object module as binary TDL REL
-    -X, --phex <file>  Write the object module as ASCII-hex REL
-    -L, --long         Allow long (>6 character) symbol names
-    -r, --read <file>  Answer assembly-time prompts from file
-    -e, --expr <expr>  Evaluate single expression and exit
-    -v, --version      Show version information and exit
-    -h, --help         Show this help text and exit
+  Options:
+    -z, --zasm            Emulate TDL ZASM 2.21 behavior [default]
+    -p, --pasm            Emulate PSA PASM 1.02 behavior
+    -o, --out <file>      Write the assembled binary image to <file>
+    -P, --pad             Pad output to full CP/M record boundary
+    -l, --list <file>     Write the listing to <file> [default: stderr]
+    -R, --pbin <file>     Write the object module as binary TDL REL to <file>
+    -X, --phex <file>     Write the object module as ASCII-hex REL to <file>
+    -L, --long            Allow long (>6 character, non-standard) symbol names
+    -r, --read <file>     Answer assembly-time prompts from <file>
+    -i, --include <file>  Include <file> before processing <source[.asm]>
+    -a, --prefix <expr>   Evaluate <expr> before processing <source[.asm]>
+    -e, --expr <expr>     Evaluate only expression <expr> and exit
+    -v, --version         Display version information and exit
+    -h, --help            Display this help text and exit
 ```
 
 **NOTE**: Invoking the assembler as `zasm` explicitly selects the
@@ -69,14 +74,16 @@ Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 ## Downloads
 
-|                                                                                                            File  | Size         | Platform                              |
-|-----------------------------------------------------------------------------------------------------------------:|:-------------|:--------------------------------------|
-| [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                   | 188&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)     |
-| [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                   | 60&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
-| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                   | 64&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
-| [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                   | 68&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
-| [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz) | 56&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
-| [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz) | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)   |
+|                                                                                                                  File  | Size         | Platform                             |
+|-----------------------------------------------------------------------------------------------------------------------:|:-------------|:-------------------------------------|
+| [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 188&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
+| [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                         | 60&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
+| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 64&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
+| [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                         | 68&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
+| [tpzasm-linuxarm32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm32.tar.gz) | 96&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;ARMv5)    |
+| [tpzasm-linuxarm64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm64.tar.gz) | 108&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;ARMv8)   |
+| [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz)       | 56&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
+| [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
 
 ## Building from source
 
@@ -185,12 +192,14 @@ error‑handling semantics, plus user‑configurable control of output padding.
   subject to the same terms and conditions as the
   [LLVM AI Tool Use Policy](https://llvm.org/docs/AIToolPolicy.html).
 
-### Future
+### Future plans
 
-* In 1979, after the closure of TDL/Xitan, Neil J. Colvin formed **Phoenix
-  Software Associates** (PSA), and Carl Galletti and Roger Amidon formed
-  **Computer Design Labs** (CDL), with both companies offering TDL‑derived
-  development tools for several years.
+In 1979, after the closure of TDL/Xitan, Neil J. Colvin formed **Phoenix
+Software Associates** (PSA), and Carl Galletti and Roger Amidon formed
+**Computer Design Labs** (CDL), with both companies offering TDL‑derived
+development tools for several years.
+
+#### CDL MACRO emulation
 
 * The **CDL MACRO** assemblers are in the same family, with three variants of
   these three assemblers definitively known from various listing outputs
@@ -220,6 +229,8 @@ error‑handling semantics, plus user‑configurable control of output padding.
   **CDL MACRO** without modification.  If these assemblers could be found and
   analyzed, their bugs, quirks, and listing styles could be emulated in a
   future **TPZASM** release.
+
+#### PSA PASM 2.0 emulation
 
 * Another **PSA PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (`C12011-0200G`,
   *likely a beta release*), is also known, though no documentation for it
