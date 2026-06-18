@@ -161,21 +161,21 @@ static void
 usage (const char *prog, dialect_t dialect, int version)
 {
   (void)fprintf (stderr,
-                 "TPZASM - TDL ZASM / PSA PASM compatible Z80 assembler %s\n"
-                 "%s%s%s%s%s%s"
-                 "Copyright (c) 2026 Jeffrey H. Johnson"
-                 " <johnsonjh.dev@gmail.com>\n",
-                 (osinfo () ? osinfo () : ""), ASM_VERSION,
+             "TPZASM - TDL ZASM / PSA PASM compatible 8080 / Z80 assembler %s\n"
+             "%s%s%s%s%s%s"
+             "Copyright (c) 2026 Jeffrey H. Johnson"
+             " <johnsonjh.dev@gmail.com>\n",
+             (osinfo () ? osinfo () : ""), ASM_VERSION,
 #if defined(__DATE__)
-                 " (Built ",
+             " (Built ",
 # ifdef __clang__
-                 trimstr (__DATE__),
+             trimstr (__DATE__),
 # else
-                 ((*(__DATE__)) ? trimstr (__DATE__) : ""),
+             ((*(__DATE__)) ? trimstr (__DATE__) : ""),
 # endif
-                 "", "", ")"
+             "", "", ")"
 #else
-                 "", "", "", "", " -"
+             "", "", "", "", " -"
 #endif
   ASM_URL);
 
