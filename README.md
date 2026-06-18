@@ -74,8 +74,8 @@ Usage: asm [options] <source[.asm]>
 
 ## Downloads
 
-|                                                                                                                  File  | Size         | Platform                             |
-|-----------------------------------------------------------------------------------------------------------------------:|:-------------|:-------------------------------------|
+|                                                                                                                  File  |         Size | Platform                             |
+|-----------------------------------------------------------------------------------------------------------------------:|-------------:|:-------------------------------------|
 | [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 188&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
 | [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                         | 60&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
 | [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 64&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
