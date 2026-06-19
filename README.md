@@ -5,11 +5,11 @@
 
 # TPZASM
 
-**TPZASM** is a portable cross‑assembler intended to be fully interchangeable
-(and in most cases bug‑for‑bug compatible) with the
-**TDL&nbsp;ZASM&nbsp;2.21** and **PSA&nbsp;PASM&nbsp;1.02** assemblers,
-targeting the Intel&nbsp;**8080**, Zilog&nbsp;**Z80**, and other
-equivalent processors.
+**TPZASM** (*pronounceable as* «***Topaz Assembler***») is a portable
+cross‑assembler intended to be fully interchangeable (and in most cases
+bug‑for‑bug compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
+**PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
+Zilog&nbsp;**Z80**, and other equivalent processors.
 
 An enhanced clone of **HEXCOM 3.00**, the DRI
 [Intel&nbsp;HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
@@ -239,9 +239,9 @@ development tools for several years.
   and the same relocatable object output) for all our TDL‑style test inputs.
   This release completely overhauls the listing format and adds some
   completely new modes, activated by the `.EPOP` and `.ZOP` pseudo‑ops,
-  allowing the use of Intel MACRO‑80‑style pseudo‑ops and Zilog mnemonics.
-  It also exhibits several behaviors that are clearly bugs, such as sometimes
-  omitting the symbol table from listings when certain macros are defined.
+  allowing the use of MACRO‑80‑style pseudo‑ops and Zilog mnemonics.  It also
+  exhibits several behaviors that are clearly bugs, such as sometimes omitting
+  the symbol table from listings when certain macros are defined.
 
   Support for emulation of this assembler and its improved listing style
   (but without the bugs) may be offered in a future release.
