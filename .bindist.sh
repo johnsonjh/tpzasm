@@ -99,6 +99,7 @@ CROSSMINT_GCC="${CROSSMINT:?}/usr/bin/m68k-atari-mintelf-gcc"
 export FIND_COMMAND_FATAL=0
 
 if out=$(
+  # shellcheck disable=SC2310
   find_command sstrip 2>&1
 ); then
   status=0
