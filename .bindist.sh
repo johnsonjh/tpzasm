@@ -354,7 +354,7 @@ advzip -z4 ./TPZASM64.ZIP
 
 # Atari TOS/MINT build (using CROSSMiNT)
 
-rm -f -r ./pasm ./zasm ./hexcom.prg ./asm.prg ./TPZASMST.LHA > /dev/null 2>&1
+rm -f -r ./pasm ./zasm ./hexcom.prg ./asm.prg ./TPZASMST.LZH > /dev/null 2>&1
 
 "${MAKE:?}" distclean CC="${CROSSMINT_GCC:?}"
 env PATH="${CROSSMINT_ARCH:?}/bin:${CROSSMINT_ARCH:?}/usr/bin:${PATH:-}" \
@@ -370,7 +370,7 @@ mv -f hexcom hexcom.prg
 (upx -q --best ./hexcom.prg ./asm.prg 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
-lha -c -z -0 TPZASMST.LHA hexcom.prg asm.prg
+lha -c -z -0 TPZASMST.LZH hexcom.prg asm.prg
 rm -f ./hexcom.prg ./asm.prg
 
 :
@@ -471,7 +471,7 @@ mv -f ./TPZASMO2.ZIP ./bindist
 mv -f ./TPZASM86.ZIP ./bindist
 mv -f ./TPZASM64.ZIP ./bindist
 mv -f ./TPZASM32.ZIP ./bindist
-mv -f ./TPZASMST.LHA ./bindist
+mv -f ./TPZASMST.LZH ./bindist
 mv -f ./tpzasm-linux64.tar.gz ./bindist
 mv -f ./tpzasm-linux32.tar.gz ./bindist
 mv -f ./tpzasm-linuxarm64.tar.gz ./bindist
