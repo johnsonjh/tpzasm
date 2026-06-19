@@ -151,9 +151,9 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 
 * In every case, **TPZASM** produces *identical* listings and
   *byte‑for‑byte identical* object output when compared to the reference
-  TDL&nbsp;ZASM&nbsp;/&nbsp;PSA&nbsp;PASM assemblers.  The only differences
-  are when processing certain deliberately malformed or specially crafted
-  inputs (that cause the reference assemblers to abort or crash).
+  **TDL&nbsp;ZASM**&nbsp;/&nbsp;**PSA&nbsp;PASM** assemblers.  The only
+  differences are when processing certain deliberately malformed or specially
+  crafted inputs (that cause the reference assemblers to abort or crash).
 
 * **TPZASM** can write the assembled output as a raw binary image, or as a
   **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or absolute
