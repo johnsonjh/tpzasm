@@ -169,8 +169,10 @@ error‑handling semantics, plus user‑configurable control of output padding.
 ## Notes
 
 **TPZASM** is ***not*** related to the similarly named
-[Cromemco](https://en.wikipedia.org/wiki/Cromemco) ZASM or
-[Megatokio](https://github.com/Megatokio) ZASM assemblers.
+[Cromemco](https://en.wikipedia.org/wiki/Cromemco)
+[ZASM](https://bitsavers.org/pdf/cromemco/023-0039_Cromemco_Z80_Macro_Assembler_Oct78.pdf)
+or [Megatokio](https://github.com/Megatokio)
+[ZASM](https://k1.spdns.de/Develop/Projects/zasm/) assemblers.
 
 ### Developer notes
 
