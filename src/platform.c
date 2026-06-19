@@ -17,6 +17,13 @@
 
 /******************************************************************************/
 
+#if defined (__atarist__) || defined(__atarist) || defined(atarist)
+# include <gem.h>
+# include <osbind.h>
+#endif
+
+/******************************************************************************/
+
 #include "platform.h"
 
 /******************************************************************************/
@@ -167,6 +174,54 @@ const char *sysarch(void)
 
 #  endif
 # endif
+}
+#endif
+
+/******************************************************************************/
+
+#if defined(__atarist__) || defined(__atarist) || defined(atarist)
+typedef struct
+{
+  unsigned long tag;
+  unsigned long value; /* cppcheck-suppress unusedStructMember */
+} COOKIE;
+
+static volatile int mint_present_super = 0;
+
+static void
+probe_mint_super(void)
+{
+  const COOKIE *cookies = *(COOKIE **) 0x5a0;
+
+  mint_present_super = 0;
+
+  if (!cookies)
+    return;
+
+  while (cookies->tag)
+    {
+      if (cookies->tag == 0x4d694e54ul)
+        {
+          mint_present_super = 1;
+
+          return;
+        }
+
+      cookies++;
+    }
+}
+#endif
+
+/******************************************************************************/
+
+#if defined(__atarist__) || defined(__atarist) || defined(atarist)
+static int
+is_mint(void)
+{
+  mint_present_super = 0;
+  Supexec((void (*)(void))probe_mint_super);
+
+  return mint_present_super;
 }
 #endif
 
@@ -372,6 +427,11 @@ const char *platform_name (void)
 
 #elif defined(_CH_)
   return "SoftIntegration Ch";
+
+  /*******************************************************************/
+
+#elif defined(__atarist__) || defined(__atarist) || defined(atarist)
+  return (is_mint () ? "MINT" : "TOS");
 
   /*******************************************************************/
 

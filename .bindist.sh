@@ -67,32 +67,65 @@ fi
 
 ################################################################################
 
-export FIND_COMMAND_FATAL=1
-
-################################################################################
-
 MAKE="${MAKE:-make}"
-command -v "${MAKE:?}"
+
+##############################################################################
 
 CWSDSTUB="${CWSDSTUB:-/opt/cwspdmi/cwsdstub.exe}"
-test -f "${CWSDSTUB:?}"
-
 DJGPPGCC="${DJGPPGCC:-/opt/djgpp/bin/i586-pc-msdosdjgpp-gcc}"
-test -x "${DJGPPGCC:?}"
-
 EXE2COFF="${EXE2COFF:-/opt/djgpp/i586-pc-msdosdjgpp/bin/exe2coff}"
-test -x "${EXE2COFF:?}"
+
+##############################################################################
+
+test -f "${CWSDSTUB:?}" \
+  || {
+    printf '%s\n' "ERROR: ${CWSDSTUB:?} not found."
+    exit 1
+  }
+
+##############################################################################
 
 WATCOM="${WATCOM:-/opt/watcom}"
-test -d "${WATCOM:?}"
 export WATCOM
 
 ##############################################################################
 
-find_command "${AWK:-awk}" "${DU:?}" "${DJGPPGCC:?}" "${EXE2COFF:?}" \
-  "${MAKE:?}" "${WATCOM:?}/binl64/owcc" advzip cat docker grep \
-  i686-w64-mingw32-gcc mkdir musl-gcc mv pigz rm sed sstrip strip tar upx \
-  x86_64-w64-mingw32ucrt-gcc zip ./asm
+CROSSMINT="${HOME:?}/crossmint"
+CROSSMINT_ARCH="${CROSSMINT:?}/usr/m68k-atari-mintelf"
+CROSSMINT_GCC="${CROSSMINT:?}/usr/bin/m68k-atari-mintelf-gcc"
+
+##############################################################################
+
+export FIND_COMMAND_FATAL=0
+
+if out=$(
+  find_command sstrip 2>&1
+); then
+  status=0
+else
+  status="$?"
+fi
+
+width="$(detect_width)"
+
+# shellcheck disable=SC2310
+printf '%s\n' "${out:-}" \
+  | wrap "${width:?}"
+
+unset NEED_PAUSE
+
+if [ "${status:?}" -ne 0 ]; then
+  NEED_PAUSE=1
+fi
+
+##############################################################################
+
+export FIND_COMMAND_FATAL=1
+
+find_command "${AWK:-awk}" "${CROSSMINT_GCC:?}" "${DJGPPGCC:?}" "${DU:?}" \
+  "${EXE2COFF:?}" "${MAKE:?}" "${WATCOM:?}/binl64/owcc" advzip ./asm cat cp \
+  docker grep i686-w64-mingw32-gcc lha mkdir musl-gcc mkdir mv pigz rm sed \
+  sleep strip tar upx x86_64-w64-mingw32ucrt-gcc zip
 
 ################################################################################
 
@@ -111,7 +144,22 @@ fi
 
 ################################################################################
 
-SIZES="$("${DU:?}" -Sh --block-size=KiB bindist/*)"
+case ${OVERRIDE_PAUSE:-} in
+'' | *[!0-9]*)
+  unset OVERRIDE_PAUSE
+  ;;
+*) : ;;
+esac
+
+test "${NEED_PAUSE:-0}" -ne 1 || {
+  printf '%s\n' \
+    "Some steps will be skipped! [pausing ${OVERRIDE_PAUSE:-10}s]" \
+    | wrap "${width:?}"
+  sleep "${OVERRIDE_PAUSE:-10}"
+}
+
+################################################################################
+
 USAGE="$(./asm -h 2>&1)"
 
 ################################################################################
@@ -124,9 +172,11 @@ SED_README="$(mktemp 2> /dev/null || mktemp_local)"
 
 set -eux
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 # MS-DOS (DJGPP) build
 
@@ -150,9 +200,11 @@ zip -0 -X -D -j ./TPZASM86.ZIP hexcom.exe asm.exe
 rm -f ./hexcom.exe ./asm.exe
 advzip -z4 ./TPZASM86.ZIP
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 # Linux (32-bit) build (Open Watcom V2)
 
@@ -171,10 +223,10 @@ env \
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
 strip --strip-all ./hexcom
-sstrip -z ./hexcom > /dev/null 2>&1
+sstrip -z ./hexcom > /dev/null 2>&1 || :
 
 strip --strip-all ./asm
-sstrip -z ./asm > /dev/null 2>&1
+sstrip -z ./asm > /dev/null 2>&1 || :
 
 mv -f ./hexcom ./asm ./tpzasm/
 
@@ -183,9 +235,11 @@ pigz -11v ./tpzasm-linux32.tar
 
 rm -f -r ./tpzasm > /dev/null 2>&1
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 # OS/2 (32-bit) build (Open Watcom V2)
 
@@ -214,9 +268,11 @@ zip -0 -X -D -j ./TPZASMO2.ZIP hexcom.exe asm.exe
 rm -f ./hexcom.exe ./asm.exe
 advzip -z4 ./TPZASMO2.ZIP
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 # Linux (64-bit) build (musl-gcc, assumes a 64-bit Linux host)
 
@@ -230,10 +286,10 @@ mkdir -p ./tpzasm
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
 strip --strip-all ./hexcom
-sstrip -z ./hexcom > /dev/null 2>&1
+sstrip -z ./hexcom > /dev/null 2>&1 || :
 
 strip --strip-all ./asm
-sstrip -z ./asm > /dev/null 2>&1
+sstrip -z ./asm > /dev/null 2>&1 || :
 
 (upx -q --best ./hexcom ./asm 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
@@ -245,9 +301,11 @@ pigz -11v ./tpzasm-linux64.tar
 
 rm -f -r ./tpzasm > /dev/null 2>&1
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 # Windows (32-bit MSVCRT) build (MinGW-w64)
 
@@ -265,9 +323,11 @@ zip -0 -X -D -j ./TPZASM32.ZIP hexcom.exe asm.exe
 rm -f ./hexcom.exe ./asm.exe
 advzip -z4 ./TPZASM32.ZIP
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 # Windows (64-bit UCRT) build (MinGW-w64)
 
@@ -285,9 +345,38 @@ zip -0 -X -D -j ./TPZASM64.ZIP hexcom.exe asm.exe
 rm -f ./hexcom.exe ./asm.exe
 advzip -z4 ./TPZASM64.ZIP
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
+
+# Atari TOS/MINT build (using CROSSMiNT)
+
+rm -f -r ./pasm ./zasm ./hexcom.prg ./asm.prg ./TPZASMST.LHA > /dev/null 2>&1
+
+"${MAKE:?}" distclean CC="${CROSSMINT_GCC:?}"
+env PATH="${CROSSMINT_ARCH:?}/bin:${CROSSMINT_ARCH:?}/usr/bin:${PATH:-}" \
+  LDFLAGS="-s" \
+  "${MAKE:?}" \
+  CC="${CROSSMINT_GCC:?}"
+
+rm -f ./pasm ./zasm > /dev/null 2>&1
+
+mv -f asm asm.prg
+mv -f hexcom hexcom.prg
+
+(upx -q --best ./hexcom.prg ./asm.prg 2> /dev/null \
+  | grep ' \-> ' 2> /dev/null) || :
+
+lha -c -z -0 TPZASMST.LHA hexcom.prg asm.prg
+rm -f ./hexcom.prg ./asm.prg
+
+:
+################################################################################
+: :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
+################################################################################
+:
 
 # Linux ARM (32-bit) build (Docker)
 
@@ -308,13 +397,13 @@ cp -f hexcom hexcom.out
 rm -f hexcom
 mv -f hexcom.out hexcom
 
-sstrip -z ./hexcom > /dev/null 2>&1
+sstrip -z ./hexcom > /dev/null 2>&1 || :
 
 cp -f asm asm.out
 rm -f asm
 mv -f asm.out asm
 
-sstrip -z ./asm > /dev/null 2>&1
+sstrip -z ./asm > /dev/null 2>&1 || :
 
 (upx -q --best ./hexcom ./asm 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
@@ -326,9 +415,11 @@ pigz -11v ./tpzasm-linuxarm32.tar
 
 rm -f -r ./tpzasm > /dev/null 2>&1
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 # Linux ARM (64-bit) build (Docker)
 
@@ -349,13 +440,13 @@ cp -f hexcom hexcom.out
 rm -f hexcom
 mv -f hexcom.out hexcom
 
-sstrip -z ./hexcom > /dev/null 2>&1
+sstrip -z ./hexcom > /dev/null 2>&1 || :
 
 cp -f asm asm.out
 rm -f asm
 mv -f asm.out asm
 
-sstrip -z ./asm > /dev/null 2>&1
+sstrip -z ./asm > /dev/null 2>&1 || :
 
 (upx -q --best ./hexcom ./asm 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
@@ -367,9 +458,11 @@ pigz -11v ./tpzasm-linuxarm64.tar
 
 rm -f -r ./tpzasm > /dev/null 2>&1
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 mkdir -p ./bindist
 
@@ -377,16 +470,23 @@ mv -f ./TPZASMO2.ZIP ./bindist
 mv -f ./TPZASM86.ZIP ./bindist
 mv -f ./TPZASM64.ZIP ./bindist
 mv -f ./TPZASM32.ZIP ./bindist
+mv -f ./TPZASMST.LHA ./bindist
 mv -f ./tpzasm-linux64.tar.gz ./bindist
 mv -f ./tpzasm-linux32.tar.gz ./bindist
 mv -f ./tpzasm-linuxarm64.tar.gz ./bindist
 mv -f ./tpzasm-linuxarm32.tar.gz ./bindist
 
+:
 ################################################################################
 : :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
 ################################################################################
+:
 
 set +x
+
+################################################################################
+
+SIZES="$("${DU:?}" -Sh --block-size=KiB bindist/*)"
 
 ################################################################################
 

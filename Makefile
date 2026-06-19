@@ -207,12 +207,13 @@ clean:
 	rm -f a.out $(PROG) $(LINKS) hexcom test_expr ./.test ./.t src/_chtmp.c
 	rm -f a.exe $(PROG).exe hexcom.exe test_expr.exe ./.test.exe ./.t.exe
 	rm -f a.sym $(PROG).sym hexcom.sym test_expr.sym ./.test.sym ./.t.sym
-	rm -f ./*.obj $(SRCDIR)/*.o ./.test.o ./.test.obj
+	rm -f ./*.prg ./*.obj $(SRCDIR)/*.o ./.test.o ./.test.obj
 	rm -f compile_commands.json log.pvs
 
 ################################################################################
 
-bindist: ./asm
+bindist:
+	"$${MAKE:-make}" clean && "$${MAKE:-make}"
 	@./.bindist.sh
 
 ################################################################################
@@ -247,7 +248,7 @@ tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 ################################################################################
 
 .PHONY: all clean distclean test longtest tags etags ctags gtags TAGS GPATH \
-		GRTAGS GTAGS cscope cscope.out tag lint dmd
+		GRTAGS GTAGS cscope cscope.out tag lint dmd bindist
 
 ################################################################################
 

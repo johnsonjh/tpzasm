@@ -77,6 +77,7 @@ Usage: asm [options] <source[.asm]>
 |                                                                                                                  File  |         Size | Platform                             |
 |-----------------------------------------------------------------------------------------------------------------------:|-------------:|:-------------------------------------|
 | [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 188&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
+| [TPZASMST.LHA](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMST.LHA)                         | 176&nbsp;KiB | **Atari&nbsp;ST**&nbsp;(TOS/MINT)    |
 | [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                         | 60&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
 | [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 64&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
 | [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                         | 68&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
@@ -113,12 +114,12 @@ UNIX‑like system.
 
 ### Portability
 
-**TPZASM** should compile cleanly on any system with an
+**TPZASM** should compile cleanly on almost any system with an
 ANSI&nbsp;C89 compiler.
 
 * Linux, AIX, OS/400, Solaris, illumos, FreeBSD, NetBSD, OpenBSD,
-  DragonFly&nbsp;BSD, Haiku, MS‑DOS, OS/2, and Windows are known to work
-  without modification.
+  DragonFly&nbsp;BSD, Haiku, MS‑DOS, OS/2, Atari&nbsp;ST, and Windows are
+  known to work without modification.
 
 * The [SoftIntegration Ch](https://www.softintegration.com/) interpreter, and
   the GNU&nbsp;GCC, LLVM&nbsp;Clang, PCC, NVIDIA&nbsp;HPC&nbsp;SDK&nbsp;C/C++,
