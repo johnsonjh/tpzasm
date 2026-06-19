@@ -87,7 +87,7 @@ Usage: asm [options] <source[.asm]>
 
 ## Building from source
 
-**TPZASM** needs **only an ANSI C89 compiler** to build on any
+**TPZASM** needs **only an ANSI&nbsp;C89 compiler** to build on any
 UNIX‑like system.
 
 * To build a native binary, just run `make` (or `gmake`):
@@ -151,9 +151,9 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
 
 * In every case, **TPZASM** produces *identical* listings and
   *byte‑for‑byte identical* object output when compared to the reference
-  TDL/PSA assemblers.  The only differences are when processing certain
-  deliberately malformed or specially crafted inputs (that cause the
-  reference assemblers to abort or crash).
+  TDL&nbsp;ZASM&nbsp;/&nbsp;PSA&nbsp;PASM assemblers.  The only differences
+  are when processing certain deliberately malformed or specially crafted
+  inputs (that cause the reference assemblers to abort or crash).
 
 * **TPZASM** can write the assembled output as a raw binary image, or as a
   **TDL&nbsp;Object&nbsp;Module** in relocatable (`.PREL`) or absolute
@@ -202,9 +202,9 @@ development tools for several years.
 #### CDL MACRO emulation
 
 * The **CDL MACRO** assemblers are in the same family, with three variants of
-  these three assemblers definitively known from various listing outputs
-  (`E12011-0311`, `C12012-0312`, and `C12012-414X` *i.e.*, versions `3.11`,
-  `3.12`, and `4.14X`).
+  the following three assemblers definitively known from examination of
+  various listing outputs (`E12011-0311`, `C12012-0312`, and `C12012-414X`
+  *i.e.*, versions `3.11`, `3.12`, and `4.14X`).
 
   * **MACRO I** is described as "a macro assembler which will generate
     relocatable or absolute code for the 8080 or Z80 using standard Intel
@@ -212,10 +212,8 @@ development tools for several years.
     listing controls, 54 pseudo‑ops, 11 arithmetic/logical operations, local
     and global symbols, chaining files, linking capability with optional
     linker, and recursive/reiterative macros",
-
   * **MACRO II** is described as "expanding upon MACRO I's linking
     capabilities and offering more listing options", and,
-
   * **MACRO III** is described as "an enhanced version of MACRO II; internal
     buffers have been increased to achieve a significant improvement in speed
     of assembly; additional features include line numbers, cross‑reference
