@@ -5,7 +5,7 @@
 
 # TPZASM
 
-**TPZASM** (*pronounceable as* «***Topaz Assembler***») is a portable
+**TPZASM** (*pronounceable as* ‛**Topaz Assembler**’) is a portable
 cross‑assembler intended to be fully interchangeable (and in most cases
 bug‑for‑bug compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
 **PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
@@ -175,10 +175,10 @@ error‑handling semantics, plus user‑configurable control of output padding.
 ### Developer notes
 
 * `make lint` needs only a POSIX shell to run (plus whichever linters and
-  static analysis tools it invokes).  You'll be informed of any missing
+  static analysis tools it invokes).  You’ll be informed of any missing
   prerequisites as well as any optional tools when you invoke `make lint`.
 
-* `make longtest` requires *Georg Brein*'s
+* `make longtest` requires *Georg Brein*’s
   [`tnylpo`](https://gitlab.com/gbrein/tnylpo) emulator available in your PATH.
 
 * If you would like to contribute to **TPZASM** development, it is *extremely*
@@ -206,19 +206,19 @@ development tools for several years.
   various listing outputs (`E12011-0311`, `C12012-0312`, and `C12012-414X`
   *i.e.*, versions `3.11`, `3.12`, and `4.14X`).
 
-  * **MACRO I** is described as "a macro assembler which will generate
+  * **MACRO I** is described as ‟a macro assembler which will generate
     relocatable or absolute code for the 8080 or Z80 using standard Intel
     mnemonics plus TDL/Z80 extensions.  Functions include 14 conditionals, 16
     listing controls, 54 pseudo‑ops, 11 arithmetic/logical operations, local
     and global symbols, chaining files, linking capability with optional
-    linker, and recursive/reiterative macros",
-  * **MACRO II** is described as "expanding upon MACRO I's linking
-    capabilities and offering more listing options", and,
-  * **MACRO III** is described as "an enhanced version of MACRO II; internal
+    linker, and recursive/reiterative macros”,
+  * **MACRO II** is described as ‟expanding upon MACRO I’s linking
+    capabilities and offering more listing options”, and,
+  * **MACRO III** is described as ‟an enhanced version of MACRO II; internal
     buffers have been increased to achieve a significant improvement in speed
     of assembly; additional features include line numbers, cross‑reference
     compressed PRN files, form feeds, page parity, additional pseudo‑ops,
-    internal setting of time and date, and expanded assembly‑time data entry".
+    internal setting of time and date, and expanded assembly‑time data entry”.
     At least one new pseudo‑op, `.SETWID`, has been definitively identified
     by reviewing listings.
 
