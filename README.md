@@ -5,7 +5,7 @@
 
 # TPZASM
 
-**TPZASM** (*pronounceable as* ‛**Topaz Assembler**’) is a portable
+**TPZASM** (pronounceable as ‛*Topaz Assembler*’) is a portable
 cross‑assembler intended to be fully interchangeable (and in most cases
 bug‑for‑bug compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
 **PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
