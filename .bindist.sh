@@ -143,7 +143,7 @@ rm -f ./pasm ./zasm > /dev/null 2>&1
 cat "${CWSDSTUB:?}" ./hexcom > ./hexcom.exe && rm -f ./hexcom
 cat "${CWSDSTUB:?}" ./asm > ./asm.exe && rm -f ./asm
 
-(upx -q -9 ./hexcom.exe ./asm.exe 2> /dev/null \
+(upx -q --best ./hexcom.exe ./asm.exe 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
 zip -0 -X -D -j ./TPZASM86.ZIP hexcom.exe asm.exe
@@ -235,7 +235,7 @@ sstrip -z ./hexcom > /dev/null 2>&1
 strip --strip-all ./asm
 sstrip -z ./asm > /dev/null 2>&1
 
-(upx -q -9 ./hexcom ./asm 2> /dev/null \
+(upx -q --best ./hexcom ./asm 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
 mv -f ./hexcom ./asm ./tpzasm/
@@ -258,7 +258,7 @@ rm -f -r ./pasm ./zasm ./hexcom.exe ./asm.exe ./TPZASM32.ZIP > /dev/null 2>&1
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
-(upx -q -9 ./hexcom.exe ./asm.exe 2> /dev/null \
+(upx -q --best ./hexcom.exe ./asm.exe 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
 zip -0 -X -D -j ./TPZASM32.ZIP hexcom.exe asm.exe
@@ -278,7 +278,7 @@ rm -f -r ./pasm ./zasm ./hexcom.exe ./asm.exe ./TPZASM64.ZIP > /dev/null 2>&1
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
-(upx -q -9 ./hexcom.exe ./asm.exe 2> /dev/null \
+(upx -q --best ./hexcom.exe ./asm.exe 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
 zip -0 -X -D -j ./TPZASM64.ZIP hexcom.exe asm.exe
@@ -316,7 +316,7 @@ mv -f asm.out asm
 
 sstrip -z ./asm > /dev/null 2>&1
 
-(upx -q -9 ./hexcom ./asm 2> /dev/null \
+(upx -q --best ./hexcom ./asm 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
 mv -f ./hexcom ./asm ./tpzasm/
@@ -357,7 +357,7 @@ mv -f asm.out asm
 
 sstrip -z ./asm > /dev/null 2>&1
 
-(upx -q -9 ./hexcom ./asm 2> /dev/null \
+(upx -q --best ./hexcom ./asm 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
 mv -f ./hexcom ./asm ./tpzasm/
