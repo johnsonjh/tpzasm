@@ -44,7 +44,7 @@ tool, is also included.
 
 ```
 TPZASM - TDL ZASM / PSA PASM compatible 8080 / Z80 assembler (Linux/x86_64)
-Release 0.84 (Built Jun 20 2026) https://github.com/johnsonjh/tpzasm
+Release 0.85 (Built Jun 20 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 Usage: asm [options] <source[.asm]>
