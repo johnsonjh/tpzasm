@@ -40,8 +40,6 @@ tool, is also included.
 
 <!-- tocstop -->
 
----
-
 ## Usage
 
 ```
