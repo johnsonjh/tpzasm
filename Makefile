@@ -13,7 +13,7 @@ XCFLAGS=-O
 
 PROG     = asm
 SRCDIR   = src
-LINKS    = pasm zasm
+LINKS    = pasm zasm pasm2 m80
 
 ################################################################################
 
@@ -37,7 +37,8 @@ $(PROG): $(OBJ)
 
 ################################################################################
 
-# pasm / zasm are the same binary; the dialect is selected from argv[0].
+# pasm / zasm / pasm2 / m80 are the same binary; the mode is selected from
+# argv[0] (m80 == --m80, the PASM 2.00G engine with the .ZOP/.EPOP prefixes).
 $(LINKS): $(PROG)
 	ln -f -s $(PROG) $@
 
@@ -126,12 +127,17 @@ test: test_expr asm tests/test_trunc.sh tests/test_obj.sh \
 # list is derived from tests/golden/*.rel so it never goes stale as fixtures
 # are added.  The tnylpo-dependent parts skip cleanly when the CP/M emulator is
 # not installed.
-longtest: test tests/test_play.sh tests/test_listing.sh tools/vrel.sh
+longtest: test tests/test_play.sh tests/test_listing.sh tools/vrel.sh \
+		tools/vpasm2.sh
 	@if command -v tnylpo > /dev/null 2>&1; then \
 		for f in $$(ls tests/golden/*.rel 2> /dev/null \
 			| sed 's|.*/||; s|\.rel$$||'); do \
 			printf '%s\n' "vrel: $$f"; \
 			./tools/vrel.sh tests/$$f.asm || exit 1; \
+		done; \
+		for f in zop zexh zoponly epoponly zmac intcond spell11; do \
+			printf '%s\n' "vpasm2: $$f"; \
+			./tools/vpasm2.sh tests/$$f.asm || exit 1; \
 		done; \
 	else \
 		printf '%s\n' \

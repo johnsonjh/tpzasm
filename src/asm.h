@@ -57,7 +57,10 @@ typedef unsigned short u16; /* a 16-bit value / address (Z80 word)  */
 typedef enum
 {
   DIALECT_ZASM, /* TDL Z80 CP/M Disk Assembler 2.21 (TDL, 1976-1977) */
-  DIALECT_PASM  /* PSA Macro Assembler 1.02 (Phoenix, 1980)          */
+  DIALECT_PASM, /* PSA Macro Assembler 1.02 (Phoenix, 1980)          */
+  DIALECT_PASM2 /* PSA Macro Assembler 2.00G (Phoenix, 1981): adds   */
+                /* the `.ZOP' Zilog mnemonic set + `.EPOP' Intel      */
+                /* pseudo-ops on top of the 1.02 engine              */
 } dialect_t;
 
 /******************************************************************************/

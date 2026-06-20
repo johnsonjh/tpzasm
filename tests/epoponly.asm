@@ -1,0 +1,24 @@
+; .EPOP without .ZOP: Intel pseudo-ops with the 8080/TDL mnemonic set
+	.PABS
+	.PHEX
+	.XLINK
+	.EPOP
+	ASEG
+	ORG	100H
+START:	MVI	A,5
+	LXI	H,DATA
+	MOV	B,M
+	INX	H
+	CPI	10H
+	JNZ	START
+	CALL	SUBR
+	RET
+SUBR:	PUSH	B
+	MOV	C,A
+	ADD	B
+	POP	B
+	RET
+DATA:	DB	1,2,3
+	DW	1234H
+	DB	"hi"
+	END

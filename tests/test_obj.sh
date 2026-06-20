@@ -86,6 +86,26 @@ clabel \
 page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
 relmode bios tapelib ssmon turbobs progid goto gotoedge regnum"
 
+# PASM 2.00G (.ZOP standard Zilog + .EPOP Intel/M80) fixtures, asserted with
+# --pasm2 against the ASCII (.hex) golden only.  zop is the full Zilog
+# instruction sweep; zoponly exercises .ZOP without .EPOP (Zilog mnemonics with
+# the TDL dotted pseudo-ops) and epoponly the reverse (.EPOP without .ZOP: the
+# Intel pseudo-ops with the 8080/TDL mnemonic set) -- the two mode axes are
+# independent.  zmac exercises the TDL `.DEFINE' macro mechanism with Zilog-
+# mnemonic bodies (PASM 2.00G has NO M80 `MACRO'/`ENDM' -- both pasm2.com and
+# the clone reject those as `O' errors -- only `.DEFINE').  Their .PABS/.PHEX
+# sources select the ASCII object; only that form is golden-checked (2.00G packs
+# the binary .PBIN records differently -- identical content, different framing
+# -- so it is not differenced).  zexh is the generated EXHAUSTIVE Zilog sweep
+# (every mnemonic x every operand form, 810 instructions).  intcond exercises
+# the Intel/M80 TITLE/SUBTTL/PAGE headings and the IF/IFT/IFE/IFF/COND + ELSE +
+# ENDIF/ENDC conditionals (no bracket blocks); it omits .XLINK to dodge a pasm2
+# object-writer bug (docs/re/pasm2-bugs.md).  spell11 is the flagship real-world
+# 2.00G source -- "A Poor Person's Spelling Checker" (A. Bomberger / J. Byram,
+# Dr. Dobb's Journal #66, 1981/82), the canonical .ZOP/.EPOP program.  All are
+# byte-exact vs pasm2.com (tools/vpasm2.sh).
+pasm2_cases="zop zexh zoponly epoponly zmac intcond spell11"
+
 # Some real-world fixtures read assembly-time '\' console values; their answers
 # (the system options that select the assembled configuration) live in a
 # committed tests/<case>.ans file, fed to the clone with -r so the run is
@@ -184,6 +204,21 @@ for c in ${cases}; do
 
     rm -f "${tmp}"
   done
+done
+
+# PASM 2.00G fixtures: ASCII (.hex) object only (see pasm2_cases above).
+for c in ${pasm2_cases}; do
+  "${asm}" --pasm2 -X "${tmp}" "${here}/tests/${c}.asm" > /dev/null 2>&1 || :
+
+  if [ ! -f "${gold}/${c}.hex" ]; then
+    printf '%s\n' "FAILURE: missing golden tests/golden/${c}.hex"
+    fail=1
+  elif ! cmp -s "${tmp}" "${gold}/${c}.hex"; then
+    printf '%s\n' "FAILURE: --pasm2 object for ${c} differs from golden"
+    fail=1
+  fi
+
+  rm -f "${tmp}"
 done
 
 if [ "${fail}" -ne 0 ]; then

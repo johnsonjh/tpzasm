@@ -51,6 +51,11 @@ dialect_from_name (const char *argv0)
 {
   const char *b = basename_of (argv0);
 
+  /* `m80' (the MACRO-80 simulation) is the PASM 2.00G engine; main() adds its
+   * `.ZOP'/`.EPOP' prefixes on top of the dialect (see add_m80_preops). */
+  if (0 == strncmp (b, "pasm2", 5) || 0 == strncmp (b, "m80", 3))
+    return DIALECT_PASM2;
+
   if (0 == strncmp (b, "pasm", 4))
     return DIALECT_PASM;
 
@@ -191,6 +196,10 @@ usage (const char *prog, dialect_t dialect, int version)
 "\n"
 "    -p, --pasm            Emulate PSA PASM 1.02 behavior%s"
 "\n"
+"    -g, --pasm2           Emulate PSA PASM 2.00G behavior%s"
+"\n"
+"    -m, --m80             Simulate MACRO-80 (-g with .ZOP + .EPOP)"
+"\n"
 "    -o, --out <file>      Write the assembled binary image to <file>"
 "\n"
 "    -P, --pad             Pad output to full CP/M record boundary"
@@ -198,7 +207,8 @@ usage (const char *prog, dialect_t dialect, int version)
 "    -l, --list <file>     Write the listing to <file> [default: stderr]"
 "\n",
       prog, (DIALECT_ZASM == dialect ? " [default]" : ""),
-            (DIALECT_PASM == dialect ? " [default]" : ""));
+            (DIALECT_PASM == dialect ? " [default]" : ""),
+            (DIALECT_PASM2 == dialect ? " [default]" : ""));
       (void)fprintf (stderr,
 "    -R, --pbin <file>     Write the object module as binary TDL REL to <file>"
 "\n"
@@ -238,6 +248,56 @@ free_preops (asm_preop *preops)
 
 /******************************************************************************/
 
+/*
+ * Whether argv[0] selects the MACRO-80 simulation (the `m80' command name).
+ */
+
+static int
+name_is_m80 (const char *argv0)
+{
+  return 0 == strncmp (basename_of (argv0), "m80", 3);
+}
+
+/******************************************************************************/
+
+/*
+ * Append the `.ZOP'/`.EPOP' assembly-time prefixes that put the assembler into
+ * MACRO-80 mode -- the standard Zilog mnemonic set plus the Intel/M80 pseudo-
+ * ops, enabled before the source as if it opened with those two directives.
+ * Used by both the `--m80' option and the `m80' argv[0].  Returns 0, or -1 on
+ * out-of-memory (the caller frees the partial list).
+ */
+
+static int
+add_m80_preops (asm_preop **head, asm_preop **tail)
+{
+  static const char *const m80dir[2] = { ".ZOP", ".EPOP" };
+  int mi;
+
+  for (mi = 0; mi < 2; mi++)
+    {
+      asm_preop *p = (asm_preop *)malloc (sizeof (asm_preop));
+
+      if (NULL == p)
+        return -1;
+
+      p->type = 'a';
+      p->arg = m80dir[mi];
+      p->next = NULL;
+
+      if (NULL == *tail)
+        *head = p;
+      else
+        (*tail)->next = p;
+
+      *tail = p;
+    }
+
+  return 0;
+}
+
+/******************************************************************************/
+
 int
 main (int argc, char **argv)
 {
@@ -254,6 +314,16 @@ main (int argc, char **argv)
   int i;
 
   allow_long_symbols = 0;
+
+  /* the `m80' command name selects MACRO-80 mode (PASM 2.00G + the `.ZOP'/
+   * `.EPOP' prefixes), just like the `--m80' option (dialect set above) */
+  if (name_is_m80 (argv[0]) && 0 != add_m80_preops (&preops, &pretail))
+    {
+      (void)fprintf (stderr, "%s: Out of memory!\n", prog);
+      free_preops (preops);
+
+      return 2;
+    }
 
   for (i = 1; i < argc; ++i)
     {
@@ -273,7 +343,8 @@ main (int argc, char **argv)
                   {  "pad", 'P' }, { "list", 'l' }, {    "pbin", 'R' },
                   { "phex", 'X' }, { "long", 'L' }, {    "read", 'r' },
                   { "expr", 'e' }, { "help", 'h' }, { "version", 'v' },
-                  { "include", 'i' }, { "prefix", 'a' },
+                  { "include", 'i' }, { "prefix", 'a' }, { "pasm2", 'g' },
+                  { "m80", 'm' },
                 };
           int li;
 
@@ -302,6 +373,30 @@ main (int argc, char **argv)
             {
             case 'p':
               dialect = DIALECT_PASM;
+              break;
+
+            case 'g':
+              dialect = DIALECT_PASM2;
+              break;
+
+            case 'm':
+              /*
+               * --m80: simulate Microsoft MACRO-80.  PASM 2.00G with the Zilog
+               * mnemonic set (.ZOP) and the Intel/M80 pseudo-ops (.EPOP)
+               * enabled from the start, as if the source opened with `.ZOP'
+               * and `.EPOP'.  Equivalent to
+               * `--pasm2 --prefix ".ZOP" --prefix ".EPOP"'.
+               */
+              dialect = DIALECT_PASM2;
+
+              if (0 != add_m80_preops (&preops, &pretail))
+                {
+                  (void)fprintf (stderr, "%s: Out of memory!\n", prog);
+                  free_preops (preops);
+
+                  return 2;
+                }
+
               break;
 
             case 'z':

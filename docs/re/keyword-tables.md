@@ -211,14 +211,26 @@ Keyword counts:
 
 ## Coverage
 
-* TPZASM fully covers ZASM 2.21 (`-z`) and PASM 1.02 (`-p`).
-* TPZASM accepts these, but neither `zasm.com` `2.21` nor `pasm.com` `1.02` has them:
-  * `.COMMO, .DB, .DC, .DS, .DW, .EXTRN, .NAME, .ORG, .PRINT, .PUBLI, .REQUE, .SUBTT, COMMON, DB, DC, DCS, DEFB, DEFW, DS, DSW, DW, END, EXTRN, ORG, PUBLIC`
+TPZASM covers all three dialects, byte-exact in OBJECT vs the originals:
 
-> **NOTE:** `DB/DW/DS/DEFB/DEFW/DS/ORG/END/EXTRN` (and the `.DB/.DW/.DS/.ORG` synonyms)
-> are for **`pasm2` `.EPOP`/Intel-M80 form**.  They are NOT in `zasm.com` 2.21 /
-> `pasm.com` 1.02 tables, which only know the dotted forms (`.BYTE/.WORD/.BLKB/.LOC/.END`).
-> `zasm.com` flags `ORG` as an `O` (unknown-opcode) error; bare `END` triggers
-> `UNEXPECTED END OF INPUT FILE`.  `TPZASM` currently accepts, so on a source using Intel
-> style the we diverge from the originals (it actually assembles; they error).  Correct
-> fix is to gate these synonyms behind the future `pasm2`/`.EPOP` mode. No tests exercise this (yet!)
+* **ZASM 2.21** (`-z`) and **PASM 1.02** (`-p`) — full keyword coverage.
+* **PASM 2.00G** (`--pasm2` / `-g`; or `--m80` / `-m`, the MACRO-80 simulation =
+  `--pasm2` with the `.ZOP`/`.EPOP` prefixes pre-applied) — the `.ZOP` standard
+  Zilog Z80 mnemonic set (`encode_zilog`, exhaustively verified), the `.EPOP`
+  Intel/M80 pseudo-ops (`DB/DW/DS/DEFB/DEFW/DEFM/DEFS/DC/DCS/DSW/ORG/END/ASEG/
+  CSEG/DSEG/EXTERN/EXT/GLOBAL/ENTRY/PUBLIC/COMMON`, the `IF/IFE/IFF/IFT/COND/
+  ELSE/ENDIF/ENDC` conditionals, and `TITLE/SUBTTL/PAGE`), and the
+  `.ZOP/.IOP/.EPOP/.XEPOP` mode switches.  Fixtures (byte-exact vs `pasm2.com`
+  via `../../tools/vpasm2.sh`): `../../tests/{zop,zexh,zoponly,epoponly,zmac,
+  intcond,spell11}.asm`.
+
+> **The Intel/M80 spellings (`DB/DW/DS/DEFB/DEFW/DEFM/DEFS/ORG/END/EXTRN/...`)
+> are `.EPOP`-gated in PASM 2.00G** — an `O` (unknown-opcode) error without an
+> active `.EPOP`, exactly as `pasm2.com` rejects them.  Under `-z`/`-p` the clone
+> still accepts them leniently (the dotted `.BYTE/.WORD/.BLKB/.LOC/.END` are the
+> real ZASM 2.21 / PASM 1.02 forms; the originals flag `ORG`→`O` and bare
+> `END`→`UNEXPECTED END OF INPUT FILE`).  This `-z`/`-p` leniency is a
+> deliberate, harmless divergence: no ZASM/PASM corpus source uses the Intel
+> spellings, so gating them there would change nothing the corpus exercises.
+> See `pasm2-bugs.md` for `pasm2.com`'s own defects (which the clone does NOT
+> reproduce).

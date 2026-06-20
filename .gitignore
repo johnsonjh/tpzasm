@@ -45,7 +45,9 @@ NOTE.txt
 out.txt
 *.pak
 *.PAK
+/m80
 /pasm
+/pasm2
 *.pop
 *.POP
 pvsreport

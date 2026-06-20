@@ -252,6 +252,10 @@ typedef struct
   int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)     */
   int obj_psym;      /* .PSYM: append the `&' symbol-table record(s)          */
   int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning   */
+  int zop_mode;      /* PASM2 .ZOP: standard Zilog mnemonic set active
+                      * (.IOP/.I8080/.Z80 switch back to 8080/TDL); default 0 */
+  int epop_mode;     /* PASM2 .EPOP: the Intel/M80 pseudo-op spellings
+                      * (DB/DW/DS/ORG/END/ASEG/...) on; .XEPOP turns off    */
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn         */
   value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'      */
   int ntemps;        /* number of .TEMPS elements currently allocated         */
@@ -1587,6 +1591,1022 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
 /******************************************************************************/
 
+/* ---- PASM 2.00G `.ZOP' standard Zilog Z80 mnemonic encoder --------- */
+
+/*
+ * In `.ZOP' mode the active mnemonic set is the standard documented Zilog Z80
+ * set (`LD'/`JR cc,e'/`JP nn'/`CP'/`EX'/`BIT'/`SET'/`SLA'/...) rather than the
+ * 8080/TDL set encode_insn parses.  The Zilog operand SYNTAX differs -- `(HL)'
+ * not `M', `(IX+d)' not `d(X)', register PAIRs `BC/DE/HL/SP/AF/IX/IY', the two-
+ * operand `LD'/`ADD A,r' forms, condition codes `NZ/Z/NC/C/PO/PE/P/M' -- so the
+ * operands are parsed here and mapped onto the SAME canonical Z80 encodings the
+ * clone already emits via the TDL mnemonics.  The opcode bytes are byte-exact
+ * to pasm2.com.
+ */
+
+typedef enum
+{
+  ZO_NONE, /* no operand (end of line / comment / `]')                   */
+  ZO_R8,   /* an 8-bit register A B C D E H L (reg = 7 0 1 2 3 4 5)      */
+  ZO_MEM,  /* (HL) [reg 6] or (IX+d)/(IY+d) [reg 6, pfx, idx, val=disp]  */
+  ZO_RP,   /* a 16-bit pair BC DE HL SP [rp 0..3] or IX/IY [rp 2, pfx]   */
+  ZO_AF,   /* the AF pair (PUSH/POP; rp 3)                               */
+  ZO_AFP,  /* AF' (EX AF,AF')                                            */
+  ZO_MRP,  /* (BC)/(DE) register-indirect [rp 0/1]                       */
+  ZO_MABS, /* (nn) a direct memory address [val]                        */
+  ZO_IMM,  /* nn an immediate expression [val]                          */
+  ZO_IREG, /* the I register (LD A,I / LD I,A)                          */
+  ZO_RREG, /* the R register (LD A,R / LD R,A)                          */
+  ZO_MC,   /* (C) the I/O port register (IN/OUT)                        */
+  ZO_MSP   /* (SP) (EX (SP),HL/IX/IY)                                   */
+} zo_kind;
+
+typedef struct
+{
+  zo_kind kind;
+  int reg;     /* ZO_R8/ZO_MEM: 8-bit register code (0..7, (HL)/index = 6)   */
+  int rp;      /* ZO_RP/ZO_MRP/ZO_AF: pair code (BC 0, DE 1, HL 2, SP/AF 3)  */
+  int pfx;     /* index / IX-IY prefix byte: 0, 0xDD, 0xFD                   */
+  int idx;     /* 1 if (IX+d)/(IY+d): a displacement byte follows the prefix */
+  value_t val; /* ZO_IMM/ZO_MABS value, or the (IX+d) displacement          */
+} zoperand;
+
+/* Read a maximal identifier run at p, uppercased, into out[cap]; return its
+ * length.  Used to recognize register / pair / condition tokens. */
+static int
+zid (const char *p, char *out, int cap)
+{
+  int n = 0;
+
+  while (n < cap - 1 && idchar ((unsigned char)p[n]))
+    {
+      out[n] = (char)toupper ((unsigned char)p[n]);
+      n++;
+    }
+
+  out[n] = '\0';
+
+  return n;
+}
+
+/* The 8-bit register code for a single letter (A=7 B=0 C=1 D=2 E=3 H=4 L=5),
+ * or -1 if c is not a register letter. */
+static int
+zreg8 (int c)
+{
+  switch (toupper (c))
+    {
+    case 'B': return 0;
+    case 'C': return 1;
+    case 'D': return 2;
+    case 'E': return 3;
+    case 'H': return 4;
+    case 'L': return 5;
+    case 'A': return 7;
+    default: return -1;
+    }
+}
+
+/*
+ * Parse a Zilog condition code at *pp: NZ Z NC C PO PE P M -> 0..7; when `jr'
+ * is set only the four JR conditions (NZ/Z/NC/C) are legal.  Returns the code
+ * and advances *pp past the token, or -1 when the next token is not a
+ * condition (the caller then treats the operand as an address/register).
+ */
+static int
+zcond (const char **pp, int jr)
+{
+  const char *p = skipws (*pp);
+  char t[8];
+  int n = zid (p, t, sizeof (t));
+  int cc = -1;
+
+  if (0 == n)
+    return -1;
+
+  if (0 == strcmp (t, "NZ"))
+    cc = 0;
+  else if (0 == strcmp (t, "Z"))
+    cc = 1;
+  else if (0 == strcmp (t, "NC"))
+    cc = 2;
+  else if (0 == strcmp (t, "C"))
+    cc = 3;
+  else if (!jr && 0 == strcmp (t, "PO"))
+    cc = 4;
+  else if (!jr && 0 == strcmp (t, "PE"))
+    cc = 5;
+  else if (!jr && 0 == strcmp (t, "P"))
+    cc = 6;
+  else if (!jr && 0 == strcmp (t, "M"))
+    cc = 7;
+
+  if (cc >= 0)
+    *pp = p + n;
+
+  return cc;
+}
+
+/* Classify one Zilog operand at *pp into *o, advancing *pp past it. */
+static void
+zparse (astate *a, const char **pp, zoperand *o)
+{
+  const char *p = skipws (*pp);
+  char t[NAMEBUF];
+  int n;
+
+  o->kind = ZO_NONE;
+  o->reg = 0;
+  o->rp = 0;
+  o->pfx = 0;
+  o->idx = 0;
+  o->val.value = 0;
+  o->val.reloc = 0;
+  o->val.base = 0;
+  o->val.ext = NULL;
+
+  if ('\0' == *p || ';' == *p || ']' == *p)
+    {
+      *pp = p;
+
+      return;
+    }
+
+  if ('(' == *p)
+    {
+      const char *inner = skipws (p + 1);
+      char it[NAMEBUF];
+      int in = zid (inner, it, sizeof (it));
+      const char *after = skipws (inner + in);
+
+      if (in > 0 && ')' == *after
+          && (0 == strcmp (it, "HL") || 0 == strcmp (it, "BC")
+              || 0 == strcmp (it, "DE") || 0 == strcmp (it, "SP")
+              || 0 == strcmp (it, "C")))
+        { /* a register-indirect operand: (HL) (BC) (DE) (SP) (C) */
+          if (0 == strcmp (it, "HL"))
+            {
+              o->kind = ZO_MEM;
+              o->reg = 6;
+            }
+          else if (0 == strcmp (it, "BC"))
+            o->kind = ZO_MRP; /* rp 0 */
+          else if (0 == strcmp (it, "DE"))
+            {
+              o->kind = ZO_MRP;
+              o->rp = 1;
+            }
+          else if (0 == strcmp (it, "SP"))
+            o->kind = ZO_MSP;
+          else
+            o->kind = ZO_MC; /* (C) */
+
+          *pp = after + 1;
+
+          return;
+        }
+
+      if (2 == in && (0 == strcmp (it, "IX") || 0 == strcmp (it, "IY"))
+          && (')' == *after || '+' == *after || '-' == *after))
+        { /* an indexed operand: (IX+d) / (IY+d) / (IX) / (IY) */
+          o->kind = ZO_MEM;
+          o->reg = 6;
+          o->idx = 1;
+          o->pfx = (0 == strcmp (it, "IY") ? 0xFD : 0xDD);
+          a->idx_pfx = 1;
+
+          if (')' == *after)
+            *pp = after + 1; /* (IX) -> displacement 0 */
+          else
+            {
+              const char *q = after; /* the +/- sign is part of the expr */
+
+              if (eval1 (a, &q, &o->val))
+                aerr (a, a->cur_line, "bad index displacement");
+
+              q = skipws (q);
+
+              if (')' == *q)
+                q++;
+              else
+                aerr (a, a->cur_line, "missing )");
+
+              *pp = q;
+            }
+
+          return;
+        }
+
+      { /* (expression): a direct memory address */
+        const char *q = p + 1;
+
+        o->kind = ZO_MABS;
+
+        if (eval1 (a, &q, &o->val))
+          aerr (a, a->cur_line, "bad address");
+
+        q = skipws (q);
+
+        if (')' == *q)
+          q++;
+        else
+          aerr (a, a->cur_line, "missing )");
+
+        *pp = q;
+
+        return;
+      }
+    }
+
+  /* not parenthesized: a bare register / pair / I / R, else an immediate */
+  n = zid (p, t, sizeof (t));
+
+  if (n > 0 && !idchar ((unsigned char)p[n]))
+    {
+      if (1 == n && zreg8 (t[0]) >= 0)
+        {
+          o->kind = ZO_R8;
+          o->reg = zreg8 (t[0]);
+          *pp = p + n;
+
+          return;
+        }
+
+      if (0 == strcmp (t, "BC") || 0 == strcmp (t, "DE")
+          || 0 == strcmp (t, "HL") || 0 == strcmp (t, "SP"))
+        {
+          o->kind = ZO_RP;
+          o->rp = (0 == strcmp (t, "BC")
+                       ? 0
+                       : (0 == strcmp (t, "DE")
+                              ? 1
+                              : (0 == strcmp (t, "HL") ? 2 : 3)));
+          *pp = p + n;
+
+          return;
+        }
+
+      if (0 == strcmp (t, "IX") || 0 == strcmp (t, "IY"))
+        {
+          o->kind = ZO_RP;
+          o->rp = 2;
+          o->pfx = (0 == strcmp (t, "IY") ? 0xFD : 0xDD);
+          a->idx_pfx = 1;
+          *pp = p + n;
+
+          return;
+        }
+
+      if (0 == strcmp (t, "AF"))
+        {
+          const char *q = p + n;
+
+          o->kind = ZO_AF;
+          o->rp = 3;
+
+          if ('\'' == *q)
+            {
+              o->kind = ZO_AFP;
+              q++;
+            }
+
+          *pp = q;
+
+          return;
+        }
+
+      if (0 == strcmp (t, "I"))
+        {
+          o->kind = ZO_IREG;
+          *pp = p + n;
+
+          return;
+        }
+
+      if (0 == strcmp (t, "R"))
+        {
+          o->kind = ZO_RREG;
+          *pp = p + n;
+
+          return;
+        }
+    }
+
+  { /* an immediate expression */
+    const char *q = p;
+
+    o->kind = ZO_IMM;
+
+    if (eval1 (a, &q, &o->val))
+      aerr (a, a->cur_line, "bad operand");
+
+    *pp = q;
+  }
+}
+
+/* Emit a JR/DJNZ relative displacement byte (target - next-instruction). */
+static void
+zemit_rel (astate *a, const char *line, const value_t *v)
+{
+  u16 d16 = (u16)(v->value - (u16)(a->lc_stmt + 2));
+  int d = ((d16 < 0x8000) ? (int)d16 : (int)d16 - 0x10000);
+
+  if (2 == a->pass && (d < -128 || d > 127))
+    aerr (a, line, "relative jump out of range");
+
+  emit (a, (u16)(d16 & 0xFF));
+}
+
+/*
+ * Emit an ALU/arith source operand reached via `<base>|reg' for a register /
+ * (HL) / (IX+d), or `immop'+byte for an immediate.  Returns 1 if the operand
+ * was one of those forms, 0 otherwise (the caller flags the error).
+ */
+static int
+zemit_alusrc (astate *a, const char *line, const zoperand *o, u8 regbase,
+              u8 immop)
+{
+  if (ZO_R8 == o->kind || ZO_MEM == o->kind)
+    {
+      if (o->idx)
+        {
+          emit (a, (u16)o->pfx);
+          emit (a, (u16)(regbase | 6));
+          emit (a, (u16)(o->val.value & 0xFF));
+        }
+      else
+        emit (a, (u16)(regbase | o->reg));
+
+      return 1;
+    }
+
+  if (ZO_IMM == o->kind)
+    {
+      emit (a, (u16)immop);
+      emit_imm8 (a, line, &o->val);
+
+      return 1;
+    }
+
+  return 0;
+}
+
+/* Simple no-operand Zilog mnemonics: a single implied opcode byte. */
+static const struct
+{
+  const char *name;
+  u8 op;
+} ZNOP1[] = {
+  { "NOP", 0x00 },  { "HALT", 0x76 }, { "DI", 0xF3 },  { "EI", 0xFB },
+  { "DAA", 0x27 },  { "CPL", 0x2F },  { "CCF", 0x3F }, { "SCF", 0x37 },
+  { "RLCA", 0x07 }, { "RRCA", 0x0F }, { "RLA", 0x17 }, { "RRA", 0x1F },
+  { "EXX", 0xD9 },  { NULL, 0 }
+};
+
+/* No-operand Zilog mnemonics emitting an ED-prefixed two-byte opcode. */
+static const struct
+{
+  const char *name;
+  u8 op;
+} ZNOPED[] = {
+  { "NEG", 0x44 },  { "RETI", 0x4D }, { "RETN", 0x45 }, { "RLD", 0x6F },
+  { "RRD", 0x67 },  { "LDI", 0xA0 },  { "LDIR", 0xB0 }, { "LDD", 0xA8 },
+  { "LDDR", 0xB8 }, { "CPI", 0xA1 },  { "CPIR", 0xB1 }, { "CPD", 0xA9 },
+  { "CPDR", 0xB9 }, { "INI", 0xA2 },  { "INIR", 0xB2 }, { "IND", 0xAA },
+  { "INDR", 0xBA }, { "OUTI", 0xA3 }, { "OTIR", 0xB3 }, { "OUTD", 0xAB },
+  { "OTDR", 0xBB }, { NULL, 0 }
+};
+
+/* Single-operand ALU ops (implied accumulator): `rb' is the register/(HL)/
+ * (IX+d) base opcode (`rb|reg'), `ib' the immediate opcode. */
+static const struct
+{
+  const char *name;
+  u8 rb, ib;
+} ZALU[] = {
+  { "SUB", 0x90, 0xD6 }, { "AND", 0xA0, 0xE6 }, { "XOR", 0xA8, 0xEE },
+  { "OR", 0xB0, 0xF6 },  { "CP", 0xB8, 0xFE },  { NULL, 0, 0 }
+};
+
+/* CB rotate/shift ops: the second CB opcode byte is `base|reg' (or `base|6'
+ * for (HL)/(IX+d)). */
+static const struct
+{
+  const char *name;
+  u8 base;
+} ZROT[] = {
+  { "RLC", 0x00 }, { "RRC", 0x08 }, { "RL", 0x10 },  { "RR", 0x18 },
+  { "SLA", 0x20 }, { "SRA", 0x28 }, { "SRL", 0x38 }, { NULL, 0 }
+};
+
+/*
+ * Encode one standard Zilog Z80 instruction (the `.ZOP' set).  Returns 1 if
+ * `mnem' (uppercase) is a Zilog mnemonic, 0 otherwise (the caller then flags
+ * the unknown-operator `O' error, exactly as pasm2.com rejects an 8080/TDL
+ * mnemonic under .ZOP).  Best-effort byte sizes are emitted on operand errors
+ * so the LC stays consistent across passes.
+ */
+static int
+encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
+{
+  const char *p = ops;
+  int i;
+  zoperand d, s;
+
+  a->idx_pfx = 0;
+
+  /* no-operand forms (1-byte, then ED 2-byte) */
+  for (i = 0; NULL != ZNOP1[i].name; i++)
+    if (0 == strcmp (mnem, ZNOP1[i].name))
+      {
+        emit (a, ZNOP1[i].op);
+
+        return 1;
+      }
+
+  for (i = 0; NULL != ZNOPED[i].name; i++)
+    if (0 == strcmp (mnem, ZNOPED[i].name))
+      {
+        emit (a, 0xED);
+        emit (a, ZNOPED[i].op);
+
+        return 1;
+      }
+
+  /* SUB AND OR XOR CP : a single source operand, implied accumulator */
+  for (i = 0; NULL != ZALU[i].name; i++)
+    if (0 == strcmp (mnem, ZALU[i].name))
+      {
+        zparse (a, &p, &d);
+
+        if (!zemit_alusrc (a, line, &d, ZALU[i].rb, ZALU[i].ib))
+          {
+            aerr (a, line, "bad operand");
+            emit (a, (u16)(ZALU[i].rb | 7));
+          }
+
+        return 1;
+      }
+
+  /* ADD ADC SBC : ADD A,src / ADD HL|IX|IY,rr (ADC/SBC HL,rr is ED) */
+  if (0 == strcmp (mnem, "ADD") || 0 == strcmp (mnem, "ADC")
+      || 0 == strcmp (mnem, "SBC"))
+    {
+      int is_add = (0 == strcmp (mnem, "ADD"));
+      int is_adc = (0 == strcmp (mnem, "ADC"));
+
+      zparse (a, &p, &d);
+      (void)comma (&p);
+      zparse (a, &p, &s);
+
+      if (ZO_R8 == d.kind && 7 == d.reg)
+        { /* ADD/ADC/SBC A,src */
+          u8 rb = (u8)(is_add ? 0x80 : (is_adc ? 0x88 : 0x98));
+          u8 ib = (u8)(is_add ? 0xC6 : (is_adc ? 0xCE : 0xDE));
+
+          if (!zemit_alusrc (a, line, &s, rb, ib))
+            {
+              aerr (a, line, "bad operand");
+              emit (a, (u16)(rb | 7));
+            }
+        }
+      else if (ZO_RP == d.kind && ZO_RP == s.kind)
+        { /* 16-bit add to HL / IX / IY */
+          if (is_add)
+            {
+              if (d.pfx)
+                emit (a, (u16)d.pfx);
+
+              emit (a, (u16)(0x09 | (s.rp << 4)));
+            }
+          else
+            { /* ADC/SBC HL,rr -> ED */
+              emit (a, 0xED);
+              emit (a, (u16)((is_adc ? 0x4A : 0x42) | (s.rp << 4)));
+            }
+        }
+      else
+        {
+          aerr (a, line, "bad operand");
+          emit (a, (u16)(is_add ? 0x80 : (is_adc ? 0x88 : 0x98)));
+        }
+
+      return 1;
+    }
+
+  /* INC DEC : 8-bit register/(HL)/(IX+d), or 16-bit pair */
+  if (0 == strcmp (mnem, "INC") || 0 == strcmp (mnem, "DEC"))
+    {
+      int dec = (0 == strcmp (mnem, "DEC"));
+
+      zparse (a, &p, &d);
+
+      if (ZO_R8 == d.kind || ZO_MEM == d.kind)
+        {
+          u8 op = (u8)((dec ? 0x05 : 0x04) | (d.reg << 3));
+
+          if (d.idx)
+            {
+              emit (a, (u16)d.pfx);
+              emit (a, op);
+              emit (a, (u16)(d.val.value & 0xFF));
+            }
+          else
+            emit (a, op);
+        }
+      else if (ZO_RP == d.kind)
+        {
+          if (d.pfx)
+            emit (a, (u16)d.pfx);
+
+          emit (a, (u16)((dec ? 0x0B : 0x03) | (d.rp << 4)));
+        }
+      else
+        {
+          aerr (a, line, "bad operand");
+          emit (a, (u16)(dec ? 0x05 : 0x04));
+        }
+
+      return 1;
+    }
+
+  /* PUSH POP : BC DE HL AF (and IX/IY) */
+  if (0 == strcmp (mnem, "PUSH") || 0 == strcmp (mnem, "POP"))
+    {
+      u8 base = (u8)(0 == strcmp (mnem, "POP") ? 0xC1 : 0xC5);
+
+      zparse (a, &p, &d);
+
+      if (ZO_AF == d.kind || (ZO_RP == d.kind && 3 != d.rp))
+        {
+          int rp = (ZO_AF == d.kind ? 3 : d.rp);
+
+          if (d.pfx)
+            emit (a, (u16)d.pfx);
+
+          emit (a, (u16)(base | (rp << 4)));
+        }
+      else
+        {
+          aerr (a, line, "BC/DE/HL/AF expected");
+          emit (a, base);
+        }
+
+      return 1;
+    }
+
+  /* BIT SET RES : b,r / b,(HL) / b,(IX+d) */
+  if (0 == strcmp (mnem, "BIT") || 0 == strcmp (mnem, "SET")
+      || 0 == strcmp (mnem, "RES"))
+    {
+      u8 base = (u8)(0 == strcmp (mnem, "BIT")
+                         ? 0x40
+                         : (0 == strcmp (mnem, "RES") ? 0x80 : 0xC0));
+      int bit;
+
+      zparse (a, &p, &d); /* the bit number */
+      (void)comma (&p);
+      zparse (a, &p, &s); /* the register / memory operand */
+      bit = (int)(d.val.value & 7);
+
+      if (ZO_IMM != d.kind || (ZO_R8 != s.kind && ZO_MEM != s.kind))
+        {
+          aerr (a, line, "bit,reg expected");
+          emit (a, 0xCB);
+          emit (a, base);
+        }
+      else if (s.idx)
+        {
+          emit (a, (u16)s.pfx);
+          emit (a, 0xCB);
+          emit (a, (u16)(s.val.value & 0xFF));
+          emit (a, (u16)(base | (bit << 3) | 6));
+        }
+      else
+        {
+          emit (a, 0xCB);
+          emit (a, (u16)(base | (bit << 3) | s.reg));
+        }
+
+      return 1;
+    }
+
+  /* RLC RRC RL RR SLA SRA SRL : r / (HL) / (IX+d) */
+  for (i = 0; NULL != ZROT[i].name; i++)
+    if (0 == strcmp (mnem, ZROT[i].name))
+      {
+        u8 base = ZROT[i].base;
+
+        zparse (a, &p, &d);
+
+        if (ZO_R8 != d.kind && ZO_MEM != d.kind)
+          {
+            aerr (a, line, "register expected");
+            emit (a, 0xCB);
+            emit (a, base);
+          }
+        else if (d.idx)
+          {
+            emit (a, (u16)d.pfx);
+            emit (a, 0xCB);
+            emit (a, (u16)(d.val.value & 0xFF));
+            emit (a, (u16)(base | 6));
+          }
+        else
+          {
+            emit (a, 0xCB);
+            emit (a, (u16)(base | d.reg));
+          }
+
+        return 1;
+      }
+
+  /* IM 0/1/2 */
+  if (0 == strcmp (mnem, "IM"))
+    {
+      zparse (a, &p, &d);
+      emit (a, 0xED);
+      emit (a, (u16)(0 == d.val.value ? 0x46 : (1 == d.val.value ? 0x56
+                                                                 : 0x5E)));
+
+      return 1;
+    }
+
+  /* RST p (p one of 0,8,10H,...,38H) */
+  if (0 == strcmp (mnem, "RST"))
+    {
+      zparse (a, &p, &d);
+
+      if (0 != (d.val.value & ~(u16)0x38U))
+        aerr (a, line, "bad RST vector");
+
+      emit (a, (u16)(0xC7 | (d.val.value & 0x38)));
+
+      return 1;
+    }
+
+  /* EX DE,HL / EX AF,AF' / EX (SP),HL|IX|IY */
+  if (0 == strcmp (mnem, "EX"))
+    {
+      zparse (a, &p, &d);
+      (void)comma (&p);
+      zparse (a, &p, &s);
+
+      if (ZO_RP == d.kind && 1 == d.rp && ZO_RP == s.kind && 2 == s.rp
+          && !s.pfx)
+        emit (a, 0xEB); /* EX DE,HL */
+      else if (ZO_AF == d.kind && ZO_AFP == s.kind)
+        emit (a, 0x08); /* EX AF,AF' */
+      else if (ZO_MSP == d.kind && ZO_RP == s.kind && 2 == s.rp)
+        { /* EX (SP),HL / (SP),IX / (SP),IY */
+          if (s.pfx)
+            emit (a, (u16)s.pfx);
+
+          emit (a, 0xE3);
+        }
+      else
+        {
+          aerr (a, line, "bad EX operands");
+          emit (a, 0xEB);
+        }
+
+      return 1;
+    }
+
+  /* IN r,(C) / IN A,(n) */
+  if (0 == strcmp (mnem, "IN"))
+    {
+      zparse (a, &p, &d);
+      (void)comma (&p);
+      zparse (a, &p, &s);
+
+      if (ZO_R8 == d.kind && ZO_MC == s.kind)
+        {
+          emit (a, 0xED);
+          emit (a, (u16)(0x40 | (d.reg << 3)));
+        }
+      else if (ZO_R8 == d.kind && 7 == d.reg
+               && (ZO_MABS == s.kind || ZO_IMM == s.kind))
+        {
+          emit (a, 0xDB);
+          emit_imm8 (a, line, &s.val);
+        }
+      else
+        {
+          aerr (a, line, "bad IN operands");
+          emit (a, 0xDB);
+          emit (a, 0);
+        }
+
+      return 1;
+    }
+
+  /* OUT (C),r / OUT (n),A */
+  if (0 == strcmp (mnem, "OUT"))
+    {
+      zparse (a, &p, &d);
+      (void)comma (&p);
+      zparse (a, &p, &s);
+
+      if (ZO_MC == d.kind && ZO_R8 == s.kind)
+        {
+          emit (a, 0xED);
+          emit (a, (u16)(0x41 | (s.reg << 3)));
+        }
+      else if ((ZO_MABS == d.kind || ZO_IMM == d.kind) && ZO_R8 == s.kind
+               && 7 == s.reg)
+        {
+          emit (a, 0xD3);
+          emit_imm8 (a, line, &d.val);
+        }
+      else
+        {
+          aerr (a, line, "bad OUT operands");
+          emit (a, 0xD3);
+          emit (a, 0);
+        }
+
+      return 1;
+    }
+
+  /* JP [cc,]nn / JP (HL)|(IX)|(IY) */
+  if (0 == strcmp (mnem, "JP"))
+    {
+      const char *q = p;
+      int cc = zcond (&q, 0);
+
+      if (cc >= 0 && comma (&q))
+        {
+          zparse (a, &q, &d);
+          emit (a, (u16)(0xC2 | (cc << 3)));
+          emit_word (a, d.val.value, 0 != d.val.reloc, d.val.base);
+          p = q;
+        }
+      else
+        {
+          zparse (a, &p, &d);
+
+          if (ZO_MEM == d.kind && 6 == d.reg)
+            { /* JP (HL) / (IX) / (IY) */
+              if (d.pfx)
+                emit (a, (u16)d.pfx);
+
+              emit (a, 0xE9);
+            }
+          else
+            {
+              emit (a, 0xC3);
+              emit_word (a, d.val.value, 0 != d.val.reloc, d.val.base);
+            }
+        }
+
+      return 1;
+    }
+
+  /* CALL [cc,]nn */
+  if (0 == strcmp (mnem, "CALL"))
+    {
+      const char *q = p;
+      int cc = zcond (&q, 0);
+
+      if (cc >= 0 && comma (&q))
+        {
+          zparse (a, &q, &d);
+          emit (a, (u16)(0xC4 | (cc << 3)));
+          p = q;
+        }
+      else
+        {
+          zparse (a, &p, &d);
+          emit (a, 0xCD);
+        }
+
+      emit_word (a, d.val.value, 0 != d.val.reloc, d.val.base);
+
+      return 1;
+    }
+
+  /* RET [cc] */
+  if (0 == strcmp (mnem, "RET"))
+    {
+      const char *q = skipws (p);
+
+      if ('\0' == *q || ';' == *q || ']' == *q)
+        emit (a, 0xC9);
+      else
+        {
+          int cc = zcond (&q, 0);
+
+          if (cc >= 0)
+            emit (a, (u16)(0xC0 | (cc << 3)));
+          else
+            {
+              aerr (a, line, "bad condition");
+              emit (a, 0xC9);
+            }
+        }
+
+      return 1;
+    }
+
+  /* JR [cc,]e */
+  if (0 == strcmp (mnem, "JR"))
+    {
+      const char *q = p;
+      int cc = zcond (&q, 1);
+
+      if (cc >= 0 && comma (&q))
+        {
+          zparse (a, &q, &d);
+          emit (a, (u16)(0x20 | (cc << 3)));
+          zemit_rel (a, line, &d.val);
+          p = q;
+        }
+      else
+        {
+          zparse (a, &p, &d);
+          emit (a, 0x18);
+          zemit_rel (a, line, &d.val);
+        }
+
+      return 1;
+    }
+
+  /* DJNZ e */
+  if (0 == strcmp (mnem, "DJNZ"))
+    {
+      zparse (a, &p, &d);
+      emit (a, 0x10);
+      zemit_rel (a, line, &d.val);
+
+      return 1;
+    }
+
+  /* LD : the full Zilog load matrix */
+  if (0 == strcmp (mnem, "LD"))
+    {
+      zparse (a, &p, &d);
+      (void)comma (&p);
+      zparse (a, &p, &s);
+
+      if (ZO_R8 == d.kind || ZO_MEM == d.kind)
+        {
+          if (ZO_R8 == s.kind || ZO_MEM == s.kind)
+            { /* LD r,r' (one side may be indexed) */
+              u8 op = (u8)(0x40 | (d.reg << 3) | s.reg);
+
+              if (d.idx)
+                {
+                  emit (a, (u16)d.pfx);
+                  emit (a, op);
+                  emit (a, (u16)(d.val.value & 0xFF));
+                }
+              else if (s.idx)
+                {
+                  emit (a, (u16)s.pfx);
+                  emit (a, op);
+                  emit (a, (u16)(s.val.value & 0xFF));
+                }
+              else
+                emit (a, op);
+            }
+          else if (ZO_IMM == s.kind)
+            { /* LD r,n */
+              u8 op = (u8)(0x06 | (d.reg << 3));
+
+              if (d.idx)
+                {
+                  emit (a, (u16)d.pfx);
+                  emit (a, op);
+                  emit (a, (u16)(d.val.value & 0xFF));
+                }
+              else
+                emit (a, op);
+
+              emit_imm8 (a, line, &s.val);
+            }
+          else if (ZO_R8 == d.kind && 7 == d.reg && ZO_MRP == s.kind)
+            emit (a, (u16)(0x0A | (s.rp << 4))); /* LD A,(BC)/(DE) */
+          else if (ZO_R8 == d.kind && 7 == d.reg && ZO_MABS == s.kind)
+            { /* LD A,(nn) */
+              emit (a, 0x3A);
+              emit_word (a, s.val.value, 0 != s.val.reloc, s.val.base);
+            }
+          else if (ZO_R8 == d.kind && 7 == d.reg && ZO_IREG == s.kind)
+            {
+              emit (a, 0xED);
+              emit (a, 0x57); /* LD A,I */
+            }
+          else if (ZO_R8 == d.kind && 7 == d.reg && ZO_RREG == s.kind)
+            {
+              emit (a, 0xED);
+              emit (a, 0x5F); /* LD A,R */
+            }
+          else
+            {
+              aerr (a, line, "bad LD operands");
+              emit (a, (u16)(0x40 | (d.reg << 3) | (d.reg)));
+            }
+        }
+      else if (ZO_MRP == d.kind && ZO_R8 == s.kind && 7 == s.reg)
+        emit (a, (u16)(0x02 | (d.rp << 4))); /* LD (BC)/(DE),A */
+      else if (ZO_MABS == d.kind)
+        {
+          if (ZO_R8 == s.kind && 7 == s.reg)
+            { /* LD (nn),A */
+              emit (a, 0x32);
+              emit_word (a, d.val.value, 0 != d.val.reloc, d.val.base);
+            }
+          else if (ZO_RP == s.kind)
+            { /* LD (nn),HL/BC/DE/SP/IX/IY */
+              if (s.pfx)
+                {
+                  emit (a, (u16)s.pfx);
+                  emit (a, 0x22);
+                }
+              else if (2 == s.rp)
+                emit (a, 0x22); /* SHLD */
+              else
+                {
+                  emit (a, 0xED);
+                  emit (a, (u16)(0x43 | (s.rp << 4)));
+                }
+
+              emit_word (a, d.val.value, 0 != d.val.reloc, d.val.base);
+            }
+          else
+            {
+              aerr (a, line, "bad LD operands");
+              emit (a, 0x32);
+              emit_word (a, d.val.value, 0 != d.val.reloc, d.val.base);
+            }
+        }
+      else if (ZO_RP == d.kind)
+        {
+          if (ZO_IMM == s.kind)
+            { /* LD rr,nn */
+              if (d.pfx)
+                emit (a, (u16)d.pfx);
+
+              emit (a, (u16)(0x01 | (d.rp << 4)));
+              emit_word (a, s.val.value, 0 != s.val.reloc, s.val.base);
+            }
+          else if (ZO_MABS == s.kind)
+            { /* LD rr,(nn) */
+              if (d.pfx)
+                {
+                  emit (a, (u16)d.pfx);
+                  emit (a, 0x2A);
+                }
+              else if (2 == d.rp)
+                emit (a, 0x2A); /* LHLD */
+              else
+                {
+                  emit (a, 0xED);
+                  emit (a, (u16)(0x4B | (d.rp << 4)));
+                }
+
+              emit_word (a, s.val.value, 0 != s.val.reloc, s.val.base);
+            }
+          else if (3 == d.rp && ZO_RP == s.kind && 2 == s.rp)
+            { /* LD SP,HL / SP,IX / SP,IY */
+              if (s.pfx)
+                emit (a, (u16)s.pfx);
+
+              emit (a, 0xF9);
+            }
+          else
+            {
+              aerr (a, line, "bad LD operands");
+              emit (a, (u16)(0x01 | (d.rp << 4)));
+              emit (a, 0);
+              emit (a, 0);
+            }
+        }
+      else if (ZO_IREG == d.kind && ZO_R8 == s.kind && 7 == s.reg)
+        {
+          emit (a, 0xED);
+          emit (a, 0x47); /* LD I,A */
+        }
+      else if (ZO_RREG == d.kind && ZO_R8 == s.kind && 7 == s.reg)
+        {
+          emit (a, 0xED);
+          emit (a, 0x4F); /* LD R,A */
+        }
+      else
+        {
+          aerr (a, line, "bad LD operands");
+          emit (a, 0);
+        }
+
+      return 1;
+    }
+
+  return 0; /* not a Zilog mnemonic */
+}
+
+/******************************************************************************/
+
 /* ---- pseudo-ops ---------------------------------------------------- */
 
 /*
@@ -1608,8 +2628,64 @@ limg_rec (astate *a, const char *line, const char *p, int cap)
 
 /******************************************************************************/
 
+/*
+ * Scan a quoted string for the M80 (PASM2 .EPOP) `DB' string form: p points at
+ * the opening delimiter (' or ").  A doubled delimiter ("" / '') inside the
+ * string stands for one literal delimiter character.  On a terminated string,
+ * *endp is set just past the closing delimiter and the function returns 1;
+ * *pure is set when the string stands alone (the next non-blank token is a
+ * separator -- a comma, comment, block-close, or end of line -- rather than an
+ * operator that would make the quote a character-constant value).  On an
+ * unterminated string, *endp gets the end and the function returns 0.
+ */
+
+static int
+db_string (const char *p, const char **endp, int *pure)
+{
+  char d = *p;
+  const char *q = p + 1;
+
+  while ('\0' != *q)
+    {
+      if (d == *q)
+        {
+          if (d == q[1]) /* a doubled delimiter is one literal character */
+            {
+              q += 2;
+
+              continue;
+            }
+
+          break; /* the closing delimiter */
+        }
+
+      q++;
+    }
+
+  if (d != *q) /* unterminated */
+    {
+      *endp = q;
+      *pure = 0;
+
+      return 0;
+    }
+
+  {
+    const char *after = skipws (q + 1);
+
+    *pure = ('\0' == *after || ',' == *after || ';' == *after
+             || ']' == *after);
+  }
+
+  *endp = q + 1;
+
+  return 1;
+}
+
+/******************************************************************************/
+
 static void
-do_data (astate *a, const char *line, const char *p, int width)
+do_data (astate *a, const char *line, const char *p, int width, int strmode)
 {
   a->lst_kind = ((2 == width) ? 2 : 1); /* listing: words vs bytes */
   a->limg_ns = 0;
@@ -1618,6 +2694,8 @@ do_data (astate *a, const char *line, const char *p, int width)
       value_t v;
       long rep = 1, k;
       const char *start;
+      const char *endq;
+      int pure = 0;
       p = skipws (p);
 
       if ('\0' == *p || ';' == *p)
@@ -1642,20 +2720,56 @@ do_data (astate *a, const char *line, const char *p, int width)
           p = skipws (q);
         }
 
-      /* emit 0, keep size */
-      if (eval1 (a, &p, &v))
-        aerr (a, line, "bad expression");
+      if (strmode && ('\'' == *p || '"' == *p) && db_string (p, &endq, &pure)
+          && pure)
+        { /*
+           * PASM2 (.EPOP) Intel `DB' string: a stand-alone quoted string emits
+           * one byte per character, a doubled delimiter ("" / '') standing for
+           * one delimiter character (M80 semantics).  A quote that is part of
+           * an arithmetic expression (followed by an operator, so `pure' is
+           * false) instead falls through and evaluates as a character constant.
+           * Only the Intel `DB'/`DEFB' form (strmode) does this -- the TDL
+           * `.BYTE' form keeps the character-constant value even under PASM2
+           * (where pasm2.com also flags a multi-character `.BYTE' a `Q' error).
+           */
+          char d = *p;
+          const char *r = p + 1;
 
-      for (k = 0; k < rep; k++)
+          while (r < endq - 1)
+            {
+              if (d == *r && r + 1 < endq - 1 && d == r[1])
+                {
+                  emit (a, (u16)(unsigned char)d);
+                  r += 2;
+                }
+              else
+                {
+                  emit (a, (u16)(unsigned char)*r);
+                  r++;
+                }
+
+              limg_rec (a, line, r, 6);
+            }
+
+          p = endq;
+        }
+      else
         {
-          if (2 == a->pass && 2 == width
-              && a->nbytes / 2 < (int)sizeof (a->wreloc))
-            a->wreloc[a->nbytes / 2] = (u8)(0 != v.reloc ? v.base : 0);
+          /* emit 0, keep size */
+          if (eval1 (a, &p, &v))
+            aerr (a, line, "bad expression");
 
-          if (2 == width)
-            emit_word (a, v.value, 0 != v.reloc, v.base);
-          else
-            emit_imm8 (a, line, &v);
+          for (k = 0; k < rep; k++)
+            {
+              if (2 == a->pass && 2 == width
+                  && a->nbytes / 2 < (int)sizeof (a->wreloc))
+                a->wreloc[a->nbytes / 2] = (u8)(0 != v.reloc ? v.base : 0);
+
+              if (2 == width)
+                emit_word (a, v.value, 0 != v.reloc, v.base);
+              else
+                emit_imm8 (a, line, &v);
+            }
         }
 
       /* .LIMAGE: record where the source splits across the byte image */
@@ -2020,6 +3134,23 @@ static int
 opeq (const char *op, const char *x, const char *y)
 {
   return 0 == strcmp (op, x) || (NULL != y && 0 == strcmp (op, y));
+}
+
+/******************************************************************************/
+
+/*
+ * Whether the Intel/M80 pseudo-op spellings (the bare `DB'/`DW'/`DS'/`ORG'/
+ * `END'/`DEFB'/`DEFW' forms, distinct from the TDL dotted `.BYTE'/`.WORD'/...)
+ * are accepted on this line.  In PASM 2.00G they are `.EPOP'-gated and an `O'
+ * error otherwise, matching pasm2.com.  In the 1.02/2.21 dialects the clone has
+ * always accepted them (byte-exact across that corpus), so this stays true and
+ * their dispatch is unchanged.
+ */
+
+static int
+epop_ok (const astate *a)
+{
+  return (DIALECT_PASM2 != a->dialect) || a->epop_mode;
 }
 
 /******************************************************************************/
@@ -5309,6 +6440,89 @@ do_line (astate *a, const char *line)
       return;
     }
 
+  /*
+   * PASM2 .EPOP Intel/M80 conditionals: `IF'/`IFT'/`COND' expr (assemble if
+   * non-zero), `IFE'/`IFF' expr (assemble if zero), `ELSE', `ENDIF'/`ENDC'.
+   * Unlike the TDL bracket conditionals these carry NO `[...]' block -- the
+   * frame stays open until ENDIF/ENDC.  Handled BEFORE the casm() skip-gate so
+   * a nested IF inside a skipped block still pushes/pops its frame and stays
+   * balanced; they emit no bytes and self-list with a blank LC.
+   */
+  if (DIALECT_PASM2 == a->dialect && a->epop_mode)
+    {
+      int is_if = (opeq (op, "IF", "IFT") || opeq (op, "COND", NULL));
+      int is_ife = opeq (op, "IFE", "IFF");
+
+      if (is_if || is_ife)
+        {
+          int outer = casm (a), t = 0;
+
+          if (outer)
+            {
+              const char *q = L.operands;
+              value_t v;
+
+              if (!eval1 (a, &q, &v))
+                t = (is_ife ? (0 == v.value) : (0 != v.value));
+            }
+
+          if (a->cdepth < MAXCOND)
+            {
+              a->cstack[a->cdepth].if_true = t;
+              a->cstack[a->cdepth].assemble = outer && t;
+              a->cstack[a->cdepth].is_else = 0;
+              a->cdepth++;
+            }
+
+          a->lst_loc = -1;
+
+          if (2 == a->pass)
+            print_lst (a, lc0, line);
+
+          return;
+        }
+
+      if (opeq (op, "ELSE", NULL))
+        { /* invert the innermost frame, like the TDL bracket else */
+          if (a->cdepth > 0)
+            {
+              int wt = a->cstack[(long)a->cdepth - 1].if_true;
+              int outer;
+
+              a->cdepth--;
+              outer = casm (a);
+
+              if (a->cdepth < MAXCOND)
+                {
+                  a->cstack[a->cdepth].if_true = !wt;
+                  a->cstack[a->cdepth].assemble = outer && !wt;
+                  a->cstack[a->cdepth].is_else = 1;
+                  a->cdepth++;
+                }
+            }
+
+          a->lst_loc = -1;
+
+          if (2 == a->pass)
+            print_lst (a, lc0, line);
+
+          return;
+        }
+
+      if (opeq (op, "ENDIF", "ENDC"))
+        { /* close the innermost conditional frame */
+          if (a->cdepth > 0)
+            a->cdepth--;
+
+          a->lst_loc = -1;
+
+          if (2 == a->pass)
+            print_lst (a, lc0, line);
+
+          return;
+        }
+    }
+
   if (!casm (a))
     { /*
        * inside a skipped conditional block: the originals still list
@@ -5537,8 +6751,11 @@ do_line (astate *a, const char *line)
       aerr (a, line, "user .ERROR");
       a->lst_loc = -1;
     }
-  else if (opeq (op, ".EXTERN", ".EXTRN") || opeq (op, "EXTRN", NULL))
-    { /* declare external symbols; each gets a sequential base number (>=4) */
+  else if (opeq (op, ".EXTERN", ".EXTRN") || opeq (op, "EXTRN", NULL)
+           || (DIALECT_PASM2 == a->dialect && a->epop_mode
+               && opeq (op, "EXTERN", "EXT")))
+    { /* declare external symbols; each gets a sequential base number (>=4).
+       * PASM2 .EPOP adds the Intel `EXTERN'/`EXT' spellings (== .EXTERN). */
       const char *q = L.operands;
 
       for (;;)
@@ -5571,9 +6788,16 @@ do_line (astate *a, const char *line)
 
       a->lst_loc = -1;
     }
-  else if (opeq (op, ".ENTRY", NULL) || opeq (op, ".INTERN", NULL))
-    { /* mark internal symbols (.ENTRY symbols are also entry points) */
-      int is_entry = opeq (op, ".ENTRY", NULL);
+  else if (opeq (op, ".ENTRY", NULL) || opeq (op, ".INTERN", NULL)
+           || (DIALECT_PASM2 == a->dialect && a->epop_mode
+               && opeq (op, "ENTRY", "GLOBAL")))
+    { /* mark internal symbols (.ENTRY symbols are also entry points).  PASM2
+       * .EPOP adds the Intel `ENTRY'/`GLOBAL' spellings (== .ENTRY: a public
+       * symbol defined here, visible to other modules).  `PUBLIC'/`COMMON'
+       * stay no-ops (is_noop_dir), unchanged from the 1.02/2.21 leniency. */
+      int is_entry = (opeq (op, ".ENTRY", NULL)
+                      || (DIALECT_PASM2 == a->dialect && a->epop_mode
+                          && opeq (op, "ENTRY", "GLOBAL")));
       const char *q = L.operands;
 
       for (;;)
@@ -5726,19 +6950,30 @@ do_line (astate *a, const char *line)
       do_define (a, L.operands);
       a->lst_loc = -1; /* .DEFINE has no location: blank the LOC column */
     }
-  else if (opeq (op, ".BYTE", ".DB") || opeq (op, "DB", "DEFB"))
-    do_data (a, line, L.operands, 1);
-  else if (opeq (op, ".WORD", ".DW") || opeq (op, "DW", "DEFW"))
-    do_data (a, line, L.operands, 2);
-  else if (opeq (op, ".BLKB", ".DS") || opeq (op, "DS", NULL))
+  else if (opeq (op, ".BYTE", ".DB"))
+    do_data (a, line, L.operands, 1, 0); /* TDL form: char-constant value */
+  else if (epop_ok (a) && opeq (op, "DB", "DEFB"))
+    /* Intel form: a quoted operand is an M80 byte string (PASM2 only) */
+    do_data (a, line, L.operands, 1, DIALECT_PASM2 == a->dialect);
+  else if (DIALECT_PASM2 == a->dialect && a->epop_mode
+           && opeq (op, "DEFM", NULL))
+    /* M80 `DEFM' ("define message") -- a byte string, like the Intel `DB' */
+    do_data (a, line, L.operands, 1, 1);
+  else if (opeq (op, ".WORD", ".DW"))
+    do_data (a, line, L.operands, 2, 0);
+  else if (epop_ok (a) && opeq (op, "DW", "DEFW"))
+    do_data (a, line, L.operands, 2, 0);
+  else if (opeq (op, ".BLKB", ".DS") || (epop_ok (a) && opeq (op, "DS", NULL))
+           || (DIALECT_PASM2 == a->dialect && a->epop_mode
+               && opeq (op, "DEFS", NULL)))
     do_blk (a, line, L.operands, 1);
-  else if (opeq (op, ".BLKW", "DSW"))
+  else if (opeq (op, ".BLKW", NULL) || (epop_ok (a) && opeq (op, "DSW", NULL)))
     do_blk (a, line, L.operands, 2);
-  else if (opeq (op, ".ASCII", ".DC") || opeq (op, "DC", NULL))
+  else if (opeq (op, ".ASCII", ".DC") || (epop_ok (a) && opeq (op, "DC", NULL)))
     do_ascii (a, line, L.operands, 0);
   else if (opeq (op, ".ASCIZ", NULL))
     do_ascii (a, line, L.operands, 1);
-  else if (opeq (op, ".ASCIS", "DCS"))
+  else if (opeq (op, ".ASCIS", NULL) || (epop_ok (a) && opeq (op, "DCS", NULL)))
     do_ascii (a, line, L.operands, 2);
   else if (opeq (op, ".DATE", NULL))
     do_datetime (a, 0);
@@ -5746,7 +6981,7 @@ do_line (astate *a, const char *line)
     do_datetime (a, 1);
   else if (opeq (op, ".RAD40", NULL))
     do_rad40 (a, line, L.operands);
-  else if (opeq (op, ".LOC", "ORG") || opeq (op, ".ORG", NULL))
+  else if (opeq (op, ".LOC", ".ORG") || (epop_ok (a) && opeq (op, "ORG", NULL)))
     {
       value_t v;
       const char *p = L.operands;
@@ -5858,13 +7093,59 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".I8080", NULL))
-    { /* restrict to the 8080 set: a Z80 instruction now raises a `Z' warning */
+    { /* restrict to the 8080 set: a Z80 instruction now raises a `Z' warning;
+       * also leave PASM2 .ZOP Zilog mode (the manual: .I8080 switches back to
+       * the 8080/TDL mnemonic set) */
       a->i8080_mode = 1;
+      a->zop_mode = 0;
       a->lst_loc = -1;
     }
   else if (opeq (op, ".Z80", NULL))
     { /* allow the Z80 extensions again (the default) */
       a->i8080_mode = 0;
+      a->lst_loc = -1;
+    }
+  else if (DIALECT_PASM2 == a->dialect && opeq (op, ".ZOP", NULL))
+    { /* PASM2: switch the active mnemonic set to the standard Zilog Z80 set */
+      a->zop_mode = 1;
+      a->lst_loc = -1;
+    }
+  else if (DIALECT_PASM2 == a->dialect && opeq (op, ".IOP", NULL))
+    { /* PASM2: switch back to the 8080/TDL mnemonic set (the default) */
+      a->zop_mode = 0;
+      a->lst_loc = -1;
+    }
+  else if (DIALECT_PASM2 == a->dialect && opeq (op, ".EPOP", NULL))
+    { /* PASM2: enable the Intel/M80 pseudo-op spellings (DB/DW/DS/ORG/END/
+       * ASEG/CSEG/DSEG/...) on top of the TDL dotted forms */
+      a->epop_mode = 1;
+      a->lst_loc = -1;
+    }
+  else if (DIALECT_PASM2 == a->dialect && opeq (op, ".XEPOP", NULL))
+    { /* PASM2: disable the Intel/M80 pseudo-op spellings (the default) */
+      a->epop_mode = 0;
+      a->lst_loc = -1;
+    }
+  else if (DIALECT_PASM2 == a->dialect && a->epop_mode
+           && opeq (op, "ASEG", NULL))
+    { /* Intel absolute segment: assemble at an absolute (non-relocatable) LC,
+       * absolute object output -- like .PABS followed by an absolute origin */
+      a->obj_abs = 1;
+      a->lc_reloc = 0;
+      a->lst_loc = -1;
+    }
+  else if (DIALECT_PASM2 == a->dialect && a->epop_mode
+           && opeq (op, "CSEG", NULL))
+    { /* Intel code segment -> the relocatable .PROG. segment */
+      a->base = 1;
+      a->lc_reloc = 1;
+      a->lst_loc = -1;
+    }
+  else if (DIALECT_PASM2 == a->dialect && a->epop_mode
+           && opeq (op, "DSEG", NULL))
+    { /* Intel data segment -> the relocatable .DATA. segment */
+      a->base = 2;
+      a->lc_reloc = 1;
       a->lst_loc = -1;
     }
   else if (opeq (op, ".LIST", NULL))
@@ -6016,19 +7297,27 @@ do_line (astate *a, const char *line)
 
       return;
     }
-  else if (opeq (op, ".TITLE", NULL))
+  else if (opeq (op, ".TITLE", NULL)
+           || (DIALECT_PASM2 == a->dialect && a->epop_mode
+               && opeq (op, "TITLE", NULL)))
     { /* capture the page title -- heading line A, after "modname - ".  Done in
        * both passes so pass 2's page-1 heading already has whatever was set
-       * before the first listed line.  The directive does not self-list. */
+       * before the first listed line.  The directive does not self-list.  The
+       * Intel `TITLE' spelling (PASM2 .EPOP) is the same as `.TITLE'. */
       capture_svalue (a, L.operands, a->title, sizeof (a->title));
       return; /* suppressed from the body listing */
     }
-  else if (opeq (op, ".SBTTL", NULL) || opeq (op, ".SUBTTL", NULL))
-    { /* capture the page subtitle -- heading line B, on its own; same rules */
+  else if (opeq (op, ".SBTTL", ".SUBTTL")
+           || (DIALECT_PASM2 == a->dialect && a->epop_mode
+               && opeq (op, "SUBTTL", NULL)))
+    { /* capture the page subtitle -- heading line B, on its own; same rules.
+       * The Intel `SUBTTL' spelling (PASM2 .EPOP) is the same as `.SBTTL'. */
       capture_svalue (a, L.operands, a->subtitle, sizeof (a->subtitle));
       return; /* suppressed from the body listing */
     }
-  else if (opeq (op, ".PAGE", NULL))
+  else if (opeq (op, ".PAGE", NULL)
+           || (DIALECT_PASM2 == a->dialect && a->epop_mode
+               && opeq (op, "PAGE", NULL)))
     {
       const char *pg = skipws (L.operands);
 
@@ -6042,7 +7331,7 @@ do_line (astate *a, const char *line)
            * line is suppressed WITHOUT ejecting.  The first operand (page
            * WIDTH -> column wrap) is not yet honored.
            */
-          if (DIALECT_PASM == a->dialect)
+          if (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
             {
               const char *cm = pg;
 
@@ -6111,7 +7400,8 @@ do_line (astate *a, const char *line)
 
       return; /* suppressed from the body listing */
     }
-  else if (opeq (op, ".END", "END") || opeq (op, ".PRGEND", NULL))
+  else if (opeq (op, ".END", ".PRGEND")
+           || (epop_ok (a) && opeq (op, "END", NULL)))
     {
       /*
        * .END terminates the file; .PRGEND ("library file generation")
@@ -6181,11 +7471,15 @@ do_line (astate *a, const char *line)
   else
     {
       /*
-       * a machine instruction (encode_insn emits it), a listing/output
-       * no-op directive, or an unknown operator
+       * a machine instruction (encode_insn / encode_zilog emits it), a
+       * listing/output no-op directive, or an unknown operator.  In PASM2
+       * `.ZOP' mode the standard Zilog set is active; otherwise the 8080/TDL
+       * set.  The two are exclusive, so an 8080 mnemonic under .ZOP (or a
+       * Zilog one under .IOP) falls through to the unknown-operator `O' error.
        */
 
-      if (!encode_insn (a, line, op, L.operands))
+      if (!(a->zop_mode ? encode_zilog (a, line, op, L.operands)
+                        : encode_insn (a, line, op, L.operands)))
         {
           if (is_noop_dir (op))
             a->lst_loc = -1; /* a listing/output no-op directive (e.g. .PRNTX)
@@ -6433,6 +7727,8 @@ init_pass (astate *a, int pass)
   a->ntemps = 0; /* no .TEMPS local array allocated yet */
   a->mac_argc = 0;
   a->i8080_mode = 0; /* default .Z80: Z80 extensions allowed without warning */
+  a->zop_mode = 0;   /* default .IOP: 8080/TDL mnemonics (PASM2 .ZOP enables) */
+  a->epop_mode = 0;  /* default .XEPOP: Intel pseudo-ops off (PASM2 .EPOP on) */
   a->idx_pfx = 0;
   macro_free_all (a);
   a->defining = NULL;
@@ -6775,7 +8071,8 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             os.data_base = (a.obj_org_used ? 0 : 1);
             os.start = a.obj_start;
             os.start_reloc = a.obj_start_rel;
-            os.emit_progid = (DIALECT_PASM == dialect);
+            os.emit_progid
+                = (DIALECT_PASM == dialect || DIALECT_PASM2 == dialect);
             os.progid = ('\0' != a.progid[0]) ? a.progid : NULL;
             os.progid_ver = a.progid_ver;
             os.progid_rev = a.progid_rev;
