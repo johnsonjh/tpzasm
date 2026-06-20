@@ -255,7 +255,7 @@ typedef struct
   int zop_mode;      /* PASM2 .ZOP: standard Zilog mnemonic set active
                       * (.IOP/.I8080/.Z80 switch back to 8080/TDL); default 0 */
   int epop_mode;     /* PASM2 .EPOP: the Intel/M80 pseudo-op spellings
-                      * (DB/DW/DS/ORG/END/ASEG/...) on; .XEPOP turns off    */
+                      * (DB/DW/DS/ORG/END/ASEG/...) on; .XEPOP turns off      */
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn         */
   value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'      */
   int ntemps;        /* number of .TEMPS elements currently allocated         */
@@ -477,9 +477,9 @@ em_record (astate *a, u8 v)
           if (nsc > (long)a->span_cap)
             {
               int sc = (int)nsc;
-              u16 *na = (u16 *)realloc (a->span_a, (size_t)sc * sizeof (u16));
-              u16 *nn = (u16 *)realloc (a->span_n, (size_t)sc * sizeof (u16));
-              u8 *ng = (u8 *)realloc (a->span_seg, (size_t)sc * sizeof (u8));
+              u16 *na = (u16 *)realloc (a->span_a,  (size_t)sc * sizeof (u16));
+              u16 *nn = (u16 *)realloc (a->span_n,  (size_t)sc * sizeof (u16));
+              u8  *ng = (u8 *)realloc (a->span_seg, (size_t)sc * sizeof (u8));
 
               if (NULL != na)
                 a->span_a = na;
@@ -1073,6 +1073,8 @@ is_reg_token (const char *t)
   return (0 == strcmp (w, "SP") || 0 == strcmp (w, "PSW"));
 }
 
+/******************************************************************************/
+
 /*
  * Flag a trailing (extra) operand the originals reject (manual Appendix C),
  * after an instruction's expected operands have parsed cleanly:
@@ -1613,13 +1615,15 @@ typedef enum
   ZO_AF,   /* the AF pair (PUSH/POP; rp 3)                               */
   ZO_AFP,  /* AF' (EX AF,AF')                                            */
   ZO_MRP,  /* (BC)/(DE) register-indirect [rp 0/1]                       */
-  ZO_MABS, /* (nn) a direct memory address [val]                        */
-  ZO_IMM,  /* nn an immediate expression [val]                          */
-  ZO_IREG, /* the I register (LD A,I / LD I,A)                          */
-  ZO_RREG, /* the R register (LD A,R / LD R,A)                          */
-  ZO_MC,   /* (C) the I/O port register (IN/OUT)                        */
-  ZO_MSP   /* (SP) (EX (SP),HL/IX/IY)                                   */
+  ZO_MABS, /* (nn) a direct memory address [val]                         */
+  ZO_IMM,  /* nn an immediate expression [val]                           */
+  ZO_IREG, /* the I register (LD A,I / LD I,A)                           */
+  ZO_RREG, /* the R register (LD A,R / LD R,A)                           */
+  ZO_MC,   /* (C) the I/O port register (IN/OUT)                         */
+  ZO_MSP   /* (SP) (EX (SP),HL/IX/IY)                                    */
 } zo_kind;
+
+/******************************************************************************/
 
 typedef struct
 {
@@ -1628,11 +1632,16 @@ typedef struct
   int rp;      /* ZO_RP/ZO_MRP/ZO_AF: pair code (BC 0, DE 1, HL 2, SP/AF 3)  */
   int pfx;     /* index / IX-IY prefix byte: 0, 0xDD, 0xFD                   */
   int idx;     /* 1 if (IX+d)/(IY+d): a displacement byte follows the prefix */
-  value_t val; /* ZO_IMM/ZO_MABS value, or the (IX+d) displacement          */
+  value_t val; /* ZO_IMM/ZO_MABS value, or the (IX+d) displacement           */
 } zoperand;
 
-/* Read a maximal identifier run at p, uppercased, into out[cap]; return its
- * length.  Used to recognize register / pair / condition tokens. */
+/******************************************************************************/
+
+/*
+ * Read a maximal identifier run at p, uppercased, into out[cap]; return its
+ * length.  Used to recognize register / pair / condition tokens.
+ */
+
 static int
 zid (const char *p, char *out, int cap)
 {
@@ -1649,8 +1658,12 @@ zid (const char *p, char *out, int cap)
   return n;
 }
 
-/* The 8-bit register code for a single letter (A=7 B=0 C=1 D=2 E=3 H=4 L=5),
- * or -1 if c is not a register letter. */
+/******************************************************************************/
+
+/*
+ * The 8-bit register code for a single letter (A=7 B=0 C=1 D=2 E=3 H=4 L=5),
+ * or -1 if c is not a register letter
+ */
 static int
 zreg8 (int c)
 {
@@ -1666,6 +1679,8 @@ zreg8 (int c)
     default: return -1;
     }
 }
+
+/******************************************************************************/
 
 /*
  * Parse a Zilog condition code at *pp: NZ Z NC C PO PE P M -> 0..7; when `jr'
@@ -1706,6 +1721,8 @@ zcond (const char **pp, int jr)
 
   return cc;
 }
+
+/******************************************************************************/
 
 /* Classify one Zilog operand at *pp into *o, advancing *pp past it. */
 static void
@@ -1904,6 +1921,8 @@ zparse (astate *a, const char **pp, zoperand *o)
   }
 }
 
+/******************************************************************************/
+
 /* Emit a JR/DJNZ relative displacement byte (target - next-instruction). */
 static void
 zemit_rel (astate *a, const char *line, const value_t *v)
@@ -1916,6 +1935,8 @@ zemit_rel (astate *a, const char *line, const value_t *v)
 
   emit (a, (u16)(d16 & 0xFF));
 }
+
+/******************************************************************************/
 
 /*
  * Emit an ALU/arith source operand reached via `<base>|reg' for a register /
@@ -1951,17 +1972,21 @@ zemit_alusrc (astate *a, const char *line, const zoperand *o, u8 regbase,
   return 0;
 }
 
+/******************************************************************************/
+
 /* Simple no-operand Zilog mnemonics: a single implied opcode byte. */
 static const struct
 {
   const char *name;
   u8 op;
 } ZNOP1[] = {
-  { "NOP", 0x00 },  { "HALT", 0x76 }, { "DI", 0xF3 },  { "EI", 0xFB },
-  { "DAA", 0x27 },  { "CPL", 0x2F },  { "CCF", 0x3F }, { "SCF", 0x37 },
+  {  "NOP", 0x00 }, { "HALT", 0x76 }, {  "DI", 0xF3 }, {  "EI", 0xFB },
+  {  "DAA", 0x27 }, {  "CPL", 0x2F }, { "CCF", 0x3F }, { "SCF", 0x37 },
   { "RLCA", 0x07 }, { "RRCA", 0x0F }, { "RLA", 0x17 }, { "RRA", 0x1F },
-  { "EXX", 0xD9 },  { NULL, 0 }
+  {  "EXX", 0xD9 }, {   NULL, 0 }
 };
+
+/******************************************************************************/
 
 /* No-operand Zilog mnemonics emitting an ED-prefixed two-byte opcode. */
 static const struct
@@ -1969,35 +1994,45 @@ static const struct
   const char *name;
   u8 op;
 } ZNOPED[] = {
-  { "NEG", 0x44 },  { "RETI", 0x4D }, { "RETN", 0x45 }, { "RLD", 0x6F },
-  { "RRD", 0x67 },  { "LDI", 0xA0 },  { "LDIR", 0xB0 }, { "LDD", 0xA8 },
-  { "LDDR", 0xB8 }, { "CPI", 0xA1 },  { "CPIR", 0xB1 }, { "CPD", 0xA9 },
-  { "CPDR", 0xB9 }, { "INI", 0xA2 },  { "INIR", 0xB2 }, { "IND", 0xAA },
+  {  "NEG", 0x44 }, { "RETI", 0x4D }, { "RETN", 0x45 }, {  "RLD", 0x6F },
+  {  "RRD", 0x67 }, {  "LDI", 0xA0 }, { "LDIR", 0xB0 }, {  "LDD", 0xA8 },
+  { "LDDR", 0xB8 }, {  "CPI", 0xA1 }, { "CPIR", 0xB1 }, {  "CPD", 0xA9 },
+  { "CPDR", 0xB9 }, {  "INI", 0xA2 }, { "INIR", 0xB2 }, {  "IND", 0xAA },
   { "INDR", 0xBA }, { "OUTI", 0xA3 }, { "OTIR", 0xB3 }, { "OUTD", 0xAB },
-  { "OTDR", 0xBB }, { NULL, 0 }
+  { "OTDR", 0xBB }, {   NULL, 0 }
 };
 
-/* Single-operand ALU ops (implied accumulator): `rb' is the register/(HL)/
- * (IX+d) base opcode (`rb|reg'), `ib' the immediate opcode. */
+/******************************************************************************/
+
+/*
+ * Single-operand ALU ops (implied accumulator): `rb' is the register/(HL)/
+ * (IX+d) base opcode (`rb|reg'), `ib' the immediate opcode.
+ */
 static const struct
 {
   const char *name;
   u8 rb, ib;
 } ZALU[] = {
   { "SUB", 0x90, 0xD6 }, { "AND", 0xA0, 0xE6 }, { "XOR", 0xA8, 0xEE },
-  { "OR", 0xB0, 0xF6 },  { "CP", 0xB8, 0xFE },  { NULL, 0, 0 }
+  {  "OR", 0xB0, 0xF6 }, {  "CP", 0xB8, 0xFE }, {  NULL,    0, 0 }
 };
 
-/* CB rotate/shift ops: the second CB opcode byte is `base|reg' (or `base|6'
- * for (HL)/(IX+d)). */
+/******************************************************************************/
+
+/*
+ * CB rotate/shift ops: the second CB opcode byte is `base|reg' (or `base|6'
+ * for (HL)/(IX+d)).
+ */
 static const struct
 {
   const char *name;
   u8 base;
 } ZROT[] = {
-  { "RLC", 0x00 }, { "RRC", 0x08 }, { "RL", 0x10 },  { "RR", 0x18 },
+  { "RLC", 0x00 }, { "RRC", 0x08 }, {  "RL", 0x10 }, { "RR", 0x18 },
   { "SLA", 0x20 }, { "SRA", 0x28 }, { "SRL", 0x38 }, { NULL, 0 }
 };
+
+/******************************************************************************/
 
 /*
  * Encode one standard Zilog Z80 instruction (the `.ZOP' set).  Returns 1 if
@@ -4938,6 +4973,8 @@ macro_capture (astate *a, const char *p)
   buf[n] = '\0';
   macro_addbody (m, dupstr (buf));
 }
+
+/******************************************************************************/
 
 #if defined(GCC_ANALYZER) && defined(__GNUC__) && !defined(__clang__) \
     && !(defined(__OPEN64__) || defined(__OPENCC__) || defined(__PCC__))

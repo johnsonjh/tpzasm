@@ -13,7 +13,7 @@ XCFLAGS=-O
 
 PROG     = asm
 SRCDIR   = src
-LINKS    = pasm zasm pasm2 m80
+LINKS    = pasm zasm pasm2
 
 ################################################################################
 
@@ -37,8 +37,6 @@ $(PROG): $(OBJ)
 
 ################################################################################
 
-# pasm / zasm / pasm2 / m80 are the same binary; the mode is selected from
-# argv[0] (m80 == --m80, the PASM 2.00G engine with the .ZOP/.EPOP prefixes).
 $(LINKS): $(PROG)
 	ln -f -s $(PROG) $@
 

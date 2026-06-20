@@ -59,7 +59,7 @@ typedef enum
   DIALECT_ZASM, /* TDL Z80 CP/M Disk Assembler 2.21 (TDL, 1976-1977) */
   DIALECT_PASM, /* PSA Macro Assembler 1.02 (Phoenix, 1980)          */
   DIALECT_PASM2 /* PSA Macro Assembler 2.00G (Phoenix, 1981): adds   */
-                /* the `.ZOP' Zilog mnemonic set + `.EPOP' Intel      */
+                /* the `.ZOP' Zilog mnemonic set + `.EPOP' Intel     */
                 /* pseudo-ops on top of the 1.02 engine              */
 } dialect_t;
 
@@ -244,6 +244,8 @@ int asm_source (const char *path, dialect_t dialect, const char *outpath,
 # define REL_HI   3 /* high byte of that value (follows a REL_LO) */
 # define REL_EXT8 4 /* single 8-bit byte relative to an external  */
 
+/******************************************************************************/
+
 /* one internal/external symbol entry for the `#'/`&'/`\\' object records */
 typedef struct
 {
@@ -251,6 +253,8 @@ typedef struct
   int base;     /* relocation base number         */
   u16 value;    /* symbol value / segment size    */
 } objsym;
+
+/******************************************************************************/
 
 typedef struct
 {

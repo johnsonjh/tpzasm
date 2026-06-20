@@ -159,7 +159,6 @@ static const char *osinfo(void)
   return buf;
 }
 
-
 /******************************************************************************/
 
 static void
@@ -196,10 +195,12 @@ usage (const char *prog, dialect_t dialect, int version)
 "\n"
 "    -p, --pasm            Emulate PSA PASM 1.02 behavior%s"
 "\n"
-"    -g, --pasm2           Emulate PSA PASM 2.00G behavior%s"
+"    -g, --pasm2           Emulate PSA PASM 2.00G behavior (WIP)%s"
 "\n"
+#ifdef ENABLE_M80
 "    -m, --m80             Simulate MACRO-80 (-g with .ZOP + .EPOP)"
 "\n"
+#endif
 "    -o, --out <file>      Write the assembled binary image to <file>"
 "\n"
 "    -P, --pad             Pad output to full CP/M record boundary"

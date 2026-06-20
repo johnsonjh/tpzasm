@@ -85,3 +85,9 @@ path = "bindist/*"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>"
 SPDX-License-Identifier = "MIT-0"
+
+[[annotations]]
+path = ".utils/lharc.ttp"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Yoshizaki, 1988-1989, Grunenberg, Mandel, 1994, Haun, 1996/97"
+SPDX-License-Identifier = "LicenseRef-LHA"

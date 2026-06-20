@@ -30,6 +30,7 @@ core-*
 /GTAGS
 /hexcom
 log.pvs
+/m80
 main
 *.map
 *.MAP
@@ -45,7 +46,6 @@ NOTE.txt
 out.txt
 *.pak
 *.PAK
-/m80
 /pasm
 /pasm2
 *.pop
@@ -60,7 +60,9 @@ symtab.txt
 /*.t
 /tags
 /TAGS
+/.test.c
 /test_expr
+/.test.out
 *.tmp
 *.TMP
 /*UME.md

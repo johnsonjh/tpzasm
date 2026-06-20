@@ -413,7 +413,7 @@ aCFLAGS="${aCFLAGS:?} -U_FORTIFY_SOURCE"
 aCFLAGS="${aCFLAGS:?} -D_FORTIFY_SOURCE=${FORTIFY_LEVEL:-3}"
 aCFLAGS="${aCFLAGS:?} -DGCC_ANALYZER -fanalyzer"
 
-# shellcheck disable=SC2015 # `&& { ... } || :' is an intentional set -e guard
+# shellcheck disable=SC2015
 /usr/bin/uname -V 2> /dev/null | grep -q AIX > /dev/null 2>&1 && {
   export OBJECT_MODE=64
   aCFLAGS="${aCFLAGS:?} -maix64"

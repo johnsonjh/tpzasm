@@ -186,7 +186,11 @@ typedef struct
   unsigned long value; /* cppcheck-suppress unusedStructMember */
 } COOKIE;
 
+/******************************************************************************/
+
 static volatile int mint_present_super = 0;
+
+/******************************************************************************/
 
 static void
 probe_mint_super(void)

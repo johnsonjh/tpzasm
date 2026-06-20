@@ -84,6 +84,9 @@ Usage: asm [options] <source[.asm]>
 | [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz)       | 56&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
 | [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
 
+> If you need an Atari&nbsp;ST LHA/LZH utility, `LHarc` is available for
+[TOS/MINT](.utils/lharc.ttp).
+
 ## Building from source
 
 **TPZASM** needs **only an ANSI&nbsp;C89 compiler** to build on any
@@ -233,17 +236,21 @@ development tools for several years.
 
 * Another **PSA PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (`C12011-0200G`,
   *likely a beta release*), is also known, though no documentation for it
-  seems to have survived.  Its assembly output seems to be byte‑for‑byte
-  identical to **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding
-  and the same relocatable object output) for all our TDL‑style test inputs.
-  This release completely overhauls the listing format and adds some
-  completely new modes, activated by the `.EPOP` and `.ZOP` pseudo‑ops,
-  allowing the use of MACRO‑80‑style pseudo‑ops and Zilog mnemonics.  It also
-  exhibits several behaviors that are clearly bugs, such as sometimes omitting
-  the symbol table from listings when certain macros are defined.
+  seems to have survived.
 
-  Support for emulation of this assembler and its improved listing style
-  (but without the bugs) may be offered in a future release.
+  Its assembly output seems to be byte‑for‑byte identical to
+  **PSA&nbsp;PASM&nbsp;1.02** (with the same instruction encoding and the same
+  relocatable object output) for all our TDL‑style test inputs.  This release
+  completely overhauls the listing format and adds some completely new modes,
+  activated by the `.EPOP` and `.ZOP` pseudo‑ops, allowing the use of
+  **MACRO‑80‑style pseudo‑ops** and **Zilog mnemonics**.
+
+  It also exhibits several behaviors that are clearly bugs, such as sometimes
+  omitting the symbol table from listings when certain macros are defined.
+
+  **Emulation of this assembler is currently a work‑in‑progress.**  Its
+  improved listing style (but without the bugs) may be supported in a
+  future release.
 
 * An optional *extended error checking* mode may be added in a future release,
   enabling new features such as classifying errors or warnings by severity,
@@ -301,6 +308,13 @@ The following third‑party materials are provided under their own licenses:
   2003, 2009 R.&nbsp;Roger&nbsp;Breton and distributed with permission under
   the terms and conditions of the
   [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
+
+* [`LHarc`](.utils/lharc.ttp) for the Atari&nbsp;ST is
+  (freeware)[LICENSES/LicenseRef-LHA.txt] and © 1988-1989 Yoshizaki,
+  © 1994 Grunenberg, Mandel, © 1996-1997 Dirk Haun.
+
+* Individual [test cases](tests) may carry their own licenses.  Refer to each
+  file for complete license information.
 
 <!--
 Local Variables:
