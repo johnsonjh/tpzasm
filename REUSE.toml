@@ -33,7 +33,7 @@ SPDX-FileCopyrightText = "2009 R. Roger Breton"
 SPDX-License-Identifier = "LicenseRef-ZALUT"
 
 [[annotations]]
-path = "docs/TDL_ZASM.pdf"
+path = "docs/TDL_ZASM*.pdf"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1976, 1977 Technical Design Labs, Inc."
 SPDX-License-Identifier = "LicenseRef-TDL"
