@@ -167,6 +167,7 @@ USAGE="$(./asm -h 2>&1)"
 
 # shellcheck disable=SC2119
 TMP_README="$(mktemp 2> /dev/null || mktemp_local)"
+# shellcheck disable=SC2119
 SED_README="$(mktemp 2> /dev/null || mktemp_local)"
 
 ##############################################################################
