@@ -85,8 +85,8 @@ Usage: asm [options] <source[.asm]>
 | [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz)       | 60&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
 | [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 120&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
 
-> If you need an Atari&nbsp;ST LHA/LZH utility, `LHarc` is available for
-[TOS/MINT](.utils/lharc.ttp).
+> If you need an Atari&nbsp;ST TOS/MINT LHA/LZH utility,
+[`LHarc`](.utils/lharc.ttp) is available.
 
 ## Building from source
 
