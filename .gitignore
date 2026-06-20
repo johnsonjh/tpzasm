@@ -33,6 +33,7 @@ log.pvs
 main
 *.map
 *.MAP
+massif.out*
 NOTE.txt
 *.o
 *.O
