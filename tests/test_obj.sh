@@ -79,12 +79,16 @@ set -eu
 # trailing group (cond imain macro macro2 str z80 z80b z80c) were originally
 # added as standalone LISTING fixtures (compared by hand against the originals);
 # their emitted object is byte-exact too, so they are guarded here as well.
+# Finally, the binary-shift operators < and > (shift), whose count is a 16-bit
+# two's-complement value: a magnitude of 16 or more shifts to 0 (NOT a modulo-16
+# wrap of the count) and a negative count reverses the shift direction -- the
+# emitted .WORD values are byte-exact vs PASM 1.02, ZASM 2.21, and PASM 2.00G.
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple zap1k dis maclc sall \
 clabel \
 page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
-relmode bios tapelib ssmon turbobs progid goto gotoedge regnum"
+relmode bios tapelib ssmon turbobs progid goto gotoedge regnum shift"
 
 # PASM 2.00G (.ZOP standard Zilog + .EPOP Intel/M80) fixtures, asserted with
 # --pasm2 against the ASCII (.hex) golden only.  zop is the full Zilog

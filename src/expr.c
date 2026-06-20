@@ -742,11 +742,32 @@ v_absop (ectx *e, value_t a, value_t b, int op)
       break;
 
     case '<':
-      v = (u16)(x << (y & 15));
-      break;
-
     case '>':
-      v = (u16)(x >> (y & 15));
+      { /*
+         * Logical 16-bit shift.  The count y is a two's-complement value:
+         * a NEGATIVE count (top bit set) reverses the shift direction (PASM
+         * manual, "Binary Shifting": "If that value is negative, the
+         * direction of the shift is reversed"), and a magnitude of 16 or
+         * more shifts every bit out, giving 0, so NOT a modulo-16 wrap.
+         * Verified byte-exact vs PASM 1.02, ZASM 2.21, and PASM 2.00G
+         * (see tests/shift.asm).
+         */
+        int left = ('<' == op);
+        u16 n = y;
+
+        if (0 != (y & 0x8000u))
+          {
+            n = (u16)(0u - (unsigned)y); /* two's-complement magnitude  */
+            left = !left;                /* negative count reverses dir */
+          }
+
+        if (n >= 16)
+          v = 0;
+        else if (left)
+          v = (u16)(x << n);
+        else
+          v = (u16)(x >> n);
+      }
       break;
 
     default:

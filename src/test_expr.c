@@ -231,6 +231,49 @@ main (void)
   check ("5!2",  10, 7,      0); /* inclusive OR                    */
   check ("5&3",  10, 1,      0); /* AND                             */
 
+  /*
+   * Binary shifts < > (level 3).  The count is a 16-bit two's-complement
+   * value: a magnitude of 16 or more shifts every bit out (-> 0, NOT a
+   * modulo-16 wrap of the count) and a negative count reverses the shift
+   * direction (manual "Binary Shifting": 2>-1 == 1<2 == 4).  The right shift
+   * is logical (no sign extension).  Every value byte-exact vs PASM 1.02,
+   * ZASM 2.21, and PASM 2.00G; see tests/shift.asm for info.
+   */
+  check ("1<0",         10, 0x0001, 0);
+  check ("1<1",         10, 0x0002, 0);
+  check ("1<2",         10, 0x0004, 0);
+  check ("1<14",        10, 0x4000, 0);
+  check ("1<15",        10, 0x8000, 0);
+  check ("1<16",        10, 0x0000, 0); /* >=16 -> 0 (wrap would give 1) */
+  check ("1<17",        10, 0x0000, 0); /* (wrap would give 2) */
+  check ("1<31",        10, 0x0000, 0);
+  check ("1<32",        10, 0x0000, 0); /* (wrap would give 1) */
+  check ("0FFFFH<4",    10, 0xFFF0, 0); /* truncated to 16 bits */
+  check ("8>1",         10, 0x0004, 0);
+  check ("8000H>1",     10, 0x4000, 0);
+  check ("0FFFFH>1",    10, 0x7FFF, 0); /* logical (arith. would give FFFF) */
+  check ("8000H>15",    10, 0x0001, 0);
+  check ("8000H>16",    10, 0x0000, 0); /* >=16 -> 0 */
+  check ("0FFFFH>16",   10, 0x0000, 0);
+  check ("0FFFFH>17",   10, 0x0000, 0);
+  check ("2>-1",        10, 0x0004, 0); /* negative reverses dir: 2<1 */
+  check ("1<-1",        10, 0x0000, 0); /* 1>1 */
+  check ("8000H<-1",    10, 0x4000, 0); /* 8000H>1 */
+  check ("1>-1",        10, 0x0002, 0); /* 1<1 */
+  check ("1>-15",       10, 0x8000, 0); /* 1<15 */
+  check ("1>-16",       10, 0x0000, 0); /* 1<16: magnitude 16 -> 0 */
+  check ("8>-2",        10, 0x0020, 0); /* 8<2 */
+  check ("8000H<-15",   10, 0x0001, 0);
+  check ("8000H<-16",   10, 0x0000, 0); /* magnitude 16 -> 0 */
+  check ("1<-16",       10, 0x0000, 0); /* 1>16 -> 0 */
+  check ("1<-17",       10, 0x0000, 0);
+  check ("1<100H",      10, 0x0000, 0); /* count 256 -> 0 (full 16-bit) */
+  check ("0FFFFH>100H", 10, 0x0000, 0);
+  check ("1<7FFFH",     10, 0x0000, 0); /* largest positive count -> 0 */
+  check ("1<8000H",     10, 0x0000, 0); /* -32768: magnitude >= 16 -> 0 */
+  check ("1>8000H",     10, 0x0000, 0);
+  check ("1<-0FFFFH",   10, 0x0002, 0); /* -0FFFFH == 1 (positive): 1<1 */
+
   /* ^X radix prefix: the number must begin with a numeral (^H0FF, not ^HFF) */
   check ("^H0FF", 10, 0x00FF, 0);
   check ("^B101", 10, 5,      0);
