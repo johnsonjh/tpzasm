@@ -354,7 +354,7 @@ advzip -z4 ./TPZASM64.ZIP
 
 # Atari TOS/MINT build (using CROSSMiNT)
 
-rm -f -r ./pasm ./zasm ./hexcom.prg ./asm.prg ./TPZASMST.LZH > /dev/null 2>&1
+rm -f -r ./pasm ./zasm ./hexcom.ttp ./asm.ttp ./TPZASMST.LZH > /dev/null 2>&1
 
 "${MAKE:?}" distclean CC="${CROSSMINT_GCC:?}"
 env PATH="${CROSSMINT_ARCH:?}/bin:${CROSSMINT_ARCH:?}/usr/bin:${PATH:-}" \
@@ -364,14 +364,14 @@ env PATH="${CROSSMINT_ARCH:?}/bin:${CROSSMINT_ARCH:?}/usr/bin:${PATH:-}" \
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
-mv -f asm asm.prg
-mv -f hexcom hexcom.prg
+mv -f asm asm.ttp
+mv -f hexcom hexcom.ttp
 
-(upx -q --best ./hexcom.prg ./asm.prg 2> /dev/null \
+(upx -q --best ./hexcom.ttp ./asm.ttp 2> /dev/null \
   | grep ' \-> ' 2> /dev/null) || :
 
-lha -c -z -0 TPZASMST.LZH hexcom.prg asm.prg
-rm -f ./hexcom.prg ./asm.prg
+lha -c -z -0 TPZASMST.LZH hexcom.ttp asm.ttp
+rm -f ./hexcom.ttp ./asm.ttp
 
 :
 ################################################################################

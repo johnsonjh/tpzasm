@@ -207,7 +207,7 @@ clean:
 	rm -f a.out $(PROG) $(LINKS) hexcom test_expr ./.test ./.t src/_chtmp.c
 	rm -f a.exe $(PROG).exe hexcom.exe test_expr.exe ./.test.exe ./.t.exe
 	rm -f a.sym $(PROG).sym hexcom.sym test_expr.sym ./.test.sym ./.t.sym
-	rm -f ./*.prg ./*.obj $(SRCDIR)/*.o ./.test.o ./.test.obj
+	rm -f ./*.ttp ./*.obj $(SRCDIR)/*.o ./.test.o ./.test.obj
 	rm -f compile_commands.json log.pvs
 
 ################################################################################
