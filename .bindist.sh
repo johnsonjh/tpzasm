@@ -360,7 +360,7 @@ rm -f -r ./pasm ./zasm ./hexcom.ttp ./asm.ttp ./TPZASMST.LZH > /dev/null 2>&1
 env PATH="${CROSSMINT_ARCH:?}/bin:${CROSSMINT_ARCH:?}/usr/bin:${PATH:-}" \
   LDFLAGS="-s" \
   "${MAKE:?}" \
-  CC="${CROSSMINT_GCC:?}"
+  CC="${CROSSMINT_GCC:?} -mfastcall"
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
