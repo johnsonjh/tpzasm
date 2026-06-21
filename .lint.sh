@@ -495,7 +495,7 @@ command -v "${BEAR_CMD:-bear}" > /dev/null 2>&1 && {
       "${MAKE:-make}" distclean > /dev/null 2>&1 || :
       (
         set -x
-        "${BEAR_CMD:-bear}" -- "${MAKE:-make}" > /dev/null
+        "${BEAR_CMD:-bear}" -- "${MAKE:-make}" PVS=1 > /dev/null
       )
       (
         set -x
