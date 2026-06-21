@@ -753,11 +753,11 @@ v_absop (ectx *e, value_t a, value_t b, int op)
          * (see tests/shift.asm).
          */
         int left = ('<' == op);
-        u16 n = y;
+        /* two's-complement magnitude  */
+        u16 n = (0 != (y & 0x8000u)) ? (u16)(0u - (unsigned)y) : y;
 
         if (0 != (y & 0x8000u))
           {
-            n = (u16)(0u - (unsigned)y); /* two's-complement magnitude  */
             left = !left;                /* negative count reverses dir */
           }
 
