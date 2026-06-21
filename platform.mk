@@ -6,7 +6,7 @@
 ################################################################################
 
 # Skip flag detection?
-ifdef PVS
+ifdef SKIP_AUTO
  SKIP_DETECTION:=1
 endif
 ifeq ($(MAKECMDGOALS),clean)
