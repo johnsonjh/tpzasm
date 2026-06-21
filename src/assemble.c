@@ -751,19 +751,25 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.lc_base = a->base;
   env.seg_hw = a->seg_hw; /* live per-segment high-water for .PROG./.DATA. */
   env.undef0 = (1 == a->pass);
-  /* on the leading multiply-defined report page, a forward reference renders
+  /*
+   * on the leading multiply-defined report page, a forward reference renders
    * undefined like the originals' pass-1 capture -- but ONLY on the offending
    * (multiply-defined-label) line itself, so a forward ref in a .LOC/DS size
    * expression on an ordinary line still resolves and the LC (hence every other
-   * symbol's value) stays correct; elsewhere fwd_pass is 0 and refs resolve */
+   * symbol's value) stays correct; elsewhere fwd_pass is 0 and refs resolve
+   */
   env.fwd_pass = ((a->mdef_page && a->cur_mdef) ? a->pass : 0);
   env.scope = a->scope;
   env.ext_next = &a->next_ebase; /* the `SYM#' modifier auto-declares externs */
   env.ext_decl = &a->next_decl;
-  /* `![sub]' .TEMPS locals are a PASM feature (temps non-NULL => PASM), legal
+  /*
+   * `![sub]' .TEMPS locals are a PASM feature (temps non-NULL => PASM), legal
    * only inside a macro expansion (tmp_ok); ZASM leaves temps NULL so a `!['
-   * there is just the OR operator hitting a bad primary */
-  env.temps = ((DIALECT_PASM == a->dialect) ? a->temps : NULL);
+   * there is just the OR operator hitting a bad primary
+   */
+  env.temps = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+                   ? a->temps
+                   : NULL);
   env.ntemps = a->ntemps;
   env.tmp_ok = (a->macro_depth > 0);
   env.mac_argc = a->mac_argc; /* `&' = current macro's argument count */
@@ -1570,7 +1576,8 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
   a->lst_obase
       = ((2 == a->lst_opw && 0 != v.reloc)
              ? (int)v.base
-             : ((1 == a->lst_opw && DIALECT_PASM == a->dialect
+             : ((1 == a->lst_opw
+                 && (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
                  && (v.base >= 4 || (0 != v.reloc && FMT_REL != in->fmt)))
                     ? (int)v.base
                     : 0));
@@ -2809,7 +2816,12 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
 
       /* .LIMAGE: record where the source splits across the byte image */
       limg_rec (a, line, p,
-                ((2 == width) ? ((DIALECT_PASM == a->dialect) ? 2 : 4) : 6));
+                ((2 == width)
+                     ? ((DIALECT_PASM == a->dialect
+                         || DIALECT_PASM2 == a->dialect)
+                            ? 2
+                            : 4)
+                     : 6));
 
       p = skipws (p);
 
@@ -3573,7 +3585,7 @@ seg_flag (int base, dialect_t dialect)
     return "'";
 
   if (2 == base)
-    return ((DIALECT_PASM == dialect) ? "\"" : "*");
+    return ((DIALECT_PASM == dialect || DIALECT_PASM2 == dialect) ? "\"" : "*");
 
   (void)xsnprintf (buf, sizeof (buf), ":%02X", base);
 
@@ -3589,7 +3601,9 @@ lst_bytes (const astate *a, char *col, size_t cap)
 
   if (2 == a->lst_kind)
     { /* .WORD: value words + reloc.  TDL shows at most two words; PSA one. */
-      int maxw = ((DIALECT_PASM == a->dialect) ? 2 : 4);
+      int maxw = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+                      ? 2
+                      : 4);
 
       for (i = 0; i + 1 < a->nbytes && i < maxw; i += 2)
         {
@@ -3818,9 +3832,13 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
 static void
 lst_limage (astate *a, u16 lc0, const char *rawline)
 {
-  int bw = ((DIALECT_PASM == a->dialect) ? 14 : 13);
+  int bw = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect) ? 14
+                                                                        : 13);
   int word = (2 == a->lst_kind);
-  int cap = (word ? ((DIALECT_PASM == a->dialect) ? 2 : 4) : 6);
+  int cap = (word ? ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+                         ? 2
+                         : 4)
+                  : 6);
   int nlines = a->limg_ns + 1;
   int srclen = (int)strlen (rawline);
   int lbase
@@ -3841,7 +3859,10 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
       /* TDL lays a multi-word .WORD line's value field over the first two
        * source columns (each word in an 8-column slot); PSA shows one word per
        * line, so it never reaches two words and never overstrikes. */
-      int over = (word && DIALECT_PASM != a->dialect && (b1 - b0) >= 4);
+      int over = (word
+                  && !(DIALECT_PASM == a->dialect
+                       || DIALECT_PASM2 == a->dialect)
+                  && (b1 - b0) >= 4);
 
       if (a->lst_line >= a->lst_pagelen) /* page full */
         {
@@ -3949,7 +3970,8 @@ static void
 print_lst (astate *a, u16 lc0, const char *rawline)
 {
   char col[40];
-  int bw = ((DIALECT_PASM == a->dialect) ? 14 : 13); /* byte-field width */
+  int bw = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect) ? 14
+                                                 /* byte-field width */ : 13);
   long loc = ((-2 == a->lst_loc) ? (long)lc0 : a->lst_loc);
   int lbase
       = ((a->lst_lbase < 0) ? (a->lc_reloc ? a->base : 0) : a->lst_lbase);
@@ -4085,7 +4107,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   {
     /* PSA shows one word, no overstrike: the over-strike quirk is TDL-only */
     int over = (0 == mark && 2 == a->lst_kind && a->nbytes >= 4 && loc >= 0
-                && DIALECT_PASM != a->dialect
+                && !(DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
                 && (int)strlen (rawline) >= 2);
     const char *src;
     int scol;
@@ -4161,7 +4183,9 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       }
 
     {
-      int wrapw = ((DIALECT_PASM == a->dialect) ? 79 : 72);
+      int wrapw = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+                       ? 79
+                       : 72);
       int indent = 11 + bw;
       int rq[2];
       int off = line_off (rawline, src);
@@ -4198,7 +4222,8 @@ print_lst (astate *a, u16 lc0, const char *rawline)
 static char
 svalue_close (const astate *a, char open)
 {
-  if (DIALECT_PASM == a->dialect && '[' == open)
+  if ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+      && '[' == open)
     return ']';
 
   return open;
@@ -4268,12 +4293,15 @@ lst_header (astate *a)
   a->lst_page++;
   (void)fprintf (a->lst, "\n\n\n");
 
-  if (DIALECT_PASM == a->dialect)
+  if (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
     {
       /* PASM puts the error count in the page header (only when nonzero); the
        * line replaces the blank line that otherwise follows "Page N" */
+      const char *herald = (DIALECT_PASM2 == a->dialect)
+                               ? "PSA Macro Assembler [C12011-0200G]"
+                               : "PSA Macro Assembler [C12011-0102 ]";
       (void)fprintf (a->lst, "%-71sPage %d\n",
-                     "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
+                     herald, a->lst_page);
 
       if (a->errs_hdr > 0)
         (void)fprintf (a->lst, " - %d Errors Were Detected *****\n",
@@ -4300,7 +4328,9 @@ lst_header (astate *a)
                    a->modname, a->title, a->subtitle);
 
   /* heading line count */
-  a->lst_line = ((DIALECT_PASM == a->dialect) ? 9 : 8);
+  a->lst_line = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+                     ? 9
+                     : 8);
 }
 
 /******************************************************************************/
@@ -4565,10 +4595,13 @@ lst_symhead (astate *a)
   a->lst_page++;
   (void)fprintf (a->lst, "\n\n\n");
 
-  if (DIALECT_PASM == a->dialect)
+  if (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
     {
+      const char *herald = (DIALECT_PASM2 == a->dialect)
+                               ? "PSA Macro Assembler [C12011-0200G]"
+                               : "PSA Macro Assembler [C12011-0102 ]";
       (void)fprintf (a->lst, "%-71sPage %d\n",
-                     "PSA Macro Assembler [C12011-0102 ]", a->lst_page);
+                     herald, a->lst_page);
 
       if (a->errs_hdr > 0) /* error count in the header, as on the body pages */
         (void)fprintf (a->lst, " - %d Errors Were Detected *****\n",
@@ -4617,9 +4650,12 @@ lst_symtab (astate *a)
   symbol **all;
   int total, nuser = 0, navail, i, col, perline;
   segflag[0] = ":03 X ";
-  segflag[1] = ((DIALECT_PASM == a->dialect) ? "\"   X " : "*   X ");
+  segflag[1] = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+                    ? "\"   X "
+                    : "*   X ");
   segflag[2] = "'   X ";
-  perline = ((DIALECT_PASM == a->dialect) ? 4 : 3);
+  perline = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect) ? 4
+                                                                         : 3);
   navail = sym_count (a->syms);
   all = (symbol **)malloc (sizeof (symbol *)
                            * (size_t)(navail > 0 ? navail : 1));
@@ -5390,7 +5426,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
            * Either way it is harmless to the byte stream (the expression
            * scanner skips it).
            */
-          if (DIALECT_PASM == a->dialect)
+          if (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
             while (j > s
                    && (' ' == argbuf[(long)j - 1]
                        || '\t' == argbuf[(long)j - 1]))
@@ -6029,8 +6065,8 @@ do_line (astate *a, const char *line)
    * The lexer treats a leading `!' as an operator, so intercept the assignment
    * form here -- only when a `]' is followed by `=' (otherwise fall through).
    */
-  if (DIALECT_PASM == a->dialect && a->macro_depth > 0 && '!' == *bp
-      && '[' == bp[1])
+  if ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+      && a->macro_depth > 0 && '!' == *bp && '[' == bp[1])
     {
       const char *pk = bp + 2;
 
@@ -6316,7 +6352,8 @@ do_line (astate *a, const char *line)
                  * the same bytes the originals shipped.  (.byte/.word treat a
                  * quoted token as a char CONSTANT, not a string -- unaffected.)
                  */
-                if (DIALECT_PASM != a->dialect && bl >= 2
+                if (!(DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+                    && bl >= 2
                     && ('\'' == bbuf[bl - 1] || '"' == bbuf[bl - 1])
                     && bbuf[bl - 1] != bbuf[bl - 2] && is_string_dir (bbuf))
                   {
@@ -7233,7 +7270,8 @@ do_line (astate *a, const char *line)
       a->obj_psym = 0;
       a->lst_loc = -1;
     }
-  else if (DIALECT_PASM == a->dialect && opeq (op, ".TEMPS", NULL))
+  else if ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+           && opeq (op, ".TEMPS", NULL))
     { /*
        * allocate the local-temporary array referenced as `![sub]' (PASM only;
        * ZASM treats .TEMPS as an unknown op).  Each element is initialized to
@@ -7425,7 +7463,8 @@ do_line (astate *a, const char *line)
            * (otherwise empty) transient page -- and only THEN ejects again.
            * PASM does not insert that page, so this is ZASM-only.
            */
-          if (DIALECT_PASM != a->dialect && a->lst_line >= a->lst_pagelen)
+          if (!(DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
+              && a->lst_line >= a->lst_pagelen)
             {
               (void)fputc ('\f', a->lst);
               lst_header (a);
@@ -7813,6 +7852,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   if (DIALECT_PASM == dialect)
     (void)fprintf (stderr, "\n%s\n",
                    "PSA Macro Assembler [C12011-0102 ] (Compatible)");
+  else if (DIALECT_PASM2 == dialect)
+    (void)fprintf (stderr, "\n%s\n",
+                   "PSA Macro Assembler [C12011-0200G] (Compatible)");
   else
     (void)fprintf (stderr, "\n%s\n",
                    "TDL Z80 CP/M DISK ASSEMBLER VERSION 2.21 (COMPATIBLE)");
@@ -8163,7 +8205,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
    */
   if (a.errors <= 0)
     (void)fprintf (a.lst, "\n%d error(s)\n", a.errors);
-  else if (DIALECT_PASM == dialect)
+  else if (DIALECT_PASM == dialect || DIALECT_PASM2 == dialect)
     (void)fprintf (a.lst, "%d Errors Were Detected *****\n", a.errors);
   else
     (void)fprintf (a.lst, "%d ERRORS WERE DETECTED *****\n", a.errors);
