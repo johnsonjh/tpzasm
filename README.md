@@ -44,7 +44,7 @@ tool, is also included.
 
 ```
 TPZASM - TDL ZASM / PSA PASM compatible 8080 / Z80 assembler (Linux/x86_64)
-Release 0.85 (Built Jun 20 2026) https://github.com/johnsonjh/tpzasm
+Release 0.87 (Built Jun 20 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 Usage: asm [options] <source[.asm]>
@@ -78,7 +78,7 @@ Usage: asm [options] <source[.asm]>
 | [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 192&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
 | [TPZASMST.LZH](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMST.LZH)                         | 176&nbsp;KiB | **Atari&nbsp;ST**&nbsp;(TOS/MINT)    |
 | [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                         | 64&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
-| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 68&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
+| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 72&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
 | [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                         | 72&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
 | [tpzasm-linuxarm32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm32.tar.gz) | 104&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;ARMv5)    |
 | [tpzasm-linuxarm64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm64.tar.gz) | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;ARMv8)   |
