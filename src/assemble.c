@@ -2734,7 +2734,7 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
   for (;;)
     { /* items are  {[r]}n , {[r]}n , ... */
       value_t v;
-      long rep = 1, k;
+      long rep = 1;
       const char *start;
       const char *endq;
       int pure = 0;
@@ -2797,6 +2797,8 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
         }
       else
         {
+          long k;
+
           /* emit 0, keep size */
           if (eval1 (a, &p, &v))
             aerr (a, line, "bad expression");
