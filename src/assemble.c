@@ -78,7 +78,7 @@ install_sigint (void)
   struct sigaction sa; /* Depends on globally available/unhidden sigaction! */
 
   memset (&sa, 0, sizeof (sa));
-  sa.sa_handler = sigint_handler;
+  sa.sa_handler = on_sigint;
   sigemptyset (&sa.sa_mask);
   sa.sa_flags = 0;
 
