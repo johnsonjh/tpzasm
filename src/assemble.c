@@ -5846,11 +5846,13 @@ static char *atarist_getline (char *buf, int size, int echo)
 #if defined(USE_GETLINE)
 static char *unix_getline (char *buf, int size)
 {
+  struct
 # if defined(USE_TERMIOS)
-  struct termios oldt, raw;
+    termios
 # elif defined(USE_TERMIO)
-  struct termio oldt, raw;
+    termio
 # endif
+    oldt, raw;
 
   int i = 0;
   int col = 0;
@@ -5871,26 +5873,23 @@ static char *unix_getline (char *buf, int size)
     {
 # if defined(USE_TERMIOS)
       if (-1 == tcgetattr (0, &oldt))
-        tty = 0;
 # elif defined(USE_TERMIO)
       if (-1 == ioctl (0, TCGETA, &oldt))
-        tty = 0;
 # endif
+        tty = 0;
     }
 
   if (tty)
     {
       raw = oldt;
 
-# if defined(USE_TERMIOS)
       raw.c_lflag &= (tcflag_t)~(ICANON | ECHO);
+      raw.c_lflag |= ISIG;
       raw.c_cc[VMIN] = 1;
       raw.c_cc[VTIME] = 0;
+# if defined(USE_TERMIOS)
       (void)tcsetattr (0, TCSANOW, &raw);
 # elif defined(USE_TERMIO)
-      raw.c_lflag &= (tcflag_t)~(ICANON | ECHO);
-      raw.c_cc[VMIN] = 1;
-      raw.c_cc[VTIME] = 0;
       (void)ioctl (0, TCSETA, &raw);
 # endif
     }
@@ -5945,7 +5944,7 @@ static char *unix_getline (char *buf, int size)
         }
 
 # ifdef SIGINT
-      if (0x03 == c) /* Handle ^C (SIGINT) */
+      if (0x03 == c) /* Handle ^C (SIGINT) fallback */
         {
           (void)raise (SIGINT);
 
@@ -5954,7 +5953,7 @@ static char *unix_getline (char *buf, int size)
 # endif
 
 # ifdef SIGTSTP
-      if (0x1a == c) /* Handle ^Z as SIGTSTP) */
+      if (0x1a == c) /* Handle ^Z as SIGTSTP) fallback */
         {
           (void)raise (SIGTSTP);
 
