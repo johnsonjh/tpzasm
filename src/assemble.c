@@ -5943,17 +5943,15 @@ static char *unix_getline (char *buf, int size)
           continue;
         }
 
-# ifdef SIGINT
-      if (0x03 == c) /* Handle ^C (SIGINT) fallback */
+      if (0x03 == c) /* Handle ^C fallback */
         {
-          (void)raise (SIGINT);
+          buf[0] = '\0';
 
-          continue;
+          goto restore;
         }
-# endif
 
 # ifdef SIGTSTP
-      if (0x1a == c) /* Handle ^Z as SIGTSTP) fallback */
+      if (0x1a == c) /* Handle ^Z (SIGTSTP) fallback */
         {
           (void)raise (SIGTSTP);
 
@@ -6062,6 +6060,9 @@ restore:
       (void)ioctl (0, TCSETA, &oldt);
 # endif
     }
+
+  check_interrupt ();
+
   return buf;
 
 restore_null:
@@ -6073,6 +6074,8 @@ restore_null:
       (void)ioctl (0, TCSETA, &oldt);
 # endif
     }
+
+  check_interrupt ();
 
   return NULL;
 }
