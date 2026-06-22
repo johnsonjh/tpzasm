@@ -44,7 +44,7 @@ tool, is also included.
 
 ```
 TPZASM - TDL ZASM / PSA PASM compatible 8080 / Z80 assembler (Linux/x86_64)
-Release 0.87 (Built Jun 20 2026) https://github.com/johnsonjh/tpzasm
+Release 0.88 (Built Jun 22 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 Usage: asm [options] <source[.asm]>
@@ -83,7 +83,7 @@ Usage: asm [options] <source[.asm]>
 | [tpzasm-linuxarm32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm32.tar.gz) | 104&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;ARMv5)    |
 | [tpzasm-linuxarm64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm64.tar.gz) | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;ARMv8)   |
 | [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz)       | 60&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
-| [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 120&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
+| [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 128&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
 
 > If you need an Atari&nbsp;ST TOS/MINT LHA/LZH utility,
 [`LHarc`](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/.utils/lharc.ttp)
@@ -92,7 +92,8 @@ is available.
 ## Building from source
 
 **TPZASM** needs **only an ANSI&nbsp;C89 compiler** to build on any
-UNIX‑like system.
+UNIX‑like platform (with a few more features available on
+POSIX‑conforming systems):
 
 * To build a native binary, just run `make` (or `gmake`):
 
