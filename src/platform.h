@@ -111,9 +111,6 @@
 #  ifndef USE_TERMIOS
 #   define USE_TERMIOS
 #  endif
-#  ifndef USE_SIGACTION
-#   define USE_SIGACTION
-#  endif
 # elif defined(__sun) || defined(sun)
 #  if defined(__SVR4)
 #   ifndef HAVE_SIGNAL_H
@@ -124,9 +121,6 @@
 #   endif
 #   ifndef USE_TERMIOS
 #    define USE_TERMIOS
-#   endif
-#   ifndef USE_SIGACTION
-#    define USE_SIGACTION
 #   endif
 #  endif
 # elif defined(_AIX) && !defined(__PASE__)
