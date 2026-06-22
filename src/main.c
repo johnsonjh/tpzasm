@@ -234,7 +234,9 @@ usage (const char *prog, dialect_t dialect, int version)
 "    -v, --version         Display version information and exit"
 "\n"
 "    -h, --help            Display this help text and exit"
+#ifndef __DJGPP__
 "\n"
+#endif
 "\n");
     }
 }
