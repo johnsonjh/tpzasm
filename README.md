@@ -35,6 +35,7 @@ tool, is also included.
   * [Original binaries](#original-binaries)
   * [Original documentation](#original-documentation)
 - [Security](#security)
+- [SAST and linters](#sast-and-linters)
 - [License](#license)
   * [Third‑party materials](#third%E2%80%91party-materials)
 
@@ -284,6 +285,34 @@ development tools for several years.
   (or send an
   [email](mailto:incoming+johnsonjh-tpzasm-83023857-issue-@incoming.gitlab.com)
   to the author).
+
+## SAST and linters
+
+The following static analysis and dynamic verification tools are used as part
+of the comprehensive **TPZASM** testing process (with many invoked
+automatically via the [`.lint.sh`](.lint.sh) script):
+
+| Tool | Usage |
+|-----:|:------|
+| [**PVS‑Studio**](https://pvs-studio.com/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source) | Static analysis tool for C, C++, C#, and Java code                                 |
+| [Clang&nbsp;Analyzer](https://clang-analyzer.llvm.org/), [Sanitizers](https://github.com/google/sanitizers)        | Static and dynamic analysis tools for C, C++, and Objective-C code                 |
+| [Cppcheck](https://cppchecksolutions.com/)                                                                         | Static analysis tool for C and C++ code                                            |
+| [Dr.&nbsp;Memory](https://drmemory.org/)                                                                           | Memory debugging tool for Windows, Linux, macOS, and Android                       |
+| [DUMA](https://github.com/johnsonjh/duma)                                                                          | Detect Unintended Memory Access, a memory debugger                                 |
+| [Flawfinder](https://dwheeler.com/flawfinder/)                                                                     | Scans C and C++ source code for potential security weaknesses                      |
+| [Funcheck](https://github.com/tmatis/funcheck)                                                                     | A tool for checking function call return protections                               |
+| [GCC&nbsp;Static&nbsp;Analyzer](https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html)                   | Coverage-guided symbolic execution static analyzer for C code                      |
+| [GNU&nbsp;Cppi](https://www.gnu.org/software/cppi/)                                                                | C preprocessor directive linting, indenting, and regularization                    |
+| [NetBSD&nbsp;lint(1)](https://man.netbsd.org/lint.1)                                                               | A C (C90/C99/C11/C17/C23) program verifier                                         |
+| [Oracle&nbsp;Developer&nbsp;Studio](https://www.oracle.com/application-development/developerstudio/)               | Performance, security, and thread analysis tools for C, C++, and Fortran           |
+| [PurifyPlus™](https://www.teamblue.unicomsi.com/products/purifyplus/)                                              | Run-time analysis tools for application reliability and performance                |
+| [REUSE](https://api.reuse.software/info/github.com/aremmell/libsir)                                                | Verifies compliance with the [REUSE](https://reuse.software/) licensing guidelines |
+| [Semgrep](https://semgrep.dev/)                                                                                    | A fast, open-source, static analysis engine for many languages                     |
+| [ShellCheck](https://www.shellcheck.net/)                                                                          | A static analysis tool for Unix shell scripts                                      |
+| [Smatch](https://repo.or.cz/w/smatch.git)                                                                          | Smatch (Source Matcher) is a static analysis tool for C code                       |
+| [SoftIntegration Ch](https://www.softintegration.com/)                                                             | C/C++ interpreter and interactive platform for scientific computing                |
+| [Valgrind](https://valgrind.org/)                                                                                  | Tools for memory debugging, memory leak detection, and profiling                   |
+| [Visual&nbsp;Studio&nbsp;Code&nbsp;Analyzer](https://learn.microsoft.com/en-us/cpp/code-quality/)                  | Tools to analyze and improve C/C++ source code quality                             |
 
 ## License
 
