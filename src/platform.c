@@ -230,34 +230,22 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #if defined(__SICORTEX__) && (defined(__linux__) || defined(__linux))
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "Linux/SiCortex";
 
   /*******************************************************************/
 
 #elif defined(__linux__) || defined(__linux)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "Linux";
 
   /*******************************************************************/
 
 #elif defined(__illumos__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "illumos";
 
   /*******************************************************************/
 
 #elif defined(__sun) || defined(sun)
 # if defined(__SVR4)
-#  ifndef HAVE_SIGNAL_H
-#   define HAVE_SIGNAL_H
-#  endif
   return "Solaris";
 
   /*******************************************************************/
@@ -274,17 +262,11 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #elif defined(_AIX) && !defined(__PASE__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "AIX";
 
   /*******************************************************************/
 
 #elif defined(_AIX) && defined(__PASE__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "OS400";
 
   /*******************************************************************/
@@ -295,45 +277,21 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #elif defined(__FreeBSD__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
-# ifndef USE_SIGACTION
-#  define USE_SIGACTION
-# endif
   return "FreeBSD";
 
   /*******************************************************************/
 
 #elif defined(__NetBSD__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
-# ifndef USE_SIGACTION
-#  define USE_SIGACTION
-# endif
   return "NetBSD";
 
   /*******************************************************************/
 
 #elif defined(__OpenBSD__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
-# ifndef USE_SIGACTION
-#  define USE_SIGACTION
-# endif
   return "OpenBSD";
 
   /*******************************************************************/
 
 #elif defined(__DragonFly__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
-# ifndef USE_SIGACTION
-#  define USE_SIGACTION
-# endif
   return "DragonFly BSD";
 
   /*******************************************************************/
@@ -354,9 +312,6 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #elif defined(__HAIKU__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "Haiku";
 
   /*******************************************************************/
@@ -382,9 +337,6 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #elif defined(__ELKS__) || defined(__IA16_SYS_ELKS)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "ELKS";
 
   /*******************************************************************/
@@ -422,9 +374,6 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #elif defined(__CYGWIN__)
-# ifndef HAVE_SIGNAL_H
-#  define HAVE_SIGNAL_H
-# endif
   return "Windows/Cygwin";
 
   /*******************************************************************/

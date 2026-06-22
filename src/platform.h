@@ -81,6 +81,76 @@
 
 /******************************************************************************/
 
+# if defined(__SICORTEX__) && (defined(__linux__) || defined(__linux))
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(__linux__) || defined(__linux)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(__illumos__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(__sun) || defined(sun)
+#  if defined(__SVR4)
+#   ifndef HAVE_SIGNAL_H
+#    define HAVE_SIGNAL_H
+#   endif
+#  endif
+# elif defined(_AIX) && !defined(__PASE__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(_AIX) && defined(__PASE__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(__FreeBSD__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+#  ifndef USE_SIGACTION
+#   define USE_SIGACTION
+#  endif
+# elif defined(__NetBSD__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+#  ifndef USE_SIGACTION
+#   define USE_SIGACTION
+#  endif
+# elif defined(__OpenBSD__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+#  ifndef USE_SIGACTION
+#   define USE_SIGACTION
+#  endif
+# elif defined(__DragonFly__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+#  ifndef USE_SIGACTION
+#   define USE_SIGACTION
+#  endif
+# elif defined(__HAIKU__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(__ELKS__) || defined(__IA16_SYS_ELKS)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(__CYGWIN__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# endif
+
+/******************************************************************************/
+
 # ifndef ASM_SIZE_T_NARROW
 #  if defined(__SIZEOF_SIZE_T__)
 #   if __SIZEOF_SIZE_T__ <= 2
