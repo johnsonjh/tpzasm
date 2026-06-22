@@ -6285,6 +6285,7 @@ static char *unix_getline (char *buf, int size)
 # if defined(SIGINT)
           (void)raise (SIGINT);
 
+          /* cppcheck-suppress duplicateBreak */
           continue;
         }
 # endif
@@ -9011,14 +9012,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
    */
 
   if (NULL != lf)
-    {
-      if (a.errors > 0)
-        (void)fprintf (stderr, "*** %d %s were detected; review %s.\n",
-                       a.errors, (1 == a.errors ? "error" : "errors"),
-                       (lstpath ? lstpath : "listing"));
-      else
-        (void)fprintf (stderr, "*** %d errors were detected.\n", a.errors);
-    }
+    (void)fprintf(stderr, "*** %d %s %s detected%s\n", a.errors,
+                  (1 == a.errors ? "error" : "errors"),
+                  (1 == a.errors ? "was" : "were"),
+                  (lstpath ? "; review listing" : ""));
 
   /*
    * -o absolute image: the object records were already streamed per module
