@@ -57,6 +57,7 @@ g_interrupted = 0;
 static void
 on_sigint (int signo)
 {
+  (void)signo;
   g_interrupted = 1;
 }
 
