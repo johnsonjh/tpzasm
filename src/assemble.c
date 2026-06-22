@@ -67,7 +67,7 @@ on_sigint (int signo)
 static void
 install_sigint (void)
 {
-#if defined(HAVE_SIGNAL_H) && defined(USE_SIGACTION)
+#if defined(HAVE_SIGNAL_H) && defined(USE_SIGACTION) && defined(SIGINT)
   struct sigaction sa; /* Depends on globally available/unhidden sigaction! */
 
   memset (&sa, 0, sizeof (sa));
@@ -5913,8 +5913,6 @@ static char *unix_getline (char *buf, int size)
       unsigned char c;
       ssize_t nr = read (0, &c, 1);
 
-      check_interrupt ();
-
       if (-1 == nr)
         {
           if (errno == EINTR)
@@ -5959,13 +5957,12 @@ static char *unix_getline (char *buf, int size)
 
       if (0x03 == c) /* Handle ^C fallback */
         {
-# if defined(HAVE_SIGNAL_H) && defined(SIGINT)
-          g_interrupted = 1;
-# endif
-          buf[0] = '\0';
+# if defined(SIGINT)
+          (void)raise (SIGINT);
 
-          goto restore_null;
+          continue
         }
+# endif
 
 # ifdef SIGTSTP
       if (0x1a == c) /* Handle ^Z (SIGTSTP) fallback */
