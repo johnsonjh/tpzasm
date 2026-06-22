@@ -4646,10 +4646,10 @@ sym_name_cmp (const void *pa, const void *pb)
 /******************************************************************************/
 
 /*
- * qsort comparator ordering symbols by their .EXTERN/.INTERN/.ENTRY
- * declaration sequence -- the order the originals write the `\'/`#'/`@'
- * records.  (An external's base number is assigned in the same sequence, so
- * this also orders the externals by relocation base.)
+ * qsort comparator ordering symbols by their .EXTERN declaration sequence
+ * (for the `\` segment/reloc-base records).  (An external's base number is
+ * assigned in the same sequence, so this orders the externals by relocation
+ * base.)  The `#'/`@' records use first-definition (defseq) order.
  */
 
 static int
@@ -4676,8 +4676,9 @@ cmp_decl (const void *pa, const void *pb)
 
 /*
  * Collect the external/internal/entry symbols into objsym arrays (each sized
- * sym_count(t)) for the `\'/`#'/`@' object records, in the originals' emission
- * order.
+ * sym_count(t)) for the `\'/`#'/`@' object records.  Externals by decl (base
+ * order for `\'); internals/entries by first-definition order (defseq) to
+ * match the originals' `#'/`@' record order.
  */
 
 static void
@@ -4718,8 +4719,8 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
     }
 
   qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl);
-  qsort (is, (size_t)ni, sizeof (symbol *), cmp_decl);
-  qsort (ts, (size_t)nt, sizeof (symbol *), cmp_decl);
+  qsort (is, (size_t)ni, sizeof (symbol *), cmp_defseq);
+  qsort (ts, (size_t)nt, sizeof (symbol *), cmp_defseq);
 
   for (i = 0; i < ne; i++)
     {
@@ -4758,11 +4759,9 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
 /******************************************************************************/
 
 /*
- * Collect ALL global symbols for the `&' .PSYM object record (in the
- * originals' order): the three segment bases (.PROG./.DATA./.BLNK., carrying
- * their sizes) first, then the external references in relocation-base order,
- * then the locally-defined symbols in first-definition order.  Local (`..')
- * symbols are excluded.  `ps' must hold at least 3 + sym_count(t) entries.
+ * Collect ALL global symbols for the `&' .PSYM object record: the three
+ * segment bases first, then externals in decl/base order, then locally-
+ * defined symbols in first-definition (defseq) order.  `..' locals excluded.
  */
 
 static void
@@ -4812,8 +4811,8 @@ collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
         ds[ndef++] = all[i];
     }
 
-  qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl);     /* base order   */
-  qsort (ds, (size_t)ndef, sizeof (symbol *), cmp_defseq); /* def. order   */
+  qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl); /* base order */
+  qsort (ds, (size_t)ndef, sizeof (symbol *), cmp_defseq); /* first-def order */
 
   for (i = 0; i < ne; i++)
     {
