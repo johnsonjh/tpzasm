@@ -49,11 +49,22 @@ g_interrupted = 0;
 
 /******************************************************************************/
 
+# define INTR_STR "\n*** Interrupted\n"
+# define INTR_EXT 255
+
+/******************************************************************************/
+
 static void
 on_sigint (int signo)
 {
   (void)signo;
+# ifndef USE_GETLINE
   g_interrupted = 1;
+# else
+  /* Flawfinder: ignore */ /* False positive CWE-134 */
+  (void)fprintf (stderr, INTR_STR);
+  _exit (INTR_EXT); /* _exit() should be OK anywhere USE_GETLINE is used */
+ #endif
 }
 
 #endif
@@ -76,8 +87,9 @@ check_interrupt (void)
 #if defined(HAVE_SIGNAL_H) && defined(SIGINT)
   if (0 != g_interrupted)
     {
-      (void)fprintf (stderr, "\n*** Interrupted\n");
-      exit (255);
+      /* Flawfinder: ignore */ /* False positive CWE-134 */
+      (void)fprintf (stderr, INTR_STR);
+      exit (INTR_EXT);
     }
 #endif
 }
@@ -5945,9 +5957,12 @@ static char *unix_getline (char *buf, int size)
 
       if (0x03 == c) /* Handle ^C fallback */
         {
+# if defined(HAVE_SIGNAL_H) && defined(SIGINT)
+          g_interrupted = 1;
+# endif
           buf[0] = '\0';
 
-          goto restore;
+          goto restore_null;
         }
 
 # ifdef SIGTSTP
