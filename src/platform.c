@@ -17,13 +17,6 @@
 
 /******************************************************************************/
 
-#if defined (__atarist__) || defined(__atarist) || defined(atarist)
-# include <gem.h>
-# include <osbind.h>
-#endif
-
-/******************************************************************************/
-
 #include "platform.h"
 
 /******************************************************************************/
@@ -305,6 +298,9 @@ const char *platform_name (void)
 # ifndef HAVE_SIGNAL_H
 #  define HAVE_SIGNAL_H
 # endif
+# ifndef USE_SIGACTION
+#  define USE_SIGACTION
+# endif
   return "FreeBSD";
 
   /*******************************************************************/
@@ -312,6 +308,9 @@ const char *platform_name (void)
 #elif defined(__NetBSD__)
 # ifndef HAVE_SIGNAL_H
 #  define HAVE_SIGNAL_H
+# endif
+# ifndef USE_SIGACTION
+#  define USE_SIGACTION
 # endif
   return "NetBSD";
 
@@ -321,6 +320,9 @@ const char *platform_name (void)
 # ifndef HAVE_SIGNAL_H
 #  define HAVE_SIGNAL_H
 # endif
+# ifndef USE_SIGACTION
+#  define USE_SIGACTION
+# endif
   return "OpenBSD";
 
   /*******************************************************************/
@@ -328,6 +330,9 @@ const char *platform_name (void)
 #elif defined(__DragonFly__)
 # ifndef HAVE_SIGNAL_H
 #  define HAVE_SIGNAL_H
+# endif
+# ifndef USE_SIGACTION
+#  define USE_SIGACTION
 # endif
   return "DragonFly BSD";
 

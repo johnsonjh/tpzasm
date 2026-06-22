@@ -64,7 +64,18 @@ static void
 install_sigint (void)
 {
 #if defined(HAVE_SIGNAL_H) && defined(SIGINT)
+# if defined(USE_SIGACTION) && defined(SA_RESTART) || defined(SA_INTERRUPT)
+  struct sigaction sa;
+  sa.sa_handler = on_sigint;
+  sigemptyset (&sa.sa_mask);
+  sa.sa_flags = 0;
+#  if defined(SA_INTERRUPT)
+  sa.sa_flags |= SA_INTERRUPT;
+#  endif
+  (void)sigaction (SIGINT, &sa, NULL);
+# else
   (void)signal (SIGINT, on_sigint);
+# endif
 #endif
 }
 
@@ -5767,6 +5778,94 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
 /******************************************************************************/
 
+#if defined(__atarist__) || defined(__atarist) || defined(atarist)
+static char *atarist_getline (char *buf, int size, int echo)
+{
+  int i = 0;
+
+  if (size <= 1)
+    {
+      buf[0] = '\0';
+
+      return buf;
+    }
+
+  for (;;)
+    {
+      int c = Bconin (2) & 0xff;
+
+      if (c == 0x0d || c == 0x9b)
+        {
+          if (echo)
+            {
+              Cconout ('\r');
+              Cconout ('\n');
+            }
+
+          buf[i++] = '\n';
+          buf[i] = '\0';
+
+          return buf;
+        }
+
+      if (c == 0x1a || c == 0x04)
+        {
+          if (i == 0)
+            return NULL;
+
+          buf[i] = '\0';
+
+          return buf;
+        }
+
+      if (c == 0x08 || c == 0x7f)
+        {
+          if (i > 0)
+            {
+              i--;
+
+              if (echo)
+                {
+                  Cconout ('\b');
+                  Cconout (' ');
+                  Cconout ('\b');
+                }
+            }
+
+          continue;
+        }
+
+      if (i < size - 1)
+        {
+          buf[i++] = (char)c;
+
+          if (echo)
+            Cconout (c);
+        }
+      else
+        {
+          buf[i] = '\0';
+
+          return buf;
+        }
+    }
+}
+#endif
+
+/******************************************************************************/
+
+static char *xgetline(char *buf, int size, FILE *fp)
+{
+#if defined(__atarist__) || defined(__atarist) || defined(atarist)
+  if (fp == stdin)
+    return atarist_getline (buf, size, 1);
+#endif
+
+  return fgets (buf, size, fp);
+}
+
+/******************************************************************************/
+
 /*
  * Read one assembly-time console value for the '\' operator: emit ':' as the
  * original does, read a line from stdin, and define the symbol from it.
@@ -5782,7 +5881,7 @@ console_read (const astate *a, symbol *s)
   (void)fflush (stdout);
   (void)fflush (stderr);
 
-  if (NULL == fgets (ibuf, (int)sizeof (ibuf), stdin))
+  if (NULL == xgetline (ibuf, (int)sizeof (ibuf), stdin))
     {
       check_interrupt ();
 

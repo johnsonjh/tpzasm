@@ -12,6 +12,13 @@
 
 /******************************************************************************/
 
+# if defined (__atarist__) || defined(__atarist) || defined(atarist)
+#  include <gem.h>
+#  include <osbind.h>
+# endif
+
+/******************************************************************************/
+
 # ifdef __has_include
 #  define HAS_INCLUDE(inc) __has_include(inc)
 # else

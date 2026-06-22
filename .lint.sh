@@ -774,7 +774,7 @@ command -v valgrind > /dev/null 2>&1 && {
         ./asm -p -o "${vg_d}/p.com" -l "${vg_d}/p.lst" \
         tests/macro.asm > /dev/null \
       && valgrind --quiet --error-exitcode=99 --leak-check=full \
-        ./asm -z tests/macparam.asm > /dev/null \
+        ./asm -z -l /dev/null tests/macparam.asm > /dev/null \
       && valgrind --quiet --error-exitcode=99 --leak-check=full \
         ./test_expr > /dev/null \
       && valgrind --quiet --error-exitcode=99 --leak-check=full \

@@ -30,6 +30,11 @@ int allow_long_symbols;
 
 /******************************************************************************/
 
+#if defined(__atarist__) || defined(__atarist) || defined(atarist)
+long _stksize = -1L;
+#endif
+
+/******************************************************************************/
 
 static const char *
 basename_of (const char *p)
