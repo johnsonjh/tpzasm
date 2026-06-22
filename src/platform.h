@@ -85,59 +85,113 @@
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
+#  endif
 # elif defined(__linux__) || defined(__linux)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
+#  endif
 # elif defined(__illumos__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
+#  endif
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
 #  endif
 # elif defined(__sun) || defined(sun)
 #  if defined(__SVR4)
 #   ifndef HAVE_SIGNAL_H
 #    define HAVE_SIGNAL_H
 #   endif
+#   ifndef USE_GETLINE
+#    define USE_GETLINE
+#   endif
+#   ifndef USE_TERMIOS
+#    define USE_TERMIOS
+#   endif
 #  endif
 # elif defined(_AIX) && !defined(__PASE__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
+#  endif
 # elif defined(_AIX) && defined(__PASE__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
+#  endif
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
 #  endif
 # elif defined(__FreeBSD__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
-#  ifndef USE_SIGACTION
-#   define USE_SIGACTION
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
 #  endif
 # elif defined(__NetBSD__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
-#  ifndef USE_SIGACTION
-#   define USE_SIGACTION
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
 #  endif
 # elif defined(__OpenBSD__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
-#  ifndef USE_SIGACTION
-#   define USE_SIGACTION
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
 #  endif
 # elif defined(__DragonFly__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
-#  ifndef USE_SIGACTION
-#   define USE_SIGACTION
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
 #  endif
 # elif defined(__HAIKU__)
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
+#  endif
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
 #  endif
 # elif defined(__ELKS__) || defined(__IA16_SYS_ELKS)
 #  ifndef HAVE_SIGNAL_H
@@ -147,6 +201,31 @@
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif
+#  ifndef USE_GETLINE
+#   define USE_GETLINE
+#  endif
+#  ifndef USE_TERMIOS
+#   define USE_TERMIOS
+#  endif
+# endif
+
+/******************************************************************************/
+
+# ifdef USE_GETLINE
+#  ifndef HAVE_SIGNAL_H
+#   error "Need HAVE_SIGNAL_H defined"
+#  endif
+#  include <signal.h>
+#  if defined(USE_TERMIOS)
+#   include <termios.h>
+#  elif defined(USE_TERMIO)
+#   include <termio.h>
+#  else
+#   error "Need USE_TERMIOS or USE_TERMIO defined"
+#  endif
+#  include <unistd.h>
+#  include <errno.h>
+#  include <string.h>
 # endif
 
 /******************************************************************************/

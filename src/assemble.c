@@ -64,18 +64,7 @@ static void
 install_sigint (void)
 {
 #if defined(HAVE_SIGNAL_H) && defined(SIGINT)
-# if defined(USE_SIGACTION) && defined(SA_RESTART) || defined(SA_INTERRUPT)
-  struct sigaction sa;
-  sa.sa_handler = on_sigint;
-  sigemptyset (&sa.sa_mask);
-  sa.sa_flags = 0;
-#  if defined(SA_INTERRUPT)
-  sa.sa_flags |= SA_INTERRUPT;
-#  endif
-  (void)sigaction (SIGINT, &sa, NULL);
-# else
   (void)signal (SIGINT, on_sigint);
-# endif
 #endif
 }
 
@@ -5854,11 +5843,252 @@ static char *atarist_getline (char *buf, int size, int echo)
 
 /******************************************************************************/
 
-static char *xgetline(char *buf, int size, FILE *fp)
+#if defined(USE_GETLINE)
+static char *unix_getline (char *buf, int size)
+{
+# if defined(USE_TERMIOS)
+  struct termios oldt, raw;
+# elif defined(USE_TERMIO)
+  struct termio oldt, raw;
+# endif
+
+  int i = 0;
+  int col = 0;
+  int tty = isatty (0);
+  ssize_t wr;
+
+
+  (void)memset (&oldt, 0, sizeof (oldt));
+
+  if (1 >= size)
+    {
+      buf[0] = '\0';
+
+      return buf;
+    }
+
+  if (tty)
+    {
+# if defined(USE_TERMIOS)
+      if (-1 == tcgetattr (0, &oldt))
+        tty = 0;
+# elif defined(USE_TERMIO)
+      if (-1 == ioctl (0, TCGETA, &oldt))
+        tty = 0;
+# endif
+    }
+
+  if (tty)
+    {
+      raw = oldt;
+
+# if defined(USE_TERMIOS)
+      raw.c_lflag &= (tcflag_t)~(ICANON | ECHO);
+      raw.c_cc[VMIN] = 1;
+      raw.c_cc[VTIME] = 0;
+      (void)tcsetattr (0, TCSANOW, &raw);
+# elif defined(USE_TERMIO)
+      raw.c_lflag &= (tcflag_t)~(ICANON | ECHO);
+      raw.c_cc[VMIN] = 1;
+      raw.c_cc[VTIME] = 0;
+      (void)ioctl (0, TCSETA, &raw);
+# endif
+    }
+
+  for (;;)
+    {
+      unsigned char c;
+      ssize_t nr = read (0, &c, 1);
+
+      check_interrupt ();
+
+      if (-1 == nr)
+        {
+          if (errno == EINTR)
+            {
+              buf[0] = '\0';
+
+              goto restore;
+            }
+
+          goto restore;
+        }
+
+      if (0 == nr)
+        {
+          if (0 == i)
+            goto restore_null;
+
+          break;
+        }
+
+      if (0x1b == c)
+        {
+          unsigned char d;
+
+          if (1 != read (0, &d, 1))
+            continue;
+
+          if ('[' == d)
+            {
+              for (;;)
+                {
+                  if (1 != read (0, &d, 1))
+                    break;
+
+                  if (d >= 0x40 && d <= 0x7e)
+                    break;
+                }
+            }
+
+          continue;
+        }
+
+# ifdef SIGINT
+      if (0x03 == c) /* Handle ^C (SIGINT) */
+        {
+          (void)raise (SIGINT);
+
+          continue;
+        }
+# endif
+
+# ifdef SIGTSTP
+      if (0x1a == c) /* Handle ^Z as SIGTSTP) */
+        {
+          (void)raise (SIGTSTP);
+
+          continue;
+        }
+# endif
+
+      if ('\n' == c || '\r' == c)
+        {
+          if (tty)
+            wr = write (1, "\r\n", 2);
+
+          buf[i++] = '\n';
+
+          break;
+        }
+
+      if (0x04 == c)
+        {
+          if (i == 0)
+            goto restore_null;
+
+          break;
+        }
+
+      if (0x08 == c || 0x7f == c)
+        {
+          if (i > 0)
+            {
+              i--;
+
+              if (tty)
+                {
+                  if (buf[i] == '\t')
+                    {
+                      int n = col % 8;
+
+                      if (n == 0)
+                        n = 8;
+
+                      while (n--)
+                        wr = write (1, "\b \b", 3);
+
+                      col -= (col % 8 == 0 ? 8 : col % 8);
+                    }
+                  else
+                    {
+                      wr = write (1, "\b \b", 3);
+                      col--;
+                    }
+                }
+            }
+
+          continue;
+        }
+
+      if (c == '\t')
+        {
+          if (i < size - 1)
+            {
+              buf[i++] = (char)c;
+
+              if (tty)
+                {
+                  int n = 8 - (col % 8);
+
+                  while (n--)
+                    wr = write (1, " ", 1);
+
+                  col = (col + 8) & ~7;
+                }
+            }
+          else
+            break;
+
+          continue;
+        }
+
+      if (c < 0x20 || c > 0x7e)
+        continue;
+
+      if (i < size - 1)
+        {
+          buf[i++] = (char)c;
+
+          if (tty)
+            {
+              wr = write (1, &c, 1);
+              col++;
+            }
+        }
+      else
+        break;
+    }
+
+  (void)wr;
+
+  buf[i] = '\0';
+
+restore:
+  if (tty)
+    {
+# if defined(USE_TERMIOS)
+      (void)tcsetattr (0, TCSANOW, &oldt);
+# elif defined(USE_TERMIO)
+      (void)ioctl (0, TCSETA, &oldt);
+# endif
+    }
+  return buf;
+
+restore_null:
+  if (tty)
+    {
+# if defined(USE_TERMIOS)
+      (void)tcsetattr (0, TCSANOW, &oldt);
+# elif defined(USE_TERMIO)
+      (void)ioctl (0, TCSETA, &oldt);
+# endif
+    }
+
+  return NULL;
+}
+#endif
+
+/******************************************************************************/
+
+static char *xgetline (char *buf, int size, FILE *fp)
 {
 #if defined(__atarist__) || defined(__atarist) || defined(atarist)
   if (fp == stdin)
     return atarist_getline (buf, size, 1);
+#elif defined(USE_GETLINE)
+  if (fp == stdin)
+    return unix_getline (buf, size);
 #endif
 
   return fgets (buf, size, fp);
