@@ -4718,7 +4718,7 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
         ts[nt++] = all[i];
     }
 
-  qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl);
+  qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl); /* //-V525 */
   qsort (is, (size_t)ni, sizeof (symbol *), cmp_defseq);
   qsort (ts, (size_t)nt, sizeof (symbol *), cmp_defseq);
 
