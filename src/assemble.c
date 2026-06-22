@@ -5960,7 +5960,7 @@ static char *unix_getline (char *buf, int size)
 # if defined(SIGINT)
           (void)raise (SIGINT);
 
-          continue
+          continue;
         }
 # endif
 
