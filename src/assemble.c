@@ -57,14 +57,7 @@ g_interrupted = 0;
 static void
 on_sigint (int signo)
 {
-  (void)signo;
-# ifndef USE_GETLINE
   g_interrupted = 1;
-# else
-  /* Flawfinder: ignore */ /* False positive CWE-134 */
-  (void)fprintf (stderr, INTR_STR);
-  _exit (INTR_EXT); /* _exit() should be OK anywhere USE_GETLINE is used */
- #endif
 }
 
 #endif
