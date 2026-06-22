@@ -305,8 +305,8 @@ automatically via the [`.lint.sh`](.lint.sh) script):
 | [IBM&nbsp;AIX&nbsp;lint](https://www.ibm.com/docs/en/aix/7.3.0?topic=l-lint-command)                               | Checks C and C++ language programs for potential problems                          |
 | [NetBSD&nbsp;lint(1)](https://man.netbsd.org/lint.1)                                                               | A C (C90/C99/C11/C17/C23) program verifier                                         |
 | [Oracle&nbsp;Developer&nbsp;Studio](https://www.oracle.com/application-development/developerstudio/)               | Performance, security, and thread analysis tools for C, C++, and Fortran           |
-| [PurifyPlus™](https://www.teamblue.unicomsi.com/products/purifyplus/)                                              | Run-time analysis tools for application reliability and performance                |
-| [REUSE](https://api.reuse.software/info/github.com/aremmell/libsir)                                                | Verifies compliance with the [REUSE](https://reuse.software/) licensing guidelines |
+| [PurifyPlus](https://www.teamblue.unicomsi.com/products/purifyplus/)                                               | Run-time analysis tools for application reliability and performance                |
+| [REUSE](https://reuse.software/)                                                                                   | Verifies compliance with the REUSE software licensing guidelines                   |
 | [ShellCheck](https://www.shellcheck.net/)                                                                          | A static analysis tool for Unix shell scripts                                      |
 | [Smatch](https://repo.or.cz/w/smatch.git)                                                                          | Smatch (Source Matcher) is a static analysis tool for C code                       |
 | [SoftIntegration Ch](https://www.softintegration.com/)                                                             | C/C++ interpreter and interactive platform for scientific computing                |
