@@ -74,7 +74,16 @@ on_sigint (int signo)
 static void
 install_sigint (void)
 {
-#if defined(HAVE_SIGNAL_H) && defined(SIGINT)
+#if defined(HAVE_SIGNAL_H) && defined(USE_SIGACTION)
+  struct sigaction sa; /* Depends on globally available/unhidden sigaction! */
+
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = sigint_handler;
+  sigemptyset (&sa.sa_mask);
+  sa.sa_flags = 0;
+
+  (void)sigaction (SIGINT, &sa, NULL);
+#elif defined(HAVE_SIGNAL_H) && defined(SIGINT)
   (void)signal (SIGINT, on_sigint);
 #endif
 }
