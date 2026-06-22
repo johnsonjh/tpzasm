@@ -7,9 +7,10 @@
 
 **TPZASM** (pronounceable as ‘*Topaz Assembler*’) is a portable
 cross‑assembler intended to be fully interchangeable (and in most cases
-bug‑for‑bug compatible) with the **TDL&nbsp;ZASM&nbsp;2.21** and
-**PSA&nbsp;PASM&nbsp;1.02** assemblers, targeting the Intel&nbsp;**8080**,
-Zilog&nbsp;**Z80**, and other equivalent processors.
+bug‑for‑bug compatible) with the **TDL&nbsp;ZASM&nbsp;2.21**,
+**PSA&nbsp;PASM&nbsp;1.02**, and **PSA&nbsp;PASM&nbsp;2.00G** assemblers,
+targeting the Intel&nbsp;**8080**, Zilog&nbsp;**Z80**, and other
+equivalent processors.
 
 An enhanced clone of **HEXCOM 3.00**, the DRI
 [Intel&nbsp;HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
@@ -30,7 +31,7 @@ tool, is also included.
   * [Developer notes](#developer-notes)
   * [Future plans](#future-plans)
     + [CDL MACRO emulation](#cdl-macro-emulation)
-    + [PSA PASM 2.0 emulation](#psa-pasm-20-emulation)
+    + [PSA PASM 2.00G emulation](#psa-pasm-200g-emulation)
 - [Reference](#reference)
   * [Original binaries](#original-binaries)
   * [Original documentation](#original-documentation)
@@ -236,7 +237,7 @@ development tools for several years.
   analyzed, their bugs, quirks, and listing styles could be emulated in a
   future **TPZASM** release.
 
-#### PSA PASM 2.0 emulation
+#### PSA PASM 2.00G emulation
 
 * Another **PSA PASM** variant, **PSA&nbsp;PASM&nbsp;2.00G** (`C12011-0200G`,
   *likely a beta release*), is also known, though no documentation for it
@@ -247,14 +248,12 @@ development tools for several years.
   relocatable object output) for all our TDL‑style test inputs.  This release
   completely overhauls the listing format and adds some completely new modes,
   activated by the `.EPOP` and `.ZOP` pseudo‑ops, allowing the use of
-  **MACRO‑80‑style pseudo‑ops** and **Zilog mnemonics**.
+  **MACRO‑80‑style pseudo‑ops** and **Zilog mnemonics**.  Unfortunately, it
+  also exhibits several behaviors that are
+  [clearly bugs](docs/re/pasm2-bugs.md), such as sometimes omitting the symbol
+  table from listings when certain macros are defined.
 
-  It also exhibits several behaviors that are clearly bugs, such as sometimes
-  omitting the symbol table from listings when certain macros are defined.
-
-  **Emulation of this assembler is currently a work‑in‑progress.**  Its
-  improved listing style (but without the bugs) may be supported in a
-  future release.
+  **Emulation of this assembler is currently a work‑in‑progress.**
 
 * An optional *extended error checking* mode may be added in a future release,
   enabling new features such as classifying errors or warnings by severity,
