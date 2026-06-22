@@ -5346,7 +5346,7 @@ do_define (astate *a, const char *operands)
   int n = 0, i;
 
   if (NULL == m)
-    return;
+    fatal_oom ();
 
   m->name = NULL;
   m->nparams = 0;
