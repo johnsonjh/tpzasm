@@ -67,9 +67,9 @@ Usage: asm [options] <source[.asm]>
     -h, --help            Display this help text and exit
 ```
 
-**NOTE**: Invoking the assembler as `zasm` explicitly selects the
-**TDL ZASM 2.21** emulation, and invoking it as `pasm` selects the
-**PSA PASM 1.02** emulation.
+The default emulation can be changed by renaming the executable (or creating a
+symbolic link).  Invoke the assembler as `zasm` to select **TDL ZASM 2.21**,
+`pasm` to select **PSA PASM 1.02**, and `pasm2` to select **PSA PASM 2.00G**.
 
 ## Downloads
 
