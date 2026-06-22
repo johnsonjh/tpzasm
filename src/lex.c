@@ -36,10 +36,12 @@
 
 static int
 idstart (int c)
-{ /* symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it
-     -- '_' flags a macro subscript reference, '@' is the remainder operator.
-     A symbol may START with any of these but a digit (a leading digit is a
-     number); '$' is an ordinary symbol char, not the location counter ('.') */
+{ /*
+   * symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it
+   * -- '_' flags a macro subscript reference, '@' is the remainder operator.
+   * A symbol may START with any of these but a digit (a leading digit is a
+   * number); '$' is an ordinary symbol char, not the location counter ('.')
+   */
   return isalpha (c) || '$' == c || '.' == c || '%' == c;
 }
 
@@ -168,14 +170,19 @@ lex_line (const char *line, line_t *out)
             }
         }
 
-      /* operator, no label */
+      /*
+       * operator, no label
+       */
+
       (void)xstrlcpy (out->op, tok1, sizeof (out->op));
       out->operands = r;
 
       return;
     }
 
-  /* out->operands already points at p (set above) */
+  /*
+   * out->operands already points at p (set above)
+   */
 }
 
 /******************************************************************************/

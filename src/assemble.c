@@ -99,28 +99,34 @@ check_interrupt (void)
 
 /******************************************************************************/
 
-#define MAXCOND 1024 /* nested conditional-block (.IFx) depth.  A recursive
+#define MAXCOND 1024 /*
+                      * nested conditional-block (.IFx) depth.  A recursive
                       * memory-fill macro nests one conditional per byte (e.g.
                       * Turbo-ROM's PADBYT: `.ifg (addr-.),[ nop  PADBYT addr ]'
                       * recurses ~addr-. deep, opening a `.ifg' each level), so
                       * this must comfortably exceed any such span (the
-                      * originals were bounded only by available RAM) */
+                      * originals were bounded only by available RAM)
+                      */
 #define MAXALIAS 128
 #define LOC_STK_DEPTH 32 /* .LOC/.RELOC save-stack depth */
 #define MAXTEMPS 256 /* .TEMPS local-array cap (the originals were RAM-bound) */
-#define MACRO_NEST_MAX 1024 /* artificial macro-expansion recursion cap: the
+#define MACRO_NEST_MAX 1024 /*
+                             * artificial macro-expansion recursion cap: the
                              * originals were bounded only by available RAM; we
                              * impose a high but finite limit so a runaway (e.g.
                              * an unconditionally self-recursive macro) fails
                              * cleanly instead of overflowing the C stack.  Kept
                              * in step with MAXCOND so a legitimately deep
-                             * recursive fill (PADBYT above) is not cut short */
+                             * recursive fill (PADBYT above) is not cut short
+                             */
 
-#define GOTO_ITER_MAX 1000000L /* anti-runaway cap on .GOTO branches within a
+#define GOTO_ITER_MAX 1000000L /*
+                                * anti-runaway cap on .GOTO branches within a
                                 * single macro expansion: high enough for any
                                 * real counted loop (e.g. a 64K memory fill),
                                 * finite so an unterminated .GOTO loop fails
-                                * cleanly instead of hanging the assembler */
+                                * cleanly instead of hanging the assembler
+                                */
 
 /*
  * listing-control flag bits (a->lst_ctl); LSTC_DEFAULT
@@ -192,8 +198,8 @@ typedef struct
   int errs_finsert; /* nested-.INSERT (`F') count: also drives the leading pg */
   int count_only;   /* error-counting pre-pass: tally errs_hdr, list nothing  */
   int mdef_page;    /* leading-page pass: list only `M'/`F' (report) lines    */
-  int cur_mdef;     /* this line redefines a multiply-defined label: on the
-                     * report page its operand forward refs render undefined  */
+  int cur_mdef;     /* this line redefines a multiply-defined label: on the   */
+                    /* report page its operand forward refs render undefined  */
   char lst_ec[2];   /* up to two error-code letters for this line's column 1  */
   int lst_nec;      /* number of error codes recorded for this line           */
   int lst_qoff[2];  /* per-error `?' marker offsets into the line (one each)  */
@@ -248,8 +254,11 @@ typedef struct
   /* the quote char that opened the current '\' prompt string (' or ") */
   char prompt_quote;
 
-  /* consuming a multi-line .REMARK string body; remark_close is the matching
-   * delimiter still being sought (']' for a '[' open, else the open char) */
+  /*
+   * consuming a multi-line .REMARK string body; remark_close is the matching
+   * delimiter still being sought (']' for a '[' open, else the open char)
+   */
+
   int in_remark;
   char remark_close;
   int remark_depth; /* nested '[' depth when the delimiter is a bracket */
@@ -267,10 +276,10 @@ typedef struct
   int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)     */
   int obj_psym;      /* .PSYM: append the `&' symbol-table record(s)          */
   int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning   */
-  int zop_mode;      /* PASM2 .ZOP: standard Zilog mnemonic set active
-                      * (.IOP/.I8080/.Z80 switch back to 8080/TDL); default 0 */
-  int epop_mode;     /* PASM2 .EPOP: the Intel/M80 pseudo-op spellings
-                      * (DB/DW/DS/ORG/END/ASEG/...) on; .XEPOP turns off      */
+  int zop_mode;      /* PASM2 .ZOP: standard Zilog mnemonic set active        */
+                     /* (.IOP/.I8080/.Z80 switch back to 8080/TDL); default 0 */
+  int epop_mode;     /* PASM2 .EPOP: the Intel/M80 pseudo-op spellings        */
+                     /* (DB/DW/DS/ORG/END/ASEG/...) on; .XEPOP turns off      */
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn         */
   value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'      */
   int ntemps;        /* number of .TEMPS elements currently allocated         */
@@ -302,16 +311,21 @@ typedef struct
   int nspans;
   int span_cap;
   long emit_prev;   /* last address emitted this pass, or -1 */
-  int loc_break;    /* a .LOC/.ORG forces the next byte to open a new object
-                     * record (span) even when its address is contiguous */
+  int loc_break;    /*
+                     * a .LOC/.ORG forces the next byte to open a new object
+                     * record (span) even when its address is contiguous
+                     */
 
   /* listing output stream (stderr, or the -l file) */
   FILE *lst;
 
-  /* page-heading text captured from the directives (both passes, so pass 2's
+  /*
+   * page-heading text captured from the directives (both passes, so pass 2's
    * page-1 heading already has whatever was set before the first listed line):
    *   title    -- .TITLE   text: heading line A, after the "modname - " prefix
-   *   subtitle -- .SBTTL   text: heading line B, on its own */
+   *   subtitle -- .SBTTL   text: heading line B, on its own
+   */
+
   char title[64];
   char subtitle[64];
 
@@ -333,30 +347,33 @@ typedef struct
   u16 lc_stmt; /* statement-start LC, for '.' in operands */
 
   /* listing format (TDL ZASM vs PSA PASM) */
-  dialect_t dialect; /* selects the TDL vs PSA listing layout   */
-  unsigned lst_ctl;  /* listing-control flags (LSTC_*)          */
-  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack      */
-  int lst_nsave;   /* number of saved entries on that stack     */
-  int lst_ctlstmt; /* this line is a listing-control statement  */
-  int lst_kind;    /* this line: 0 insn, 1 data bytes, 2 words  */
-  int lst_opw;     /* insn operand width (0/1/2) for value-form */
-  long lst_loc;    /* LOC-column value: -1 blank, -2 use lc0    */
-  long lst_line;   /* listing line counter, for pagination      */
-  int lst_page;    /* current listing page number               */
-  int lst_pending; /* the first body page's heading is owed: emit it (without a
-                    * form-feed) before the first listed line, so a .TITLE or
-                    * .SBTTL ahead of that line already shows in it */
-  int lst_pagelen; /* lines per page (PASM `.PAGE width,length' 2nd arg); the
-                    * width->wrap (1st arg) is not yet implemented */
-  int lst_lbase; /* LC relocation base: -1 derive from lc_reloc/base, else # */
-  int lst_obase; /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext)   */
-  u8 wreloc[32]; /* per-.WORD-value relocation base (0 abs, 1/2/3/ext)       */
+  dialect_t dialect; /* selects the TDL vs PSA listing layout    */
+  unsigned lst_ctl;  /* listing-control flags (LSTC_*)           */
+  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack       */
+  int lst_nsave;   /* number of saved entries on that stack      */
+  int lst_ctlstmt; /* this line is a listing-control statement   */
+  int lst_kind;    /* this line: 0 insn, 1 data bytes, 2 words   */
+  int lst_opw;     /* insn operand width (0/1/2) for value-form  */
+  long lst_loc;    /* LOC-column value: -1 blank, -2 use lc0     */
+  long lst_line;   /* listing line counter, for pagination       */
+  int lst_page;    /* current listing page number                */
+  int lst_listed;  /* source lines emitted (PASM2 left # column) */
+  int lst_eflag;   /* PASM2: 1='=' 2='==' for equate value lines */
+  int lst_pending; /* the first body pages heading is owed: emit it without a */
+                   /* form-feed before the first listed line, so a .TITLE or  */
+                   /* .SBTTL ahead of that line already shows in it           */
+  int lst_pagelen; /* lines per page (PASM `.PAGE width,length' 2nd arg) the  */
+                   /* width->wrap (1st arg) is not yet implemented            */
+  int lst_lbase;   /* LC relocation base: -1 derive from lc_reloc/base else # */
+  int lst_obase;   /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext)  */
+  u8 wreloc[32];   /* per-.WORD-value relocation base (0 abs, 1/2/3/ext)      */
 
   /*
    * .LIMAGE multi-line byte image: source-line offsets at which the source
    * splits across physical lines (recorded as data is parsed; the source runs
    * one value ahead of the 6-byte / per-word image it sits beside)
    */
+
   int limg_split[68];
   int limg_ns;
 
@@ -369,6 +386,7 @@ typedef struct
   int mac_plus;        /* place the '+' macro-continuation marker             */
   int mac_active;      /* inside the outermost macro expansion's listing      */
   int lst_suppress;    /* assemble a line but emit no listing output          */
+
   /*
    * .SALL macro-collapse: the whole expansion lists as ONE bare call line that
    * carries the first emitting statement's LC + value-form bytes.  sall_call is
@@ -376,6 +394,7 @@ typedef struct
    * NULL); sall_done marks the call line already emitted (by the first emitter,
    * possibly deep in a nested macro).  See print_lst and expand_macro.
    */
+
   const char *sall_call;
   int sall_done;
   int ins_depth; /* .INSERT nesting: inserted lines carry the '@' mark */
@@ -470,11 +489,15 @@ em_record (astate *a, u8 v)
       = (u8)((REL_LO == cls || REL_EXT8 == cls) ? a->em_pend_base : 0);
   a->em_n++;
 
-  /* span: extend the current run, or open a new one at an address gap OR
+  /*
+   * span: extend the current run, or open a new one at an address gap OR
    * an active-base change (each ';' record carries a single base; absolute
-   * code is base 0, relocatable code its active segment 1/2/3). */
+   * code is base 0, relocatable code its active segment 1/2/3).
+   */
+
   {
   u8 seg = (u8)(a->lc_reloc ? a->base : 0);
+
   if (a->nspans > 0 && a->emit_prev >= 0 && (long)a->lc == a->emit_prev + 1
       && a->span_seg[(long)a->nspans - 1] == seg && !a->loc_break)
     a->span_n[(long)a->nspans - 1]++;
@@ -492,6 +515,7 @@ em_record (astate *a, u8 v)
           if (nsc > (long)a->span_cap)
             {
               int sc = (int)nsc;
+
               u16 *na = (u16 *)realloc (a->span_a,  (size_t)sc * sizeof (u16));
               u16 *nn = (u16 *)realloc (a->span_n,  (size_t)sc * sizeof (u16));
               u8  *ng = (u8 *)realloc (a->span_seg, (size_t)sc * sizeof (u8));
@@ -529,8 +553,11 @@ em_record (astate *a, u8 v)
 static void
 emit (astate *a, u16 v)
 {
-  /* the per-line byte buffer feeds the listing; the leading multiply-defined
-   * report page (mdef_page) needs it too, but emits no object/image */
+  /*
+   * the per-line byte buffer feeds the listing; the leading multiply-defined
+   * report page (mdef_page) needs it too, but emits no object/image
+   */
+
   if ((2 == a->pass || a->mdef_page) && a->nbytes < (int)sizeof (a->bytes))
     a->bytes[a->nbytes++] = (u8)(v & 0xFFu);
 
@@ -610,7 +637,9 @@ emit_imm8 (astate *a, const char *line, const value_t *v)
            * does support it (the `111' control code below).
            */
           aerr (a, line, "8-bit external illegal");
+
           emit (a, (u16)(v->value & 0xFFu));
+
           return;
         }
 
@@ -687,9 +716,11 @@ aerr (astate *a, const char *line, const char *msg)
        * symbol is only detectable once the symbols are all defined).  Also
        * count multiply-defined errors, which get a leading report page.
        */
+
       a->errs_hdr++;
 
-      /* `M' (multiply-defined) and `F' (nested .INSERT) both get reproduced
+      /*
+       * `M' (multiply-defined) and `F' (nested .INSERT) both get reproduced
        * on the leading report page; tally each so its pass runs only when
        * such an error exists
        */
@@ -716,8 +747,10 @@ aerr (astate *a, const char *line, const char *msg)
         }
 
       if (a->lst_nec < 2) /* the listing shows the first two codes per line */
-        { /* each error places a `?' at its own parse position (two errors at
-           * the same spot therefore render as `??') */
+        { /*
+           * each error places a `?' at its own parse position (two errors at
+           * the same spot therefore render as `??')
+           */
           a->lst_qoff[a->lst_nec] = a->ppos;
           a->lst_ec[a->lst_nec] = code;
           a->lst_nec++;
@@ -822,7 +855,9 @@ eval1 (astate *a, const char **pp, value_t *v)
       int endp_ppos = a->ppos;
 
       a->ppos = line_off (a->cur_line, mdefp);
+
       aerr (a, a->cur_line, "multiply-defined reference");
+
       a->ppos = endp_ppos;
     }
 
@@ -852,6 +887,7 @@ parse_reg8 (astate *a, const char **pp)
   if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> `Q' */
     {
       a->ppos = line_off (a->cur_line, skipws (p));
+
       aerr (a, a->cur_line, "register value range");
     }
 
@@ -977,6 +1013,7 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
       if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> `Q' */
         {
           a->ppos = line_off (a->cur_line, p);
+
           aerr (a, a->cur_line, "register value range");
         }
 
@@ -1015,7 +1052,9 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
   else
     { /* any other register inside the index paren: `X'+`Q' (`??'), prefix 0 */
       a->ppos = line_off (a->cur_line, ip);
+
       aerr (a, a->cur_line, "bad index register"); /* X */
+
       aerr (a, a->cur_line, "extra operand");      /* Q (same spot -> `??') */
 
       cp = ip; /* find the closing paren past the unrecognized index text */
@@ -1069,8 +1108,11 @@ fmt_opw (insn_fmt_t fmt)
 
 /******************************************************************************/
 
-/* A bare register-name token (for the extra-operand `A' vs `AQ' distinction):
- * the token is exactly a register mnemonic, not the start of a longer name. */
+/*
+ * A bare register-name token (for the extra-operand `A' vs `AQ' distinction):
+ * the token is exactly a register mnemonic, not the start of a longer name.
+ */
+
 static int
 is_reg_token (const char *t)
 {
@@ -1121,6 +1163,7 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
       if ('\0' != *t && ';' != *t && ']' != *t)
         {
           a->ppos = line_off (line, t);
+
           aerr (a, line, "extra operand"); /* Q */
         }
 
@@ -1130,7 +1173,9 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
   if (',' == *p) /* an extra `,operand' in the list */
     {
       a->ppos = line_off (line, p);
+
       aerr (a, line, "extra operand"); /* Q */
+
       return;
     }
 
@@ -1147,12 +1192,15 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
         e++;
 
       a->ppos = line_off (line, e);
+
       aerr (a, line, "extra argument"); /* A (default) */
     }
   else /* a trailing number/expression: `A'+`Q', both before it (`??') */
     {
       a->ppos = line_off (line, t);
+
       aerr (a, line, "extra argument"); /* A */
+
       aerr (a, line, "extra operand"); /* Q (same position -> `??') */
     }
 }
@@ -1179,6 +1227,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
        * the start of the operands, or the end of the line when there are none.
        */
       a->ppos = line_off (line, ops);
+
       aerr (a, line, "z80 instruction in 8080 mode");
     }
 
@@ -1192,17 +1241,21 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
     {
     case FMT_NONE:
       emit (a, in->opcode);
+
       break;
 
     case FMT_MOV:
       {
         int d, s, dp = 0, sp = 0, dx = 0, sx = 0;
         u16 dd = 0, sd = 0;
+
         if (parse_regop (a, &p, &d, &dp, &dd, &dx) || !comma (&p)
             || parse_regop (a, &p, &s, &sp, &sd, &sx))
           {
             aerr (a, line, "MOV r,r");
+
             emit (a, 0x40);
+
             break;
           }
 
@@ -1232,7 +1285,9 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (parse_regop (a, &p, &r, &pf, &ds, &ix))
           {
             aerr (a, line, "register expected");
+
             emit (a, in->opcode);
+
             break;
           }
 
@@ -1255,8 +1310,10 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (parse_regop (a, &p, &r, &pf, &ds, &ix) || !comma (&p))
           {
             aerr (a, line, "MVI r,data");
+
             emit (a, in->opcode);
             emit (a, 0);
+
             break;
           }
 
@@ -1272,6 +1329,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           aerr (a, line, "bad immediate");
 
         emit_imm8 (a, line, &v);
+
         break;
       }
 
@@ -1279,10 +1337,13 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
       {
         int r, pf = 0, ix = 0;
         u16 ds = 0;
+
         if (parse_regop (a, &p, &r, &pf, &ds, &ix))
           {
             aerr (a, line, "register expected");
+
             emit (a, in->opcode);
+
             break;
           }
 
@@ -1304,7 +1365,9 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         if (rp < 0)
           {
             aerr (a, line, "register pair expected");
+
             emit (a, in->opcode);
+
             break;
           }
 
@@ -1312,16 +1375,20 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           emit (a, (u16)pfx); /* INX/DCX X/Y -> DD/FD prefix */
 
         emit (a, (u16)(in->opcode | (rp << 4)));
+
         break;
       }
 
     case FMT_PUSHPOP:
       {
         int pfx, rp = parse_rp (a, &p, 1, &pfx);
+
         if (rp < 0)
           {
             aerr (a, line, "B/D/H/PSW expected");
+
             emit (a, in->opcode);
+
             break;
           }
 
@@ -1329,6 +1396,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           emit (a, (u16)pfx); /* PUSH/POP X/Y -> DD/FD prefix */
 
         emit (a, (u16)(in->opcode | (rp << 4)));
+
         break;
       }
 
@@ -1340,22 +1408,27 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
             aerr (a, line, "LDAX/STAX need B or D");
 
             emit (a, in->opcode);
+
             break;
           }
 
         emit (a, (u16)(in->opcode | (rp << 4)));
+
         break;
       }
 
     case FMT_LXI:
       {
         int pfx, rp = parse_rp (a, &p, 0, &pfx);
+
         if (rp < 0 || !comma (&p))
           {
             aerr (a, line, "LXI rp,data16");
+
             emit (a, in->opcode);
             emit (a, 0);
             emit (a, 0);
+
             break;
           }
 
@@ -1363,10 +1436,12 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           emit (a, (u16)pfx); /* LXI X/Y,nn -> DD/FD prefix */
 
         emit (a, (u16)(in->opcode | (rp << 4)));
+
         if (eval1 (a, &p, &v))
           aerr (a, line, "bad immediate");
 
         emit_word (a, v.value, 0 != v.reloc, v.base);
+
         break;
       }
 
@@ -1377,6 +1452,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         aerr (a, line, "bad immediate");
 
       emit_imm8 (a, line, &v);
+
       break;
 
     case FMT_ADDR:
@@ -1386,6 +1462,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         aerr (a, line, "bad address");
 
       emit_word (a, v.value, 0 != v.reloc, v.base);
+
       break;
 
     case FMT_RST:
@@ -1396,6 +1473,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         aerr (a, line, "RST 0-7");
 
       emit (a, (u16)(in->opcode | ((v.value & 7) << 3)));
+
       break;
 
     case FMT_REL:
@@ -1414,6 +1492,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           aerr (a, line, "relative jump out of range");
 
         emit (a, (u16)(d16 & 0xFF));
+
         break;
       }
 
@@ -1425,58 +1504,72 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
         aerr (a, line, "bad address");
 
       emit_word (a, v.value, 0 != v.reloc, v.base);
+
       break;
 
     case FMT_EDHL:
       {
         int pfx, rp = parse_rp (a, &p, 0, &pfx);
+
         if (rp < 0 || pfx)
           {
             aerr (a, line, "register pair expected");
+
             emit (a, 0xED);
             emit (a, in->opcode);
+
             break;
           }
 
         emit (a, 0xED);
         emit (a, (u16)(in->opcode | (rp << 4)));
+
         break;
       }
 
     case FMT_ED0:
       emit (a, 0xED);
       emit (a, in->opcode);
+
       break;
 
     case FMT_EDDST: /* INP/OUTP r : ED + (opcode | reg<<3) */
       {
         int r = parse_reg8 (a, &p);
+
         if (r < 0)
           {
             aerr (a, line, "register expected");
+
             emit (a, 0xED);
             emit (a, in->opcode);
+
             break;
           }
 
         emit (a, 0xED);
         emit (a, (u16)(in->opcode | (r << 3)));
+
         break;
       }
 
     case FMT_CBR:
       {
         int r = parse_reg8 (a, &p);
+
         if (r < 0)
           {
             aerr (a, line, "register expected");
+
             emit (a, 0xCB);
             emit (a, in->opcode);
+
             break;
           }
 
         emit (a, 0xCB);
         emit (a, (u16)(in->opcode | r));
+
         break;
       }
 
@@ -1490,8 +1583,10 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
             || parse_regop (a, &p, &reg, &pf, &ds, &ix))
           {
             aerr (a, line, "bit,reg expected");
+
             emit (a, 0xCB);
             emit (a, in->opcode);
+
             break;
           }
 
@@ -1514,16 +1609,17 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
     case FMT_IXP:
       {
         int pf = (('\0' != mnem[0] && 'Y' == mnem[strlen (mnem) - 1]) ? 0xFD
-                                                                       : 0xDD);
+                                                                      : 0xDD);
         emit (a, (u16)pf);
         emit (a, in->opcode);
+
         break;
       }
 
     case FMT_IXADD:
       {
         int pf = (('\0' != mnem[0] && 'Y' == mnem[strlen (mnem) - 1]) ? 0xFD
-                                                                       : 0xDD);
+                                                                      : 0xDD);
         const char *q = skipws (p);
         char t[4];
         int n = 0, rp = -1;
@@ -1551,13 +1647,17 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
             aerr (a, line, "bad register pair");
             emit (a, (u16)pf);
             emit (a, 0x09);
+
             break;
           }
 
         emit (a, (u16)pf);
         emit (a, (u16)(0x09 | (rp << 4)));
-        p = q + n; /* advance past the register so the trailing-operand check
-                    * (flag_extra_operand) does not see it as an extra */
+        p = q + n; /*
+                    * advance past the register so the trailing-operand
+                    * check (flag_extra_operand) does not see it as an extra
+                    */
+
         break;
       }
 
@@ -1572,6 +1672,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
           aerr (a, line, "bad address");
 
         emit_word (a, v.value, 0 != v.reloc, v.base);
+
         break;
       }
 
@@ -1588,6 +1689,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
    * (JMPR/JRx/DJNZ, FMT_REL) is an absolute offset even when its target is
    * relocatable, so it carries no flag (except the pre-existing external edge).
    */
+
   a->lst_obase
       = ((2 == a->lst_opw && 0 != v.reloc)
              ? (int)v.base
@@ -1605,6 +1707,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
        * the end of the parsed operand.
        */
       a->ppos = line_off (line, p);
+
       aerr (a, line, "z80 instruction in 8080 mode");
     }
 
@@ -2099,6 +2202,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
         if (!zemit_alusrc (a, line, &d, ZALU[i].rb, ZALU[i].ib))
           {
             aerr (a, line, "bad operand");
+
             emit (a, (u16)(ZALU[i].rb | 7));
           }
 
@@ -2124,6 +2228,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
           if (!zemit_alusrc (a, line, &s, rb, ib))
             {
               aerr (a, line, "bad operand");
+
               emit (a, (u16)(rb | 7));
             }
         }
@@ -2145,6 +2250,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       else
         {
           aerr (a, line, "bad operand");
+
           emit (a, (u16)(is_add ? 0x80 : (is_adc ? 0x88 : 0x98)));
         }
 
@@ -2181,6 +2287,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       else
         {
           aerr (a, line, "bad operand");
+
           emit (a, (u16)(dec ? 0x05 : 0x04));
         }
 
@@ -2206,6 +2313,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       else
         {
           aerr (a, line, "BC/DE/HL/AF expected");
+
           emit (a, base);
         }
 
@@ -2229,6 +2337,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       if (ZO_IMM != d.kind || (ZO_R8 != s.kind && ZO_MEM != s.kind))
         {
           aerr (a, line, "bit,reg expected");
+
           emit (a, 0xCB);
           emit (a, base);
         }
@@ -2259,6 +2368,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
         if (ZO_R8 != d.kind && ZO_MEM != d.kind)
           {
             aerr (a, line, "register expected");
+
             emit (a, 0xCB);
             emit (a, base);
           }
@@ -2324,6 +2434,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       else
         {
           aerr (a, line, "bad EX operands");
+
           emit (a, 0xEB);
         }
 
@@ -2351,6 +2462,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       else
         {
           aerr (a, line, "bad IN operands");
+
           emit (a, 0xDB);
           emit (a, 0);
         }
@@ -2379,6 +2491,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       else
         {
           aerr (a, line, "bad OUT operands");
+
           emit (a, 0xD3);
           emit (a, 0);
         }
@@ -2459,6 +2572,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
           else
             {
               aerr (a, line, "bad condition");
+
               emit (a, 0xC9);
             }
         }
@@ -2562,6 +2676,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
           else
             {
               aerr (a, line, "bad LD operands");
+
               emit (a, (u16)(0x40 | (d.reg << 3) | (d.reg)));
             }
         }
@@ -2594,6 +2709,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
           else
             {
               aerr (a, line, "bad LD operands");
+
               emit (a, 0x32);
               emit_word (a, d.val.value, 0 != d.val.reloc, d.val.base);
             }
@@ -2635,6 +2751,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
           else
             {
               aerr (a, line, "bad LD operands");
+
               emit (a, (u16)(0x01 | (d.rp << 4)));
               emit (a, 0);
               emit (a, 0);
@@ -2653,6 +2770,7 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
       else
         {
           aerr (a, line, "bad LD operands");
+
           emit (a, 0);
         }
 
@@ -2852,8 +2970,11 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
            * not an operand, so it ends the list cleanly.
            */
           a->ppos = line_off (line, p);
+
           aerr (a, line, "extra argument"); /* `AA': two argument errors at */
+
           aerr (a, line, "extra argument"); /* the same spot -> a `??' marker */
+
           break;
         }
       else if (']' == *p)
@@ -2876,12 +2997,14 @@ do_blk (astate *a, const char *line, const char *p, int width)
   if (eval1 (a, &p, &v))
     {
       aerr (a, line, "bad reservation size");
+
       return;
     }
 
   if (v.reloc || v.ext)
     {
       aerr (a, line, "size must be absolute");
+
       return;
     }
 
@@ -2941,6 +3064,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
           else
             {
               aerr (a, line, "unterminated string");
+
               break;
             }
         }
@@ -2997,8 +3121,12 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
             a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
         }
 
-      /* the object is built from the emission log, not the image, so set the
-       * high bit on the last logged byte too (the char just emitted) */
+      /*
+       * the object is built from the emission log, not the image,
+       * so set the high bit on the last logged byte too
+       * (the char just emitted)
+       */
+
       if (NULL != a->em_byte && a->em_n > 0)
         a->em_byte[a->em_n - 1] = (u8)(a->em_byte[a->em_n - 1] | 0x80u);
 
@@ -3046,10 +3174,9 @@ do_datetime (astate *a, int want_time)
       tmv = localtime (&t);
     }
 
-  if (NULL == tmv
-      || 0
-             == strftime (buf, sizeof (buf),
-                          (want_time ? "%H:%M:%S" : "%m/%d/%y"), tmv))
+  if (NULL == tmv || 0 == strftime (buf, sizeof (buf),
+                                    (want_time ? "%H:%M:%S"
+                                               : "%m/%d/%y"), tmv))
     (void)xstrlcpy (buf, "        ", sizeof (buf)); /* no clock: 8 spaces */
 
   a->lst_kind = 1; /* listing: byte stream */
@@ -3124,6 +3251,7 @@ do_rad40 (astate *a, const char *line, const char *p)
           if (v < 0)
             {
               bad = 1; /* stop at the first non-encodable character */
+
               break;
             }
 
@@ -3256,6 +3384,7 @@ resolve_alias (const astate *a, char *op)
           {
             (void)xstrlcpy (op, a->alias_to[i], NAMEBUF);
             found = 1;
+
             break;
           }
 
@@ -3296,6 +3425,7 @@ canon_dir (char *op)
     if (0 == strncmp (op, tab[i].prefix6, 6))
       {
         (void)xstrlcpy (op, tab[i].canon, NAMEBUF);
+
         return;
       }
 }
@@ -3397,13 +3527,13 @@ count_block_closes (const char *s)
 static int
 is_conditional (const char *op)
 {
-  return 0 == strcmp (op, ".IFE") || 0 == strcmp (op, ".IFN")
-      || 0 == strcmp (op, ".IFL") || 0 == strcmp (op, ".IFLE")
-      || 0 == strcmp (op, ".IFG") || 0 == strcmp (op, ".IFGE")
+  return 0 == strcmp (op, ".IFE")   || 0 == strcmp (op, ".IFN")
+      || 0 == strcmp (op, ".IFL")   || 0 == strcmp (op, ".IFLE")
+      || 0 == strcmp (op, ".IFG")   || 0 == strcmp (op, ".IFGE")
       || 0 == strcmp (op, ".IFDEF") || 0 == strcmp (op, ".IFNDEF")
       || 0 == strcmp (op, ".IFIDN") || 0 == strcmp (op, ".IFDIF")
-      || 0 == strcmp (op, ".IFB") || 0 == strcmp (op, ".IFNB")
-      || 0 == strcmp (op, ".IF1") || 0 == strcmp (op, ".IF2");
+      || 0 == strcmp (op, ".IFB")   || 0 == strcmp (op, ".IFNB")
+      || 0 == strcmp (op, ".IF1")   || 0 == strcmp (op, ".IF2");
 }
 
 /******************************************************************************/
@@ -3466,6 +3596,7 @@ parse_str_arg (const char *p, char *out)
           else if (']' == *p && 0 == --depth)
             {
               p++;
+
               break;
             }
 
@@ -3476,6 +3607,7 @@ parse_str_arg (const char *p, char *out)
         }
 
       out[n] = '\0';
+
       return p;
     }
 
@@ -3496,6 +3628,7 @@ parse_str_arg (const char *p, char *out)
       out[n++] = *p++;
 
   out[n] = '\0';
+
   return p;
 }
 
@@ -3675,8 +3808,10 @@ lst_bytes (const astate *a, char *col, size_t cap)
       else if (2 == a->lst_opw && nop + 1 < a->nbytes)
         {
           if (a->lst_ctl & LSTC_LADDR)
-            /* .LADDR: the operand's bytes in load (memory) order, packed onto
-             * the opcode (CALL 784C -> CD4C78), as the originals list them */
+            /*
+             * .LADDR: the operand's bytes in load (memory) order, packed onto
+             * the opcode (CALL 784C -> CD4C78), as the originals list them
+             */
             cn += xsnprintf (
                 col + cn, cap - (size_t)cn, "%04X%s",
                 (unsigned)((a->bytes[nop] << 8) | a->bytes[(long)nop + 1]),
@@ -3716,13 +3851,18 @@ static void lst_header (astate *a); /* forward */
 static int
 lst_wrap (astate *a, int col, int wrapw, int indent)
 {
+
   if (col >= wrapw)
-    { /*
+    {
+      int k;
+
+      if (DIALECT_PASM2 == a->dialect)
+        return col; /* 2.00G truncates at right margin; no re-indent wrap */
+      /*
        * end this physical line and start an indented continuation; the
        * originals paginate physical lines, so a continuation that lands on a
        * full page is preceded by a form-feed and heading (a mid-line break)
        */
-      int k;
 
       (void)fputc ('\n', a->lst);
       a->lst_line++;
@@ -3764,8 +3904,12 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
         if (si == qoff[k])
           {
             col = lst_wrap (a, col, wrapw, indent);
-            (void)fputc ('?', a->lst);
-            col++;
+
+            if (!(DIALECT_PASM2 == a->dialect && col >= wrapw))
+              {
+                (void)fputc ('?', a->lst);
+                col++;
+              }
           }
 
       if ('\t' == *s)
@@ -3794,8 +3938,14 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
                 break;
 
               first = 0;
-              (void)fputc (' ', a->lst);
-              col++;
+
+              if (!(DIALECT_PASM2 == a->dialect && col >= wrapw))
+                {
+                  (void)fputc (' ', a->lst);
+                  col++;
+                }
+              else
+                col++; /* still account for space positionally for tabs? */
             }
           while (0 != ((col - indent) % 8));
         }
@@ -3813,8 +3963,12 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
       else
         {
           col = lst_wrap (a, col, wrapw, indent);
-          (void)fputc (*s, a->lst);
-          col++;
+
+          if (!(DIALECT_PASM2 == a->dialect && col >= wrapw))
+            {
+              (void)fputc (*s, a->lst);
+              col++;
+            }
         }
     }
 
@@ -3822,8 +3976,12 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
     if (si == qoff[k])
       {
         col = lst_wrap (a, col, wrapw, indent);
-        (void)fputc ('?', a->lst);
-        col++;
+
+        if (!(DIALECT_PASM2 == a->dialect && col >= wrapw))
+          {
+            (void)fputc ('?', a->lst);
+            col++;
+          }
       }
 
   /*
@@ -3873,9 +4031,14 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
       int se = ((k == a->limg_ns) ? srclen : a->limg_split[k]);
       char bf[40];
       int bn = 0, i, col, indent;
-      /* TDL lays a multi-word .WORD line's value field over the first two
-       * source columns (each word in an 8-column slot); PSA shows one word per
-       * line, so it never reaches two words and never overstrikes. */
+
+      /*
+       * TDL lays a multi-word .WORD line's value field over
+       * the first two source columns (each word in an 8-column slot);
+       * PSA shows one word per line, so it never reaches two words
+       * and never overstrikes.
+       */
+
       int over = (word
                   && !(DIALECT_PASM == a->dialect
                        || DIALECT_PASM2 == a->dialect)
@@ -3932,6 +4095,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
            * continuation), so no `\' marker is emitted and the source starts
            * two columns in.
            */
+
           int p;
 
           (void)fprintf (a->lst, "   %04X%-4s%s", (unsigned)loc, lfl, bf);
@@ -3953,8 +4117,11 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
             }
         }
 
-      /* the source chunk, tabs expanded (relative to the normal indent); an
-       * overstrike drops its leading two columns */
+      /*
+       * the source chunk, tabs expanded (relative to the normal indent);
+       * an overstrike drops its leading two columns
+       */
+
       for (i = so + (over ? ((k > 0) ? 1 : 2) : 0); i < se; i++)
         {
           if ('\t' == rawline[i])
@@ -4037,6 +4204,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
    * still applies to a body line whose rendered text (e.g. the ']'-appended
    * body close) was supplied via mac_src.
    */
+
   if (a->mac_active && (a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST))
     { /*
        * the .SALL collapse applies only when body listing is ON.  Under .XLIST
@@ -4065,9 +4233,11 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   else if (NULL != a->mac_src) /* macro listing supplies the rendered source */
     rawline = a->mac_src;
   else if (a->mac_active)
-    { /* .XALL (default) drops the no-code lines, .LALL lists everything --
+    { /*
+       *  .XALL (default) drops the no-code lines, .LALL lists everything,
        * but an errored statement is ALWAYS listed (the originals never hide a
-       * diagnostic), e.g. a standalone `.GOTO' with an undefined label */
+       * diagnostic), e.g. a standalone `.GOTO' with an undefined label
+       */
       if (0 == a->nbytes && 0 == a->lst_nec && !(a->lst_ctl & LSTC_LALL))
         return;
     }
@@ -4077,6 +4247,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
    * line is committed to the listing, so a .TITLE/.SBTTL on the leading lines
    * is already captured in it
    */
+
   if (a->lst_pending)
     {
       lst_header (a);
@@ -4096,12 +4267,16 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   else if (a->ins_depth > 0)
     mark = '@';
 
-  /* .LIMAGE: a data statement whose image spilled past one line is rendered
-   * as a multi-line byte image with the source split across the lines */
+  /*
+   * .LIMAGE: a data statement whose image spilled past one line is rendered
+   * as a multi-line byte image with the source split across the lines
+   */
+
   if ((a->lst_ctl & LSTC_LIMAGE) && a->limg_ns > 0 && 0 == mark
       && (1 == a->lst_kind || 2 == a->lst_kind))
     {
       lst_limage (a, lc0, rawline);
+
       return;
     }
 
@@ -4145,6 +4320,9 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         scol = 11 + (clen > bw ? clen : bw);
       }
 
+    if (DIALECT_PASM2 == a->dialect)
+      src = skipws (src);
+
     /*
      * page full: form-feed + heading before this line's first
      * physical row (continuation rows paginate inside lst_source)
@@ -4156,6 +4334,26 @@ print_lst (astate *a, u16 lc0, const char *rawline)
         lst_header (a);
       }
 
+    if (DIALECT_PASM2 == a->dialect && !a->mdef_page)
+      {
+        a->lst_listed++;
+        (void)fprintf (a->lst, "%2d ", a->lst_listed);
+      }
+
+    if (DIALECT_PASM2 == a->dialect && loc < 0)
+      {
+        /*
+         * initial comment lines use a shorter left margin
+         * in pasm2.com listings; other loc<0 (incl. directives)
+         * use full ~32-col source start
+         */
+
+        const char *ts = skipws (rawline);
+        int nsp = (ts[0] == ';' ? 21 : 29);
+
+        (void)fprintf (a->lst, "%*s", nsp, "");
+      }
+
     {
       /*
        * the error-code letter(s) occupy column 1 (and 2) of the line,
@@ -4165,6 +4363,9 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       char lead[12];
       int lw = ((loc < 0) ? 11 : 3);
       int k;
+
+      if (DIALECT_PASM2 == a->dialect)
+        lw = 0; /* line# + force print above for blank p2 */
 
       /* k < 2 pins the lst_ec[] index for static analyzers (nec is <= 2) */
       for (k = 0; k < lw; k++)
@@ -4185,7 +4386,15 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       }
     else if (mark)
       { /* the marker occupies the final byte-field column */
-        if (loc < 0)
+        if (DIALECT_PASM2 == a->dialect)
+          {
+            if (loc < 0)
+              (void)fprintf (a->lst, "%-*s%c", bw - 1, col, mark);
+            else
+              (void)fprintf (a->lst, "  %04X%s %-*s%c", (unsigned)loc, lfl, 21,
+                             col, mark);
+          }
+        else if (loc < 0)
           (void)fprintf (a->lst, "%-*s%c", bw - 1, col, mark);
         else
           (void)fprintf (a->lst, "%04X%-4s%-*s%c", (unsigned)loc, lfl, bw - 1,
@@ -4194,7 +4403,28 @@ print_lst (astate *a, u16 lc0, const char *rawline)
     else
       {
         if (loc < 0) /* .END and other blank-LOC lines */
-          (void)fprintf (a->lst, "%-*s", bw, col);
+          {
+            if (DIALECT_PASM2 != a->dialect)
+              (void)fprintf (a->lst, "%-*s", bw, col);
+            /*
+             * for PASM2 loc<0 the print above already emitted the indent spaces
+             */
+          }
+        else if (a->lst_eflag > 0)
+          {
+            /* PASM2: value in loc column followed by = or == flag */
+            const char *ef = (a->lst_eflag >= 2 ? "==" : "=");
+
+            (void)fprintf (a->lst, "  %04X  %s ", (unsigned)loc, ef);
+            {
+              int i;
+
+              for (i = 0; i < 12; i++)
+                (void)fputc (' ', a->lst);
+            }
+          }
+        else if (DIALECT_PASM2 == a->dialect)
+          (void)fprintf (a->lst, "  %04X%s %-*s", (unsigned)loc, lfl, 21, col);
         else
           (void)fprintf (a->lst, "%04X%-4s%-*s", (unsigned)loc, lfl, bw, col);
       }
@@ -4205,19 +4435,29 @@ print_lst (astate *a, u16 lc0, const char *rawline)
                        : 72);
       int indent = 11 + bw;
       int rq[2];
-      int off = line_off (rawline, src);
+      int off;
       int i;
+
+      if (DIALECT_PASM2 == a->dialect)
+        {
+          scol = 32;
+          indent = 32;
+        }
 
       rq[0] = -1;
       rq[1] = -1;
+      off = line_off (rawline, src);
 
       for (i = 0; i < a->lst_nec; i++) /* `?' offsets vs the source field */
         {
           rq[i] = a->lst_qoff[i] - off;
 
-          /* a `?' that lands on a macro body close `]' steps past it so it
+          /*
+           * a `?' that lands on a macro body close `]' steps past it so it
            * sits at the END of the rendered line, as the originals place it
-           * (`STA PPLNCN]?', not `STA PPLNCN?]') */
+           * (`STA PPLNCN]?', not `STA PPLNCN?]')
+           */
+
           while (rq[i] >= 0 && ']' == src[rq[i]])
             rq[i]++;
         }
@@ -4308,12 +4548,17 @@ static void
 lst_header (astate *a)
 {
   a->lst_page++;
-  (void)fprintf (a->lst, "\n\n\n");
+  if (DIALECT_PASM2 == a->dialect)
+    (void)fprintf (a->lst, "\n\n");
+  else
+    (void)fprintf (a->lst, "\n\n\n");
 
   if (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
     {
-      /* PASM puts the error count in the page header (only when nonzero); the
-       * line replaces the blank line that otherwise follows "Page N" */
+      /*
+       * PASM puts the error count in the page header (only when nonzero); the
+       * line replaces the blank line that otherwise follows "Page N"
+       */
       const char *herald = (DIALECT_PASM2 == a->dialect)
                                ? "PSA Macro Assembler [C12011-0200G]"
                                : "PSA Macro Assembler [C12011-0102 ]";
@@ -4666,11 +4911,19 @@ lst_symtab (astate *a)
   char *segflag[3];
   symbol **all;
   int total, nuser = 0, navail, i, col, perline;
-  segflag[0] = ":03 X ";
-  segflag[1] = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
-                    ? "\"   X "
-                    : "*   X ");
-  segflag[2] = "'   X ";
+
+  if (DIALECT_PASM2 == a->dialect)
+    {
+      segflag[0] = "# X    ";
+      segflag[1] = "\" X    ";
+      segflag[2] = "' X    ";
+    }
+  else
+    {
+      segflag[0] = ":03 X ";
+      segflag[1] = ((DIALECT_PASM == a->dialect) ? "\"   X " : "*   X ");
+      segflag[2] = "'   X ";
+    }
   perline = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect) ? 4
                                                                          : 3);
   navail = sym_count (a->syms);
@@ -4687,7 +4940,10 @@ lst_symtab (astate *a)
         && NULL == strchr (all[i]->name, ':'))
       all[nuser++] = all[i];
 
-  qsort (all, (size_t)nuser, sizeof (symbol *), sym_name_cmp);
+  if (DIALECT_PASM2 == a->dialect)
+    qsort (all, (size_t)nuser, sizeof (symbol *), cmp_defseq);
+  else
+    qsort (all, (size_t)nuser, sizeof (symbol *), sym_name_cmp);
 
   /* an .XLINK core image has no link info: omit the segment-base rows */
   total = nuser + (a->obj_xlink ? 0 : 3);
@@ -4696,6 +4952,7 @@ lst_symtab (astate *a)
     { /* nothing to show: the originals emit no symbol-table page at all */
       /*LINTED E_CONSTANT_CONDITION*/
       FREE (all);
+
       return;
     }
 
@@ -4710,37 +4967,80 @@ lst_symtab (astate *a)
 
       if (i < nuser)
         {
-          static char ubuf[12];
-          const char *g = seg_flag ((int)all[i]->val.base, a->dialect);
           char tcls = (all[i]->entry
                            ? 'E'
                            : (all[i]->internal
                                   ? 'I'
                                   : (all[i]->external ? 'X' : ' ')));
           char ecls = (all[i]->mdef ? 'M' : (all[i]->udef ? 'U' : ' '));
-          int gl = 0;
           name = all[i]->name;
           val = all[i]->val.value;
 
-          /*
-           * the relocation-base flag (', ", *, or :NN) left-justified in four
-           * columns, then the symbol-type flag (E entry, I internal, X
-           * external) and the error flag (M multiply-defined, U undefined) --
-           * six columns total, matching the predefined-segment rows below
-           */
-          while (gl < 4 && '\0' != g[gl])
+          if (DIALECT_PASM2 == a->dialect)
             {
-              ubuf[gl] = g[gl];
-              gl++;
+              char f[8];
+
+              if (all[i]->external)
+                {
+                  /* p2 externals: val# X... attached # for BLNK; X is class */
+                  f[0] = '#';
+                  f[1] = ' ';
+                  f[2] = 'X';
+                  f[3] = (ecls != ' ' ? ecls : ' ');
+                  f[4] = ' ';
+                  f[5] = ' ';
+                  f[6] = ' ';
+                  f[7] = '\0';
+                }
+              else
+                {
+                  int fi = 0;
+                  f[fi++] = ' ';
+                  f[fi++] = ' ';
+
+                  if (tcls != ' ')
+                    f[fi++] = tcls;
+
+                  if (ecls != ' ')
+                    f[fi++] = ecls;
+
+                  while (fi < 7)
+                    f[fi++] = ' ';
+
+                  f[7] = '\0';
+                }
+
+              (void)fprintf (a->lst, "%-6s %04X%s", name, val & 0xFFFFu, f);
             }
+          else
+            {
+              static char ubuf[12];
+              const char *g = seg_flag ((int)all[i]->val.base, a->dialect);
+              int gl = 0;
 
-          while (gl < 4)
-            ubuf[gl++] = ' ';
+              /*
+               * the relocation-base flag (', ", *, or :NN) left-justified
+               * in four columns, then the symbol-type flag (E entry, I
+               * internal, X external) and the error flag (M multiply-defined,
+               * U undefined), so six columns total, matching the
+               * predefined-segment rows below
+               */
 
-          ubuf[gl++] = tcls;
-          ubuf[gl++] = ecls;
-          ubuf[gl] = '\0';
-          flag = ubuf;
+              while (gl < 4 && '\0' != g[gl])
+                {
+                  ubuf[gl] = g[gl];
+                  gl++;
+                }
+
+              while (gl < 4)
+                ubuf[gl++] = ' ';
+
+              ubuf[gl++] = tcls;
+              ubuf[gl++] = ecls;
+              ubuf[gl] = '\0';
+              flag = ubuf;
+              (void)fprintf (a->lst, "%-6s %04X%s", name, val & 0xFFFFu, flag);
+            }
         }
       else
         {
@@ -4758,9 +5058,8 @@ lst_symtab (astate *a)
             val = 0;
 
           flag = segflag[(long)i - nuser];
+          (void)fprintf (a->lst, "%-6s %04X%s", name, val & 0xFFFFu, flag);
         }
-
-      (void)fprintf (a->lst, "%-6s %04X%s", name, val & 0xFFFFu, flag);
 
       if ((col == perline - 1) || (i == total - 1))
         {
@@ -4776,7 +5075,9 @@ lst_symtab (astate *a)
         }
       else
         {
-          (void)fprintf (a->lst, "   ");
+          if (DIALECT_PASM2 != a->dialect)
+            (void)fprintf (a->lst, "   ");
+
           col++;
         }
     }
@@ -4987,6 +5288,7 @@ macro_capture (astate *a, const char *p)
           /*LINTED E_CONSTANT_CONDITION*/
           FREE (m);
           a->defining = NULL;
+
           return;
         }
 
@@ -5107,6 +5409,7 @@ do_define (astate *a, const char *operands)
                   else if (')' == *p && 0 == --dd)
                     {
                       p++;
+
                       break;
                     }
 
@@ -5119,9 +5422,12 @@ do_define (astate *a, const char *operands)
               dbuf[di] = '\0';
             }
 
-          /* Commit the param (and any default) only when it will be kept, so
+          /*
+           * Commit the param (and any default) only when it will be kept, so
            * an empty slot or a parameter past the 7-dummy cap does not leak a
-           * dupstr() that the next iteration would overwrite. */
+           * dupstr() that the next iteration would overwrite.
+           */
+
           if (pi > 0 && m->nparams < 7)
             {
               m->params[m->nparams] = dupstr (buf);
@@ -5192,6 +5498,7 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
               if (ci_eq (pk, m->params[k]))
                 {
                   isp = 1;
+
                   break;
                 }
             }
@@ -5199,6 +5506,7 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
           if (isp)
             {
               in++;
+
               continue;
             } /* paste: drop the apostrophe */
 
@@ -5229,6 +5537,7 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
               if (ci_eq (tok, m->params[j]))
                 {
                   pi = j;
+
                   break;
                 }
             }
@@ -5314,6 +5623,7 @@ mac_label (const char *line, char *name_out)
  * or -1.  .GOTO's search "begins at the start of the macro text", so a
  * duplicated label resolves to the first.
  */
+
 static int
 find_mac_label (const macrodef *m, const char *name)
 {
@@ -5337,8 +5647,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   char *args[8];
   int nargs = 0, i, j = 0;
   int outer = 0, start = 0;
-  int saved_mac = a->mac_active; /* restored on exit: a nested macro is also
-                                  * "outer" under .LALL (see below) */
+  int saved_mac = a->mac_active; /*
+                                  * restored on exit: a nested macro is also
+                                  * "outer" under .LALL (see below)
+                                  */
   int saved_argc;
   const macrodef *saved_cur; /* .GOTO context restored on exit (nesting) */
   const char *p = skipws (argstr);
@@ -5376,6 +5688,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
           const char *ep = p + 1;
           char num[16];
           const char *np;
+
           (void)eval1 (a, &ep, &vv);
           (void)xsnprintf (num, sizeof (num), "%u", (unsigned)vv.value);
 
@@ -5400,6 +5713,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
                   if (0 == depth)
                     {
                       p++;
+
                       break;
                     }
                 }
@@ -5443,6 +5757,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
            * Either way it is harmless to the byte stream (the expression
            * scanner skips it).
            */
+
           if (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
             while (j > s
                    && (' ' == argbuf[(long)j - 1]
@@ -5463,8 +5778,11 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         break;
     }
 
-  /* `&' = the macro's argument count: the larger of the declared dummy-param
-   * count and the number of arguments actually passed */
+  /*
+   * `&' = the macro's argument count: the larger of the declared
+   * dummy-param count and the number of arguments actually passed
+   */
+
   a->mac_argc = ((nargs > m->nparams) ? nargs : m->nparams);
 
   /*
@@ -5478,6 +5796,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
    * bound.  genctr resets each pass (init_pass), so both passes generate the
    * same labels in the same order.
    */
+
   {
     int k;
 
@@ -5558,10 +5877,12 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
             continue; /* macro label `name>': emits nothing, not listed */
 
           if (bi == m->nbody - 1)
-            { /* the body-close: an errored last statement that .SALL force-
+            { /*
+               * the body-close: an errored last statement that .SALL force-
                * lists must show the ']' on a '+' line (mac_src carries the
                * closed text; a non-errored line is still collapsed away in
-               * print_lst, where mac_plus is then irrelevant) */
+               * print_lst, where mac_plus is then irrelevant)
+               */
               char clb[600];
               (void)xsnprintf (clb, sizeof (clb), "%s]", lnb);
               a->mac_src = clb;
@@ -5676,8 +5997,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         }
 
       a->mac_src = src;
-      a->mac_plus = saved_mac; /* a NESTED call line (.LALL) carries '+'; the
-                                * top-level call line does not (saved_mac==0) */
+      a->mac_plus = saved_mac; /*
+                                * a NESTED call line (.LALL) carries '+'; the
+                                * top-level call line does not (saved_mac==0)
+                                */
       print_lst (a, lc0, callline);
       a->mac_src = NULL;
       a->mac_plus = 0;
@@ -5776,8 +6099,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
   a->macro_exit = 0; /* the .EXIT (if any) terminated only this expansion */
 
   if (outer)
-    a->mac_active = saved_mac; /* 0 for the top-level call; 1 keeps an enclosing
-                                * .LALL expansion active after a nested one */
+    a->mac_active = saved_mac; /*
+                                * 0 for the top-level call; 1 keeps an enclosing
+                                * .LALL expansion active after a nested one
+                                */
 }
 
 /******************************************************************************/
@@ -6164,6 +6489,7 @@ do_line (astate *a, const char *line)
   a->lst_loc = -2; /* default: show the statement LC */
   a->lst_lbase = -1; /* default: LC base from lc_reloc/base */
   a->lst_obase = 0;
+  a->lst_eflag = 0; /* only set for =/EQU under PASM2 */
   a->lst_ctlstmt = 0; /* set by the listing-control directives */
   a->lst_nec = 0;    /* per-line error codes (col 1) + their `?' offsets */
   a->limg_ns = 0;    /* per-line .LIMAGE source splits (set by do_data) */
@@ -6184,6 +6510,7 @@ do_line (astate *a, const char *line)
         }
 
       macro_capture (a, line);
+
       return;
     }
 
@@ -6212,8 +6539,10 @@ do_line (astate *a, const char *line)
       else if (NULL != a->pend_console)
         (void)fputc ('\n', stderr);
 
-      /* the originals list each continuation line of the prompt verbatim
-       * (blank LC), as the source it is */
+      /*
+       * the originals list each continuation line of the prompt verbatim
+       * (blank LC), as the source it is
+       */
       if (2 == a->pass)
         {
           a->lst_loc = -1;
@@ -6224,9 +6553,11 @@ do_line (astate *a, const char *line)
     }
 
   if (a->in_remark)
-    { /* consuming the body of a multi-line .REMARK string; list it verbatim,
+    { /*
+       * consuming the body of a multi-line .REMARK string; list it verbatim,
        * emit nothing, until the matching delimiter is reached.  A '[' ... ']'
-       * remark nests; any other delimiter closes on its first reappearance. */
+       * remark nests; any other delimiter closes on its first reappearance.
+       */
       const char *q;
 
       for (q = line; '\0' != *q; q++)
@@ -6240,6 +6571,7 @@ do_line (astate *a, const char *line)
               else
                 {
                   a->in_remark = 0;
+
                   break;
                 }
             }
@@ -6312,8 +6644,8 @@ do_line (astate *a, const char *line)
   bp = skipws (line);
 
   {
-    int dang = 0;    /* the last ']' was a dangling true-block close          */
-    int dang_wt = 0; /* its if_true (the else, if any, takes the inverse)     */
+    int dang = 0;    /* the last ']' was a dangling true-block close      */
+    int dang_wt = 0; /* its if_true (the else, if any, takes the inverse) */
 
     /*
      * A conditional whose true block closed on an earlier line (pend_else)
@@ -6321,6 +6653,7 @@ do_line (astate *a, const char *line)
      * `] ... [' else form, comment/blank lines allowed between).  Any other
      * non-comment line closes the window without an else.
      */
+
     if (a->pend_else)
       {
         if ('[' == *bp)
@@ -6460,9 +6793,11 @@ do_line (astate *a, const char *line)
 
   lex_line (bp, &L);
 
-  /* default `?' position: the operand field (after the op); eval1 advances
+  /*
+   * default `?' position: the operand field (after the op); eval1 advances
    * it as it consumes the expression, so an operand error marks where it
-   * stopped */
+   * stopped
+   */
   a->ppos = line_off (line, L.operands);
 
   op[0] = '\0';
@@ -6534,10 +6869,14 @@ do_line (astate *a, const char *line)
            * so point it just past the label name.
            */
           a->ppos = line_off (line, bp) + (int)strlen (L.label);
+
           aerr (a, line, "multiply-defined symbol");
+
           s->mdef = 1; /* flagged `M' in the symbol table */
-          a->cur_mdef = 1; /* operand forward refs render undefined on the
-                            * report page (the originals' pass-1 view) */
+          a->cur_mdef = 1; /*
+                            * operand forward refs render undefined on the
+                            * report page (the originals' pass-1 view)
+                            */
         }
     }
 
@@ -6604,6 +6943,7 @@ do_line (astate *a, const char *line)
                 if ('[' == *t2)
                   {
                     bk = t2;
+
                     break;
                   }
               }
@@ -7025,10 +7365,14 @@ do_line (astate *a, const char *line)
               console_read (a, s);
             }
 
-          /* like any `=' assignment, the line lists the value (the answer
-           * read, or in pass 2 the value cached from pass 1), not the LC */
+          /*
+           * like any `=' assignment, the line lists the value (the answer
+           * read, or in pass 2 the value cached from pass 1), not the LC
+           */
+
           a->lst_loc = (long)s->val.value;
           a->lst_lbase = (0 != s->val.reloc ? s->val.base : 0);
+          a->lst_eflag = (DIALECT_PASM2 == a->dialect ? 1 : 0);
 
           if (2 == a->pass)
             print_lst (a, lc0, line);
@@ -7043,13 +7387,16 @@ do_line (astate *a, const char *line)
         if (eval1 (a, &qq, &v))
           {
             aerr (a, line, "bad assignment");
+
             return;
           }
 
         {
-          /* a `..local' assignment is scope-local, like a `..local:' label --
+          /*
+           * a `..local' assignment is scope-local, like a `..local:' label --
            * scope-qualify the name so an expression reference (which qualifies
-           * the same way) resolves it within the scope */
+           * the same way) resolves it within the scope
+           */
           const char *dn = L.label;
           char qn[NAMEBUF + 16];
           symbol *s;
@@ -7078,6 +7425,9 @@ do_line (astate *a, const char *line)
 
         a->lst_loc = (long)v.value;     /* listing: '=' shows the value */
         a->lst_lbase = (0 != v.reloc ? v.base : 0); /* the value's base flag */
+
+        if (DIALECT_PASM2 == a->dialect)
+          a->lst_eflag = (0 == strcmp (L.op, "EQU") ? 2 : 1);
       }
 
       if (2 == a->pass)
@@ -7114,11 +7464,15 @@ do_line (astate *a, const char *line)
            * operand `Q' (questionable), so the line carries two codes (`FQ')
            * and two `?' markers (`??') over the file-name field.
            */
+
           a->ppos = line_off (line, L.operands);
+
           aerr (a, line, "nested .INSERT"); /* F */
+
           aerr (a, line, "extra operand");  /* Q (same column -> `??') */
 
-          if (2 == a->pass || a->mdef_page) /* body, or leading report page */
+          /* body, or leading report page */
+          if (2 == a->pass || (a->mdef_page && DIALECT_PASM2 != a->dialect))
             {
               a->lst_loc = -1;
               print_lst (a, lc0, line);
@@ -7139,6 +7493,7 @@ do_line (astate *a, const char *line)
       a->ins_depth++;
       do_insert (a, L.operands);
       a->ins_depth--;
+
       return;
     }
   else if (opeq (op, ".OPSYN", ".SYN") || opeq (op, ".SYSYN", ".MASYN"))
@@ -7171,13 +7526,16 @@ do_line (astate *a, const char *line)
   else if (opeq (op, ".ERROR", NULL))
     { /* force a user assembly error; the line text carries the message */
       aerr (a, line, "user .ERROR");
+
       a->lst_loc = -1;
     }
   else if (opeq (op, ".EXTERN", ".EXTRN") || opeq (op, "EXTRN", NULL)
            || (DIALECT_PASM2 == a->dialect && a->epop_mode
                && opeq (op, "EXTERN", "EXT")))
-    { /* declare external symbols; each gets a sequential base number (>=4).
-       * PASM2 .EPOP adds the Intel `EXTERN'/`EXT' spellings (== .EXTERN). */
+    { /*
+       * declare external symbols; each gets a sequential base number (>=4).
+       * PASM2 .EPOP adds the Intel `EXTERN'/`EXT' spellings (== .EXTERN).
+       */
       const char *q = L.operands;
 
       for (;;)
@@ -7213,10 +7571,12 @@ do_line (astate *a, const char *line)
   else if (opeq (op, ".ENTRY", NULL) || opeq (op, ".INTERN", NULL)
            || (DIALECT_PASM2 == a->dialect && a->epop_mode
                && opeq (op, "ENTRY", "GLOBAL")))
-    { /* mark internal symbols (.ENTRY symbols are also entry points).  PASM2
+    { /*
+       * mark internal symbols (.ENTRY symbols are also entry points).  PASM2
        * .EPOP adds the Intel `ENTRY'/`GLOBAL' spellings (== .ENTRY: a public
        * symbol defined here, visible to other modules).  `PUBLIC'/`COMMON'
-       * stay no-ops (is_noop_dir), unchanged from the 1.02/2.21 leniency. */
+       * stay no-ops (is_noop_dir), unchanged from the 1.02/2.21 leniency.
+       */
       int is_entry = (opeq (op, ".ENTRY", NULL)
                       || (DIALECT_PASM2 == a->dialect && a->epop_mode
                           && opeq (op, "ENTRY", "GLOBAL")));
@@ -7282,10 +7642,12 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".REMARK", NULL))
-    { /* a remark listed in the source body; emits no bytes.  Its argument is
+    { /*
+       * a remark listed in the source body; emits no bytes.  Its argument is
        * a generic string value (a delimiter then text up to the matching
        * delimiter) that may run for any number of lines -- when it does not
-       * close on this line, consume the body verbatim until it does. */
+       * close on this line, consume the body verbatim until it does.
+       */
       const char *q = skipws (L.operands);
 
       if ('\0' != *q)
@@ -7342,12 +7704,15 @@ do_line (astate *a, const char *line)
       if (NULL == a->cur_macro)
         { /* not inside a macro: pasm.com flags two `Q' at the operand */
           a->ppos = line_off (line, os);
+
           aerr (a, line, "extra operand");
+
           aerr (a, line, "extra operand");
         }
       else if ('\0' == nm[0])
         { /* no label operand */
           a->ppos = line_off (line, os);
+
           aerr (a, line, "extra operand");
         }
       else
@@ -7358,7 +7723,9 @@ do_line (astate *a, const char *line)
             { /* undefined macro label: `U', `?' just past the name */
               a->ppos = line_off (line, oe);
               a->eval_undef = 1;
+
               aerr (a, line, "undefined macro label");
+
               a->eval_undef = 0;
             }
           else
@@ -7423,8 +7790,10 @@ do_line (astate *a, const char *line)
             }
 
           a->lc = v.value;
-          a->loc_break = 1; /* the originals start a fresh object record at
-                             * every .LOC, even one that lands contiguously */
+          a->loc_break = 1; /*
+                             * the originals start a fresh object record at
+                             * every .LOC, even one that lands contiguously
+                             */
 
           if (0 != v.reloc && v.base >= 1 && v.base <= 3)
             { /* switch to the named segment, resuming its high-water */
@@ -7447,8 +7816,10 @@ do_line (astate *a, const char *line)
       a->lst_loc = (long)a->lc; /* listing shows the LC after ORG */
     }
   else if (opeq (op, ".RELOC", NULL))
-    { /* restore the (lc, base, mode) before the immediately preceding .LOC;
-       * an empty stack is equivalent to .LOC 0 of .PROG. */
+    { /*
+       * restore the (lc, base, mode) before the immediately preceding
+       * .LOC; an empty stack is equivalent to .LOC 0 of .PROG.
+       */
       if (a->loc_sp > 0)
         {
           a->loc_sp--;
@@ -7476,6 +7847,7 @@ do_line (astate *a, const char *line)
       if (eval1 (a, &p, &v))
         {
           aerr (a, line, "bad .RADIX");
+
           a->radix = saved;
         }
       else if (2 == v.value || 8 == v.value || 10 == v.value || 16 == v.value)
@@ -7483,6 +7855,7 @@ do_line (astate *a, const char *line)
       else
         {
           aerr (a, line, "bad radix");
+
           a->radix = saved;
         }
 
@@ -7490,10 +7863,12 @@ do_line (astate *a, const char *line)
     }
   else if (opeq (op, ".PABS", NULL))
     {
-      /* .PABS selects absolute OBJECT output but does NOT itself make the
+      /*
+       * .PABS selects absolute OBJECT output but does NOT itself make the
        * location counter absolute: the LC stays relocatable (.PROG.) until a
        * `.LOC <abs>' sets an absolute origin, exactly as the originals do (so a
-       * `.RELOC' before any `.LOC' lists `0000'', not `0000'). */
+       * `.RELOC' before any `.LOC' lists `0000'', not `0000').
+       */
       a->obj_abs = 1; /* absolute object output (Intel-hex `:' records) */
       a->lst_loc = -1; /* output-mode directive: blank LC in the listing */
     }
@@ -7504,8 +7879,10 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1; /* output-mode directive: blank LC in the listing */
     }
   else if (opeq (op, ".LINK", NULL))
-    { /* emit the full link records (the default); an output directive that
-       * lists with a blank LC (not a listing-control statement) */
+    { /*
+       * emit the full link records (the default); an output directive
+       * that lists with a blank LC (not a listing-control statement)
+       */
       a->obj_xlink = 0;
       a->lst_loc = -1;
     }
@@ -7515,9 +7892,11 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".I8080", NULL))
-    { /* restrict to the 8080 set: a Z80 instruction now raises a `Z' warning;
-       * also leave PASM2 .ZOP Zilog mode (the manual: .I8080 switches back to
-       * the 8080/TDL mnemonic set) */
+    { /*
+       * restrict to the 8080 set: a Z80 instruction now raises a `Z'
+       * warning; also leave PASM2 .ZOP Zilog mode (the manual: .I8080
+       * switches back to the 8080/TDL mnemonic set)
+       */
       a->i8080_mode = 1;
       a->zop_mode = 0;
       a->lst_loc = -1;
@@ -7530,28 +7909,40 @@ do_line (astate *a, const char *line)
   else if (DIALECT_PASM2 == a->dialect && opeq (op, ".ZOP", NULL))
     { /* PASM2: switch the active mnemonic set to the standard Zilog Z80 set */
       a->zop_mode = 1;
-      a->lst_loc = -1;
+
+      if (2 == a->pass)
+        return; /* 2.00G suppresses .ZOP/.IOP from the listing */
     }
   else if (DIALECT_PASM2 == a->dialect && opeq (op, ".IOP", NULL))
     { /* PASM2: switch back to the 8080/TDL mnemonic set (the default) */
       a->zop_mode = 0;
-      a->lst_loc = -1;
+
+      if (2 == a->pass)
+        return;
     }
   else if (DIALECT_PASM2 == a->dialect && opeq (op, ".EPOP", NULL))
-    { /* PASM2: enable the Intel/M80 pseudo-op spellings (DB/DW/DS/ORG/END/
-       * ASEG/CSEG/DSEG/...) on top of the TDL dotted forms */
+    { /*
+       * PASM2: enable the Intel/M80 pseudo-op spellings (DB/DW/DS/ORG/END/
+       * ASEG/CSEG/DSEG/...) on top of the TDL dotted forms
+       */
       a->epop_mode = 1;
-      a->lst_loc = -1;
+
+      if (2 == a->pass)
+        return; /* suppress mode directive from body listing under 2.00G */
     }
   else if (DIALECT_PASM2 == a->dialect && opeq (op, ".XEPOP", NULL))
     { /* PASM2: disable the Intel/M80 pseudo-op spellings (the default) */
       a->epop_mode = 0;
-      a->lst_loc = -1;
+
+      if (2 == a->pass)
+        return;
     }
   else if (DIALECT_PASM2 == a->dialect && a->epop_mode
            && opeq (op, "ASEG", NULL))
-    { /* Intel absolute segment: assemble at an absolute (non-relocatable) LC,
-       * absolute object output -- like .PABS followed by an absolute origin */
+    { /*
+       * Intel absolute segment: assemble at an absolute (non-relocatable)
+       * LC, absolute object output like .PABS followed by an absolute origin
+       */
       a->obj_abs = 1;
       a->lc_reloc = 0;
       a->lst_loc = -1;
@@ -7607,9 +7998,11 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".PSYM", NULL))
-    { /* punch the global symbol table into the OBJECT (the `&' record), for
-       * the PSA BUG debugger -- an output directive (lists with a blank LC),
-       * distinct from the .LSYM listing control */
+    { /*
+       * punch the global symbol table into the OBJECT (the `&' record),
+       * for the PSA BUG debugger -- an output directive (lists with a
+       * blank LC), distinct from the .LSYM listing control
+       */
       a->obj_psym = 1;
       a->lst_loc = -1;
     }
@@ -7723,19 +8116,26 @@ do_line (astate *a, const char *line)
   else if (opeq (op, ".TITLE", NULL)
            || (DIALECT_PASM2 == a->dialect && a->epop_mode
                && opeq (op, "TITLE", NULL)))
-    { /* capture the page title -- heading line A, after "modname - ".  Done in
-       * both passes so pass 2's page-1 heading already has whatever was set
-       * before the first listed line.  The directive does not self-list.  The
-       * Intel `TITLE' spelling (PASM2 .EPOP) is the same as `.TITLE'. */
+    { /*
+       * capture the page title -- heading line A, after "modname - ".
+       * Done in both passes so pass 2's page-1 heading already has
+       * whatever was set before the first listed line.  The directive
+       * does not self-list.  The Intel `TITLE' spelling (PASM2 .EPOP)
+       * is the same as `.TITLE'.
+       */
       capture_svalue (a, L.operands, a->title, sizeof (a->title));
-      return; /* suppressed from the body listing */
+
+      return; /* suppressed from the body listing (affects only header) */
     }
   else if (opeq (op, ".SBTTL", ".SUBTTL")
            || (DIALECT_PASM2 == a->dialect && a->epop_mode
                && opeq (op, "SUBTTL", NULL)))
-    { /* capture the page subtitle -- heading line B, on its own; same rules.
-       * The Intel `SUBTTL' spelling (PASM2 .EPOP) is the same as `.SBTTL'. */
+    { /*
+       * capture the page subtitle -- heading line B, on its own; same rules.
+       * The Intel `SUBTTL' spelling (PASM2 .EPOP) is the same as `.SBTTL'.
+       */
       capture_svalue (a, L.operands, a->subtitle, sizeof (a->subtitle));
+
       return; /* suppressed from the body listing */
     }
   else if (opeq (op, ".PAGE", NULL)
@@ -7766,10 +8166,13 @@ do_line (astate *a, const char *line)
                   value_t v;
                   const char *q = skipws (cm + 1);
 
-                  /* the operand is the TOTAL page length; the form-feed fires
+                  /*
+                   * The operand is the TOTAL page length; the form-feed fires
                    * after that many lines less the 3-line bottom margin -- the
                    * same convention as the default LST_PAGE (a 66-line page
-                   * less 3).  Require it to exceed the margin. */
+                   * less 3).  Require it to exceed the margin.
+                   */
+
                   if (!eval1 (a, &q, &v) && 0 == v.reloc && NULL == v.ext
                       && v.value > 3)
                     a->lst_pagelen = (int)v.value - 3;
@@ -7779,9 +8182,15 @@ do_line (astate *a, const char *line)
             }
 
           a->ppos = line_off (line, pg);
+
           aerr (a, line, "extra operand"); /* `Q': questionable operand */
-          /* a labeled `.PAGE <arg>' shows the label's address (= lc0), like any
-           * labeled line; an unlabeled one lists with a blank LOC column */
+
+          /*
+           * a labeled `.PAGE <arg>' shows the label's address (= lc0),
+           * like any labeled line; an unlabeled one lists with
+           * a blank LOC column
+           */
+
           a->lst_loc = (('\0' != L.label[0]) ? (long)lc0 : -1);
           a->lst_lbase = -1;
 
@@ -7802,6 +8211,7 @@ do_line (astate *a, const char *line)
        * .SBTTL between this .PAGE and that line shows in the new heading (the
        * originals emit the heading lazily, not at the eject).
        */
+
       if (2 == a->pass)
         {
           /*
@@ -7811,6 +8221,7 @@ do_line (astate *a, const char *line)
            * (otherwise empty) transient page -- and only THEN ejects again.
            * PASM does not insert that page, so this is ZASM-only.
            */
+
           if (!(DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
               && a->lst_line >= a->lst_pagelen)
             {
@@ -7848,8 +8259,13 @@ do_line (astate *a, const char *line)
             {
               a->obj_start = v.value;
               a->obj_start_rel = (0 != v.reloc);
-              /* the originals list `.END expr' with the start value in the LOC
-               * column (with its relocation flag), like an `=' assignment */
+
+              /*
+               * the originals list `.END expr' with the start value
+               * in the LOC column (with its relocation flag), like
+               * a `=' assignment
+               */
+
               a->lst_loc = (long)v.value;
               a->lst_lbase = (0 != v.reloc ? v.base : 0);
             }
@@ -7906,9 +8322,11 @@ do_line (astate *a, const char *line)
                         : encode_insn (a, line, op, L.operands)))
         {
           if (is_noop_dir (op))
-            a->lst_loc = -1; /* a listing/output no-op directive (e.g. .PRNTX)
+            a->lst_loc = -1; /*
+                              * a listing/output no-op directive (e.g. .PRNTX)
                               * emits nothing: blank its LOC column, as the
-                              * originals do, instead of showing the live LC */
+                              * originals do, instead of showing the live LC
+                              */
           else
             { /*
                * unknown operator (Operation error): the originals flag 'O' and
@@ -7917,16 +8335,32 @@ do_line (astate *a, const char *line)
                * feeds the PASM page header.
                */
               aerr (a, line, "unknown operator");
+
               emit (a, 0);
               emit (a, 0);
               emit (a, 0);
               emit (a, 0);
             }
         }
+      else if (a->zop_mode && 0 == a->lst_opw && a->nbytes >= 2)
+        {
+          /* Zilog path did not set lst_opw; infer for listing value form */
+          a->lst_opw = (a->nbytes >= 3 ? 2 : 1);
+        }
     }
 
-  if (2 == a->pass || a->mdef_page)
-    print_lst (a, lc0, line);
+  if (2 == a->pass || (a->mdef_page && DIALECT_PASM2 != a->dialect))
+    {
+      if (DIALECT_PASM2 == a->dialect && a->lst_listed > 0 && a->lst_loc < 0 &&
+          a->nbytes == 0 && /*LINTED E_NOP_IF_STMT*/
+          a->lst_eflag == 0);
+          /*
+           * p2 after first active:
+           * only list lines with LC/bytes/=/mark or label/op content
+           */
+      else
+        print_lst (a, lc0, line);
+    }
 }
 
 /******************************************************************************/
@@ -7943,6 +8377,7 @@ process_file (astate *a, const char *path)
     {
       (void)fprintf (stderr, "cannot open '%s'\n", path);
       a->errors++;
+
       return;
     }
 
@@ -7951,9 +8386,8 @@ process_file (astate *a, const char *path)
       size_t n = strlen (buf);
 
       while (n > 0 && ('\n' == buf[n - 1] || '\r' == buf[n - 1]))
-        {
-          buf[--n] = '\0';
-        }
+        buf[--n] = '\0';
+
       do_line (a, buf);
     }
 
@@ -8056,6 +8490,7 @@ process_module (astate *a, const char *path, int modidx)
     {
       (void)fprintf (stderr, "cannot open '%s'\n", path);
       a->errors++;
+
       return;
     }
 
@@ -8104,9 +8539,13 @@ init_pass (astate *a, int pass)
   a->progid[0] = '\0';
   a->progid_ver = 0;
   a->progid_rev = 0;
-  /* clear the page heading: a page header emitted before the source reaches
+
+  /*
+   * clear the page heading: a page header emitted before the source reaches
    * its .TITLE/.SBTTL (e.g. page 1, whose header precedes the first listed
-   * line) shows it blank, exactly as the originals do */
+   * line) shows it blank, exactly as the originals do
+   */
+
   a->title[0] = '\0';
   a->subtitle[0] = '\0';
   a->seg_hw[0] = a->seg_hw[1] = a->seg_hw[2] = a->seg_hw[3] = 0;
@@ -8150,7 +8589,7 @@ init_pass (astate *a, int pass)
   a->next_defseq = 1;
   a->ntemps = 0; /* no .TEMPS local array allocated yet */
   a->mac_argc = 0;
-  a->i8080_mode = 0; /* default .Z80: Z80 extensions allowed without warning */
+  a->i8080_mode = 0; /* default .Z80: Z80 extensions allowed without warning  */
   a->zop_mode = 0;   /* default .IOP: 8080/TDL mnemonics (PASM2 .ZOP enables) */
   a->epop_mode = 0;  /* default .XEPOP: Intel pseudo-ops off (PASM2 .EPOP on) */
   a->idx_pfx = 0;
@@ -8216,9 +8655,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   base = ((NULL != base) ? base + 1 : path);
 
   if (NULL == strchr (base, '.') && strlen (path) + 4 < sizeof (srcpath))
-    {
-      (void)xsnprintf (srcpath, sizeof (srcpath), "%s.asm", path);
-    }
+    (void)xsnprintf (srcpath, sizeof (srcpath), "%s.asm", path);
   else
     {
       (void)strncpy (srcpath, path, sizeof (srcpath) - 1);
@@ -8230,6 +8667,8 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.long_symbols = long_symbols;
   a.lst_page = 0;
   a.lst_line = 0;
+  a.lst_listed = 0;
+  a.lst_eflag = 0;
   a.lst_pagelen = LST_PAGE; /* PASM `.PAGE w,L' overrides this */
 
   /*
@@ -8262,6 +8701,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         (void)fclose (lf);
 
       sym_free (a.syms);
+
       return 1;
     }
 
@@ -8482,19 +8922,23 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             os.span_n = a.span_n;
             os.span_seg = a.span_seg;
             os.nspans = a.nspans;
+
             /*
              * .PROG. size = the LC high-water (segment span incl. any trailing
              * reservation).  An explicit .LOC/ORG pins the code absolutely, so
              * the segment then reports size 0, matching the originals.
              */
+
             os.prog_size = (a.obj_org_used ? 0u : a.seg_hw[1]);
             os.data_size = a.seg_hw[2];
             os.blnk_size = a.seg_hw[3];
             os.abs_mode = a.obj_abs;
+
             /*
              * data-record base: .PROG.-relative (1) unless an explicit origin
              * pinned the code absolutely (0)
              */
+
             os.data_base = (a.obj_org_used ? 0 : 1);
             os.start = a.obj_start;
             os.start_reloc = a.obj_start_rel;
@@ -8532,12 +8976,16 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
          * (.XSYM/.XPSYM suppress it); for a single-module file this is the
          * one closing table, unchanged from before
          */
+
         if (a.lst_ctl & LSTC_SYM)
           lst_symtab (&a);
       }
 
-    /* relf/hexf are non-NULL only when relpath/hexpath are; check the paths
-     * explicitly anyway so the error message's deref is provably guarded */
+    /*
+     * relf/hexf are non-NULL only when relpath/hexpath are; check the paths
+     * explicitly anyway so the error message's deref is provably guarded
+     */
+
     if (NULL != relpath && NULL != relf && 0 != obj_close (relf))
       (void)fprintf (stderr, "cannot write '%s'\n", relpath);
 
@@ -8551,6 +8999,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
    * count in every page header).  With no errors, keep the clone's own
    * "%d error(s)" line (the project listing-compare strips it).
    */
+
   if (a.errors <= 0)
     (void)fprintf (a.lst, "\n%d error(s)\n", a.errors);
   else if (DIALECT_PASM == dialect || DIALECT_PASM2 == dialect)
@@ -8558,7 +9007,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   else
     (void)fprintf (a.lst, "%d ERRORS WERE DETECTED *****\n", a.errors);
 
-  /* with -l to a real file, also report the count on the console */
+  /* with -l to a real file, also
+   * report the count on the console
+   */
+
   if (NULL != lf)
     {
       if (a.errors > 0)
@@ -8574,6 +9026,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
    * above; the in-memory image holds the last module assembled (for the common
    * single-module file, that is the whole program).
    */
+
   if (NULL != a.image)
     {
       if (a.img_any && NULL != outpath)

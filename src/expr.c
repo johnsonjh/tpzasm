@@ -135,6 +135,7 @@ scan_number (ectx *e)
         case 'h':
           radix = 16;
           ndig = n - 1;
+
           break;
 
         case 'B':
@@ -144,6 +145,7 @@ scan_number (ectx *e)
               radix = 2;
               ndig = n - 1;
             }
+
           break;
 
         case 'O':
@@ -152,6 +154,7 @@ scan_number (ectx *e)
         case 'q':
           radix = 8;
           ndig = n - 1;
+
           break;
 
         case 'D':
@@ -161,6 +164,7 @@ scan_number (ectx *e)
               radix = 10;
               ndig = n - 1;
             }
+
           break;
 
         default:
@@ -192,6 +196,7 @@ scan_number (ectx *e)
           if (d < 0 || d >= radix)
             {
               ok = 0;
+
               break;
             }
         }
@@ -226,9 +231,11 @@ scan_number (ectx *e)
 
 static int
 idstart (int c)
-{ /* symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it
-     -- '_' flags a macro subscript reference, '@' is the remainder operator.
-     '$' is an ordinary symbol char (not the location counter, which is '.') */
+{ /*
+   * symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it
+   * -- '_' flags a macro subscript reference, '@' is the remainder operator.
+   * '$' is an ordinary symbol char (not the location counter, which is '.')
+   */
   return isalpha (c) || '$' == c || '.' == c || '%' == c;
 }
 
@@ -344,6 +351,7 @@ ev_primary (ectx *e)
               if (d < 0 || d >= rdx)
                 {
                   efail (e, "bad digit for radix");
+
                   break;
                 }
 
@@ -727,18 +735,22 @@ v_absop (ectx *e, value_t a, value_t b, int op)
         }
 
       v = (u16)(x % y);
+
       break;
 
     case '&':
       v = (u16)(x & y);
+
       break;
 
     case '!':
       v = (u16)(x | y);
+
       break;
 
     case '^':
       v = (u16)(x ^ y);
+
       break;
 
     case '<':
@@ -757,9 +769,7 @@ v_absop (ectx *e, value_t a, value_t b, int op)
         u16 n = (0 != (y & 0x8000u)) ? (u16)(0u - (unsigned)y) : y;
 
         if (0 != (y & 0x8000u))
-          {
-            left = !left;                /* negative count reverses dir */
-          }
+          left = !left; /* negative count reverses dir */
 
         if (n >= 16)
           v = 0;
@@ -768,6 +778,7 @@ v_absop (ectx *e, value_t a, value_t b, int op)
         else
           v = (u16)(x >> n);
       }
+
       break;
 
     default:
@@ -950,8 +961,11 @@ v_addsub (ectx *e, value_t a, value_t b, int sub)
   if ((a.ext && 0 != b.reloc) || (b.ext && 0 != a.reloc))
     efail (e, "external with relocatable");
 
-  /* two relocatable operands must share a base; the only legal mixed-base
-   * combination is one that cancels (same base, opposite coefficients). */
+  /*
+   * two relocatable operands must share a base; the only legal mixed-base
+   * combination is one that cancels (same base, opposite coefficients).
+   */
+
   if (0 != a.reloc && 0 != b.reloc && a.base != b.base)
     efail (e, "different relocation bases");
 

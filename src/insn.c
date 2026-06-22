@@ -293,11 +293,13 @@ insn_value (const insn *in)
     case FMT_ED0:
     case FMT_EDDST:
       pfx = 0xED;
+
       break;
 
     case FMT_CBR:
     case FMT_CBB:
       pfx = 0xCB;
+
       break;
 
     case FMT_IXP:
@@ -305,6 +307,7 @@ insn_value (const insn *in)
     case FMT_IXADDR:
       /* index prefix from the mnemonic's register letter: X -> DD, Y -> FD */
       pfx = (NULL != strchr (in->name, 'Y') ? 0xFD : 0xDD);
+
       break;
 
     default:

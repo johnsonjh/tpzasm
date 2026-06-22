@@ -103,11 +103,11 @@ typedef struct symbol
   unsigned entry : 1;     /* .ENTRY: also an entry point (`@' record)       */
   unsigned mdef : 1;      /* multiply-defined (listing `M' class flag)      */
   unsigned udef : 1;      /* referenced but undefined (listing `U' flag)    */
-  unsigned seen : 3;      /* pass # in which last defined as a label: holds
-                           * 1, 2, 3 (count-only) and 4 (mdef report page),
-                           * so it needs 3 bits, 2 would truncate pass 4 to
-                           * 0 and break multiply-defined detection on that
-                           * pass (a spurious phase error, lost `M' line)   */
+  unsigned seen : 3;      /* pass # in which last defined as a label: holds */
+                          /* 1, 2, 3 (count-only) and 4 (mdef report page), */
+                          /* so it needs 3 bits, 2 would truncate pass 4 to */
+                          /* 0 and break multiply-defined detection on that */
+                          /* pass (a spurious phase error, lost `M' line)   */
   unsigned short decl;    /* .INTERN/.ENTRY declaration order (for records) */
   unsigned short defseq;  /* definition order (for & .PSYM record), 0=unset */
   struct symbol *next;
@@ -149,26 +149,26 @@ int xsnprintf (char *dst, size_t cap, const char *fmt, ...);
 
 typedef struct
 {
-  int radix;          /* current numeric radix (2/8/10/16) */
-  symtab *syms;       /* symbols for lookups (NULL => none) */
-  u16 lc;             /* location counter (for '.') */
-  int lc_reloc;       /* relocation coeff of '.' */
-  int lc_base;        /* relocation base of '.' (active segment) */
-  const u16 *seg_hw;  /* per-base high-water [1..3], or NULL */
-  int undef0;         /* if set, undefined symbols evaluate to 0 */
-  int fwd_pass;       /* leading multiply-defined report page (mdef_page): the
-                       * pass a symbol's `seen' must match to count as defined.
-                       * A symbol defined only in an earlier pass (seen !=
-                       * fwd_pass -- not yet reached in this walk) is a FORWARD
-                       * reference, rendered undefined as the originals' pass-1
-                       * view does.  0 = off */
-  unsigned scope;     /* local-symbol scope ('..' labels) */
+  int radix;          /* current numeric radix (2/8/10/16)                    */
+  symtab *syms;       /* symbols for lookups (NULL => none)                   */
+  u16 lc;             /* location counter (for '.')                           */
+  int lc_reloc;       /* relocation coeff of '.'                              */
+  int lc_base;        /* relocation base of '.' (active segment)              */
+  const u16 *seg_hw;  /* per-base high-water [1..3], or NULL                  */
+  int undef0;         /* if set, undefined symbols evaluate to 0              */
+  int fwd_pass;       /* leading multiply-defined report page mdef_page: the  */
+                      /* pass a symbols seen must match to count as defined.  */
+                      /* A symbol defined only in an earlier pass (seen !=    */
+                      /* fwd_pass, not yet reached in this walk is a FORWARD  */
+                      /* reference rendered undefined as the originals pass-1 */
+                      /* view does.  0 = off                                  */
+  unsigned scope;     /* local-symbol scope ('..' labels)                     */
   int *ext_next;      /* &next external base# for the SYM# modifier (or NULL) */
-  int *ext_decl;      /* &next declaration sequence for SYM# (or NULL) */
-  value_t *temps;     /* .TEMPS local array for `![sub]' (or NULL) */
-  int ntemps;         /* number of allocated .TEMPS elements */
-  int tmp_ok;         /* 1 if `![sub]'/`&' are legal here (PASM, in a macro) */
-  int mac_argc;       /* `&': arg count of the current macro invocation */
+  int *ext_decl;      /* &next declaration sequence for SYM# (or NULL)        */
+  value_t *temps;     /* .TEMPS local array for `![sub]' (or NULL)            */
+  int ntemps;         /* number of allocated .TEMPS elements                  */
+  int tmp_ok;         /* 1 if `![sub]'/`&' are legal here (PASM, in a macro)  */
+  int mac_argc;       /* `&': arg count of the current macro invocation       */
 } eval_env;
 
 /******************************************************************************/
@@ -200,10 +200,10 @@ int expr_eval2 (const char *s, const eval_env *env, value_t *out,
 
 typedef struct
 {
-  char label[NAMEBUF];  /* label/symbol to define, or "" */
-  char op[NAMEBUF];     /* mnemonic / pseudo-op, or "" */
-  const char *operands; /* operand text (into the line), or " " */
-  int assign;           /* 1: `label` = operands (= / EQU) */
+  char label[NAMEBUF];  /* label/symbol to define, or ""                  */
+  char op[NAMEBUF];     /* mnemonic / pseudo-op, or ""                    */
+  const char *operands; /* operand text (into the line), or " "           */
+  int assign;           /* 1: `label` = operands (= / EQU)                */
   int internal;         /* 1: defined with a ::/=:/==: internal delimiter */
 } line_t;
 

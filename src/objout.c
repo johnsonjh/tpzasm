@@ -555,10 +555,12 @@ obj_module (FILE *f, const objspec *s)
             int used;
 
             if (s->abs_mode)
-              /* the ':' base/segment byte is per-span: bytes emitted while the
+              /*
+               * the ':' base/segment byte is per-span: bytes emitted while the
                * LC was still relocatable (.PROG. base 1, before any absolute
-               * .LOC) carry that base even in an otherwise absolute module --
-               * e.g. an `O'-error placeholder ahead of the first .LOC */
+               * .LOC) carry that base even in an otherwise absolute module,
+               * e.g. an `O'-error placeholder ahead of the first .LOC
+               */
               used = emit_pabs_record (f, s->ascii, eb, addr, avail, rbase);
             else
               used = emit_prel_record (f, s->ascii, eb, er, et, addr, avail,

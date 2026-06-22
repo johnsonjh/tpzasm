@@ -56,8 +56,12 @@ dialect_from_name (const char *argv0)
 {
   const char *b = basename_of (argv0);
 
-  /* `m80' (the MACRO-80 simulation) is the PASM 2.00G engine; main() adds its
-   * `.ZOP'/`.EPOP' prefixes on top of the dialect (see add_m80_preops). */
+  /*
+   * `m80' (the MACRO-80 simulation) is upcoming, uses the PASM 2.00G engine;
+   * main() adds its `.ZOP'/`.EPOP' prefixes on top of the dialect
+   * (see add_m80_preops).
+   */
+
   if (0 == strncmp (b, "pasm2", 5) || 0 == strncmp (b, "m80", 3))
     return DIALECT_PASM2;
 
@@ -250,6 +254,7 @@ free_preops (asm_preop *preops)
     {
       asm_preop *p = preops;
       preops = p->next;
+      /*LINTED E_CONSTANT_CONDITION*/
       FREE (p);
     }
 }
@@ -323,11 +328,16 @@ main (int argc, char **argv)
 
   allow_long_symbols = 0;
 
-  /* the `m80' command name selects MACRO-80 mode (PASM 2.00G + the `.ZOP'/
-   * `.EPOP' prefixes), just like the `--m80' option (dialect set above) */
+  /*
+   * the `m80' command name selects MACRO-80 mode (PASM 2.00G with the
+   * `.ZOP'/`.EPOP' prefixing for now, just like the `--m80' option
+   * (dialect set above)
+   */
+
   if (name_is_m80 (argv[0]) && 0 != add_m80_preops (&preops, &pretail))
     {
       (void)fprintf (stderr, "%s: Out of memory!\n", prog);
+
       free_preops (preops);
 
       return 2;
@@ -340,19 +350,22 @@ main (int argc, char **argv)
 
       if ('-' == a[0] && '-' == a[1] && '\0' != a[2])
         {
-          /* GNU-style long option: map to its short-option letter, then fall
-           * through to the shared per-option handling below */
+          /*
+           * GNU-style long option: map to its short-option letter, then
+           * fall through to the shared per-option handling below
+           */
+
           static const struct
           {
             const char *name;
             char ch;
           } longs[]
-              = { { "zasm", 'z' }, { "pasm", 'p' }, {     "out", 'o' },
-                  {  "pad", 'P' }, { "list", 'l' }, {    "pbin", 'R' },
-                  { "phex", 'X' }, { "long", 'L' }, {    "read", 'r' },
-                  { "expr", 'e' }, { "help", 'h' }, { "version", 'v' },
-                  { "include", 'i' }, { "prefix", 'a' }, { "pasm2", 'g' },
-                  { "m80", 'm' },
+              = { {    "zasm", 'z' }, {   "pasm", 'p' }, {     "out", 'o' },
+                  {     "pad", 'P' }, {   "list", 'l' }, {    "pbin", 'R' },
+                  {    "phex", 'X' }, {   "long", 'L' }, {    "read", 'r' },
+                  {    "expr", 'e' }, {   "help", 'h' }, { "version", 'v' },
+                  { "include", 'i' }, { "prefix", 'a' }, {   "pasm2", 'g' },
+                  {     "m80", 'm' },
                 };
           int li;
 
@@ -360,6 +373,7 @@ main (int argc, char **argv)
             if (0 == strcmp (a + 2, longs[li].name))
               {
                 opt = longs[li].ch;
+
                 break;
               }
 
@@ -367,6 +381,7 @@ main (int argc, char **argv)
             {
               (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
               usage (prog, dialect, 0);
+
               free_preops (preops);
 
               return 2;
@@ -381,25 +396,29 @@ main (int argc, char **argv)
             {
             case 'p':
               dialect = DIALECT_PASM;
+
               break;
 
             case 'g':
               dialect = DIALECT_PASM2;
+
               break;
 
             case 'm':
               /*
-               * --m80: simulate Microsoft MACRO-80.  PASM 2.00G with the Zilog
-               * mnemonic set (.ZOP) and the Intel/M80 pseudo-ops (.EPOP)
-               * enabled from the start, as if the source opened with `.ZOP'
-               * and `.EPOP'.  Equivalent to
+               * --m80: simulate MACRO-80.  Currently just PASM 2.00G with
+               * the Zilog mnemonic set (.ZOP) and the Intel/M80 pseudo-ops
+               * (.EPOP) enabled from the start, as if the source opened
+               * with `.ZOP' and `.EPOP'.  Equivalent to:
                * `--pasm2 --prefix ".ZOP" --prefix ".EPOP"'.
                */
+
               dialect = DIALECT_PASM2;
 
               if (0 != add_m80_preops (&preops, &pretail))
                 {
                   (void)fprintf (stderr, "%s: Out of memory!\n", prog);
+
                   free_preops (preops);
 
                   return 2;
@@ -409,24 +428,29 @@ main (int argc, char **argv)
 
             case 'z':
               dialect = DIALECT_ZASM;
+
               break;
 
             case 'L':
               allow_long_symbols = 1;
+
               break;
 
             case 'P':
               pad = 1;
+
               break;
 
             case 'v':
               usage (prog, dialect, 1);
+
               free_preops (preops);
 
               return 0;
 
             case 'h':
               usage (prog, dialect, 0);
+
               free_preops (preops);
 
               return 0;
@@ -435,52 +459,64 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -o needs a filename\n", prog);
+
                   free_preops (preops);
 
                   return 2;
                 }
 
               outpath = argv[++i];
+
               break;
 
             case 'l':
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -l needs a filename\n", prog);
+
                   free_preops (preops);
 
                   return 2;
                 }
 
               lstpath = argv[++i];
+
               break;
 
             case 'R':
-              /* write the object module as a binary TDL REL file (.PBIN) */
+              /*
+               * write the object module as a binary TDL REL file (.PBIN)
+               */
 
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -R needs a filename\n", prog);
+
                   free_preops (preops);
 
                   return 2;
                 }
 
               relpath = argv[++i];
+
               break;
 
             case 'X':
-              /* write the object module as an ASCII-hex REL file (.PHEX) */
+              /*
+               * write the object module as an ASCII-hex REL file (.PHEX)
+               */
 
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -X needs a filename\n", prog);
+
                   free_preops (preops);
 
                   return 2;
                 }
 
               hexpath = argv[++i];
+
               break;
 
             case 'r':
@@ -492,6 +528,7 @@ main (int argc, char **argv)
               if (i + 1 >= argc)
                 {
                   (void)fprintf (stderr, "%s: -r needs a filename\n", prog);
+
                   free_preops (preops);
 
                   return 2;
@@ -502,6 +539,7 @@ main (int argc, char **argv)
                   (void)fprintf (stderr,
                                  "%s: cannot open response file '%s'\n", prog,
                                  argv[i]);
+
                   free_preops (preops);
 
                   return 2;
@@ -518,6 +556,7 @@ main (int argc, char **argv)
                   {
                     (void)fprintf (stderr, "%s: -%c needs an argument\n",
                                    prog, opt);
+
                     free_preops (preops);
 
                     return 2;
@@ -528,6 +567,7 @@ main (int argc, char **argv)
                 if (NULL == p)
                   {
                     (void)fprintf (stderr, "%s: Out of memory!\n", prog);
+
                     free_preops (preops);
 
                     return 2;
@@ -543,6 +583,7 @@ main (int argc, char **argv)
                   pretail->next = p;
 
                 pretail = p;
+
                 break;
               }
 
@@ -556,6 +597,7 @@ main (int argc, char **argv)
                   {
                     (void)fprintf (stderr, "%s: -e needs an expression\n",
                                    prog);
+
                     free_preops (preops);
 
                     return 2;
@@ -573,6 +615,7 @@ main (int argc, char **argv)
                 if (expr_eval (argv[++i], &env, &v, &eerr))
                   {
                     (void)fprintf (stderr, "%s: -e: %s\n", prog, eerr);
+
                     free_preops (preops);
 
                     return 1;
@@ -581,6 +624,7 @@ main (int argc, char **argv)
                 (void)printf ("%u (0x%04X)%s\n", (unsigned)v.value,
                               (unsigned)v.value,
                               (v.reloc ? " [relocatable]" : ""));
+
                 free_preops (preops);
 
                 return 0;
@@ -589,6 +633,7 @@ main (int argc, char **argv)
             default:
               (void)fprintf (stderr, "%s: unknown option '%s'\n", prog, a);
               usage (prog, dialect, 0);
+
               free_preops (preops);
 
               return 2;
@@ -601,6 +646,7 @@ main (int argc, char **argv)
   if (NULL == src)
     {
       usage (prog, dialect, 0);
+
       free_preops (preops);
 
       return 2;

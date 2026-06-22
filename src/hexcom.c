@@ -110,6 +110,7 @@ rd_byte (FILE *f, int *ok)
   if (EOF == c1)
     {
       *ok = 0;
+
       return 0;
     } /* don't read past EOF */
 
@@ -120,6 +121,7 @@ rd_byte (FILE *f, int *ok)
   if (hi < 0 || lo < 0)
     {
       *ok = 0;
+
       return 0;
     }
 
