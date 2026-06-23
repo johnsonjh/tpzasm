@@ -139,9 +139,9 @@ ANSI&nbsp;C89 compiler.
 **TPZASM** is \~**99.8%** complete relative to **TDL&nbsp;ZASM&nbsp;2.21**
 and **PSA&nbsp;PASM&nbsp;1.02**.
 
-* It is a fully faithful reimplementation of *both* assemblers (including
-  their quirks and bugs) and can assemble many substantial historic codebases
-  (which also serve as [test cases](tests)), including:
+* **TPZASM** is a faithful reimplementation of the original assemblers
+  (including their quirks and bugs) and can assemble many substantial historic
+  codebases (which also serve as [test cases](tests)), including:
 
   | Codebase                                                                                                  |               Size |
   |:----------------------------------------------------------------------------------------------------------|-------------------:|
@@ -168,6 +168,10 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
   (using the `-R` flag, *i.e.*, `.PBIN`) or as ASCII‑hex text (using the `-X`
   flag, *i.e.*, `.PHEX`), all of which is *byte‑for‑byte identical* to the
   object output of the reference software.
+
+The emulation of the **PSA&nbsp;PASM&nbsp;2.00G** assembler is still a
+[work‑in‑progress](#psa-pasm-20-emulation) and is approximately
+**85%** complete.
 
 **HEXCOM** is **100%** complete and produces byte‑for‑byte identical
 output to the original reference tool, with matching messages and identical
