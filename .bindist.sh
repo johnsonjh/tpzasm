@@ -259,7 +259,7 @@ env \
   "${MAKE:?}" \
   CC="${WATCOM:?}/binl64/owcc" \
   CFLAGS="-std=c89 -march=i386 -Wall -Wextra -g0 -O3 -mcmodel=f \
-  -fno-stack-check -frerun-optimizer" \
+  -frerun-optimizer -mstack-size=512k -fgrow-stack" \
   LDFLAGS="-s -bos2v2"
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
