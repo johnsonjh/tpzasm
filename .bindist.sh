@@ -258,9 +258,9 @@ env \
   LIBPATH="${WATCOM:?}/binp/dll:${LIBPATH:-}" \
   "${MAKE:?}" \
   CC="${WATCOM:?}/binl64/owcc" \
-  CFLAGS="-std=c89 -march=i386 -Wall -Wextra -g0 -O3 -mcmodel=f \
+  CFLAGS="-bos2v2 -std=c89 -march=i386 -Wall -Wextra -g0 -O3 \
   -frerun-optimizer -mstack-size=512k -fgrow-stack" \
-  LDFLAGS="-s -bos2v2"
+  LDFLAGS="-bos2v2"
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
 sed "s|${OS2OLD:?}|${OS2TPZ:?}|" ./asm > ./asm.exe && rm -f ./asm
