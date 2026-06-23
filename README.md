@@ -26,6 +26,7 @@ tool, is also included.
 - [Downloads](#downloads)
 - [Building from source](#building-from-source)
   * [Portability](#portability)
+  * [Make targets](#make-targets)
 - [Status](#status)
 - [Notes](#notes)
   * [Developer notes](#developer-notes)
@@ -46,7 +47,7 @@ tool, is also included.
 
 ```
 TPZASM - TDL ZASM / PSA PASM compatible 8080 / Z80 assembler (Linux/x86_64)
-Release 0.91 (Built Jun 22 2026) https://github.com/johnsonjh/tpzasm
+Release 0.92 (Built Jun 23 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 Usage: asm [options] <source[.asm]>
@@ -77,12 +78,12 @@ symbolic link).  Invoke the assembler as `zasm` to select **TDL ZASM 2.21**,
 
 |                                                                                                                  File  |         Size | Platform                             |
 |-----------------------------------------------------------------------------------------------------------------------:|-------------:|:-------------------------------------|
-| [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 192&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
+| [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 196&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
 | [TPZASMST.LZH](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMST.LZH)                         | 176&nbsp;KiB | **Atari&nbsp;ST**&nbsp;(TOS/MINT)    |
 | [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                         | 68&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
 | [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 72&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
-| [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                         | 72&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
-| [tpzasm-linuxarm32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm32.tar.gz) | 104&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;ARMv5)    |
+| [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                         | 76&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
+| [tpzasm-linuxarm32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm32.tar.gz) | 104&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;ARMv5)   |
 | [tpzasm-linuxarm64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm64.tar.gz) | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;ARMv8)   |
 | [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz)       | 64&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
 | [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 128&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
@@ -133,6 +134,27 @@ ANSI&nbsp;C89 compiler.
   PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP,
   Microsoft&nbsp;Visual&nbsp;C/C++, IBM&nbsp;Open&nbsp;XL&nbsp;C/C++,
   Open&nbsp;Watcom&nbsp;V2, and МЦСТ&nbsp;LCC compilers are regularly tested.
+
+### Make targets
+
+The following `make` targets are available:
+
+|    Make Target | Description                                                     |
+|---------------:|:----------------------------------------------------------------|
+| `all`          | Builds&nbsp;the&nbsp;complete&nbsp;project                      |
+| `asm`          | Builds&nbsp;*only*&nbsp;the&nbsp;**TPZASM**&nbsp;assembler      |
+| `hexcom`       | Builds&nbsp;*only*&nbsp;the&nbsp;`HEXCOM`&nbsp;utility          |
+
+The following `make` targets will likely only be of interest to developers:
+
+|    Make Target | Description                                                                                                                                  |
+|---------------:|:---------------------------------------------------------------------------------------------------------------------------------------------|
+| `test`         | Runs&nbsp;the&nbsp;quick&nbsp;test&nbsp;suite&nbsp;(no&nbsp;emulator&nbsp;required)                                                          |
+| `longtest`     | Runs&nbsp;the&nbsp;comprehensive&nbsp;test&nbsp;suite&nbsp;(requires&nbsp;the&nbsp;[tnylpo](https://gitlab.com/gbrein/tnylpo)&nbsp;emulator) |
+| `lint`         | Source‑code&nbsp;quality&nbsp;checks&nbsp;(linting&nbsp;and&nbsp;static&nbsp;analysis)                                                       |
+| `dmd`          | Builds&nbsp;the&nbsp;project&nbsp;using&nbsp;the&nbsp;[DMD&nbsp;ImportC](https://dlang.org/spec/importc.html)&nbsp;compiler                  |
+| `tags`         | Builds&nbsp;source&nbsp;code&nbsp;tags&nbsp;(`etags`,&nbsp;`ctags`,&nbsp;`gtags`,&nbsp;`cscope`)                                             |
+| `amalgamation` | Creates&nbsp;a&nbsp;single&nbsp;`tpzasm.c`&nbsp;source&nbsp;file                                                                             |
 
 ## Status
 
@@ -261,7 +283,8 @@ development tools for several years.
   Note that the `.ZOP` mode of **TPZASM** has been lightly extended with
   support for the undocumented Zilog `XH`/`XL`/`YH`/`YL` (and
   `IXH`/`IXL`/`IYH`/`IYL`) instructions that access the high and low bytes of
-  `IX` and `IY`.
+  `IX` and `IY`.  These and similar extensions may be gated behind a
+  command‑line option in a future release.
 
   **Complete emulation of this assembler is currently a work‑in‑progress.**
 

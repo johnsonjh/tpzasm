@@ -225,6 +225,28 @@ for c in ${pasm2_cases}; do
   rm -f "${tmp}"
 done
 
+# Extension fixture for undocumented index-register high/low instructions
+# (XH/XL/YH/YL and the IXH/IXL/IYH/IYL aliases), recognized only in .ZOP mode.
+# Built with the -g -L -a '.ZOP' -a '.EPOP' form per the enabling commits
+# (c6c05c0, a181d8c).  This is a clone extension (original pasm2.com does not
+# implement these); it is checked only against its committed golden, not via
+# vpasm2 oracle diff.
+# shellcheck disable=SC2043
+for c in zundoc; do
+  "${asm}" -g -L -a '.ZOP' -a '.EPOP' -X "${tmp}" \
+    "${here}/tests/${c}.asm" > /dev/null 2>&1 || :
+
+  if [ ! -f "${gold}/${c}.hex" ]; then
+    printf '%s\n' "FAILURE: missing golden tests/golden/${c}.hex"
+    fail=1
+  elif ! cmp -s "${tmp}" "${gold}/${c}.hex"; then
+    printf '%s\n' "FAILURE: -g -L -a object for ${c} differs from golden"
+    fail=1
+  fi
+
+  rm -f "${tmp}"
+done
+
 if [ "${fail}" -ne 0 ]; then
   printf '\n%s\n\n' "FAILURE: object-output regression detected."
   exit 1
