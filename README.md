@@ -316,6 +316,7 @@ automatically via the [`.lint.sh`](.lint.sh) script):
 | [Smatch](https://repo.or.cz/w/smatch.git)                                                                          | Smatch (Source Matcher) is a static analysis tool for C code                       |
 | [SoftIntegration Ch](https://www.softintegration.com/)                                                             | C/C++ interpreter and interactive platform for scientific computing                |
 | [Valgrind](https://valgrind.org/)                                                                                  | Tools for memory debugging, memory leak detection, and profiling                   |
+| [Visual Studio Code Analyzer](https://learn.microsoft.com/en-us/cpp/code-quality/)                                 | Tools to analyze and improve C/C++ source code quality                             |
 
 ## License
 
