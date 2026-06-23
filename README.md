@@ -327,24 +327,24 @@ automatically via the [`.lint.sh`](.lint.sh) script):
 | Tool | Usage |
 |-----:|:------|
 | [**PVS‑Studio**](https://pvs-studio.com/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source) | Static analysis tool for C, C++, C#, and Java code                                 |
-| [Clang&nbsp;Analyzer](https://clang-analyzer.llvm.org/), [Sanitizers](https://github.com/google/sanitizers)        | Static and dynamic analysis tools for C, C++, and Objective-C code                 |
+| [Clang&nbsp;Analyzer](https://clang-analyzer.llvm.org/),&nbsp;[Sanitizers](https://github.com/google/sanitizers)   | Static and dynamic analysis tools for C, C++, and Objective‑C code                 |
 | [Cppcheck](https://cppchecksolutions.com/)                                                                         | Static analysis tool for C and C++ code                                            |
 | [Dr.&nbsp;Memory](https://drmemory.org/)                                                                           | Memory debugging tool for Windows, Linux, macOS, and Android                       |
 | [DUMA](https://github.com/johnsonjh/duma)                                                                          | Detect Unintended Memory Access, a memory debugger                                 |
 | [Flawfinder](https://dwheeler.com/flawfinder/)                                                                     | Scans C and C++ source code for potential security weaknesses                      |
 | [Funcheck](https://github.com/tmatis/funcheck)                                                                     | A tool for checking function call return protections                               |
-| [GCC&nbsp;Static&nbsp;Analyzer](https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html)                   | Coverage-guided symbolic execution static analyzer for C code                      |
+| [GCC&nbsp;Static&nbsp;Analyzer](https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html)                   | Coverage‑guided symbolic execution static analyzer for C code                      |
 | [GNU&nbsp;Cppi](https://www.gnu.org/software/cppi/)                                                                | C preprocessor directive linting, indenting, and regularization                    |
 | [IBM&nbsp;AIX&nbsp;lint](https://www.ibm.com/docs/en/aix/7.3.0?topic=l-lint-command)                               | Checks C and C++ language programs for potential problems                          |
 | [NetBSD&nbsp;lint(1)](https://man.netbsd.org/lint.1)                                                               | A C (C90/C99/C11/C17/C23) program verifier                                         |
 | [Oracle&nbsp;Developer&nbsp;Studio](https://www.oracle.com/application-development/developerstudio/)               | Performance, security, and thread analysis tools for C, C++, and Fortran           |
-| [PurifyPlus](https://www.teamblue.unicomsi.com/products/purifyplus/)                                               | Run-time analysis tools for application reliability and performance                |
+| [PurifyPlus](https://www.teamblue.unicomsi.com/products/purifyplus/)                                               | Run‑time analysis tools for application reliability and performance                |
 | [REUSE](https://reuse.software/)                                                                                   | Verifies compliance with the REUSE software licensing guidelines                   |
 | [ShellCheck](https://www.shellcheck.net/)                                                                          | A static analysis tool for Unix shell scripts                                      |
 | [Smatch](https://repo.or.cz/w/smatch.git)                                                                          | Smatch (Source Matcher) is a static analysis tool for C code                       |
 | [SoftIntegration Ch](https://www.softintegration.com/)                                                             | C/C++ interpreter and interactive platform for scientific computing                |
 | [Valgrind](https://valgrind.org/)                                                                                  | Tools for memory debugging, memory leak detection, and profiling                   |
-| [Visual Studio Code Analyzer](https://learn.microsoft.com/en-us/cpp/code-quality/)                                 | Tools to analyze and improve C/C++ source code quality                             |
+| [Visual&nbsp;Studio&nbsp;Code&nbsp;Analyzer](https://learn.microsoft.com/en-us/cpp/code-quality/)                  | Tools to analyze and improve C/C++ source code quality                             |
 
 ## License
 
@@ -374,8 +374,8 @@ The following third‑party materials are provided under their own licenses:
   [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
 
 * [`LHarc`](.utils/lharc.ttp) for the Atari&nbsp;ST is
-  [freeware](LICENSES/LicenseRef-LHA.txt) and © 1988-1989 Yoshizaki,
-  © 1994 Grunenberg, Mandel, © 1996-1997 Dirk Haun.
+  [freeware](LICENSES/LicenseRef-LHA.txt) and © 1988‑1989 Yoshizaki,
+  © 1994 Grunenberg, Mandel, © 1996‑1997 Dirk Haun.
 
 * Individual [test cases](tests) may carry their own licenses.  Refer to each
   file for complete license information.
