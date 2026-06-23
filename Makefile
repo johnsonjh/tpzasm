@@ -106,8 +106,8 @@ $(SRCDIR)/platform.o: $(SRCDIR)/platform.c $(SRCDIR)/platform.h
 # against committed golden files (no CP/M oracle needed); tools/vrel.sh does
 # the differential check against the original PSA PASM when tnylpo is present.
 test: test_expr asm tests/test_trunc.sh tests/test_obj.sh \
-	tests/test_maclist.sh tests/test_datetime.sh tests/test_page.sh \
-	tests/longname.asm
+		tests/test_maclist.sh tests/test_datetime.sh \
+		tests/test_page.sh tests/longname.asm
 	@printf '%s\n' "" 2> /dev/null || :
 	@./test_expr
 	@./tests/test_trunc.sh
@@ -213,6 +213,7 @@ clean:
 	rm -f a.sym $(PROG).sym hexcom.sym test_expr.sym ./.test.sym ./.t.sym
 	rm -f ./*.ttp ./*.obj $(SRCDIR)/*.o ./.test.o ./.test.obj
 	rm -f compile_commands.json log.pvs
+	rm -f tpzasm.c src/_chtmp.c
 
 ################################################################################
 
@@ -235,6 +236,16 @@ distclean: clean
 
 ################################################################################
 
+amalgamation amalgamate: src/asm.h src/assemble.c src/expr.c src/hexcom.c \
+		src/insn.c src/lex.c src/main.c src/objout.c src/platform.c \
+		src/platform.h src/sym.c src/test_expr.c src/version.h
+	printf '%s\n' '#define AMALGAMATION' > tpzasm.c
+	cat src/asm.h src/platform.h src/version.h src/assemble.c src/expr.c \
+		src/insn.c src/lex.c src/main.c src/sym.c src/objout.c \
+		src/platform.c | grep -v '^#.*include ".*"' >> tpzasm.c
+
+################################################################################
+
 tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 	@command -v etags > /dev/null 2>&1 && \
 		{ { echo etags...; etags src/*.c && exit 0; };\
@@ -252,7 +263,8 @@ tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 ################################################################################
 
 .PHONY: all clean distclean test longtest tags etags ctags gtags TAGS GPATH \
-		GRTAGS GTAGS cscope cscope.out tag lint dmd bindist
+		GRTAGS GTAGS cscope cscope.out tag lint dmd bindist \
+		amalgamation amalgamate
 
 ################################################################################
 

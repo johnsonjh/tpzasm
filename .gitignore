@@ -66,6 +66,7 @@ symtab.txt
 /.test.out
 *.tmp
 *.TMP
+/tpzasm.c
 /*UME.md
 *.unittest
 /work/

@@ -23,7 +23,7 @@
 
 /******************************************************************************/
 
-#ifdef _CH_
+#if defined(AMALGAMATION) || defined(_CH_)
 # undef skipws
 # define skipws lex_skipws
 # undef idstart
