@@ -373,9 +373,9 @@ The following third‑party materials are provided under their own licenses:
   the terms and conditions of the
   [Personal‑Use and Distribution License](LICENSES/LicenseRef-ZALUT.txt).
 
-* [`LHarc`](.utils/lharc.ttp) for the Atari&nbsp;ST is
-  [freeware](LICENSES/LicenseRef-LHA.txt) and © 1988‑1989 Yoshizaki,
-  © 1994 Grunenberg, Mandel, © 1996‑1997 Dirk Haun.
+* [`LHarc`](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/.utils/lharc.ttp)
+  for the Atari&nbsp;ST is [freeware](LICENSES/LicenseRef-LHA.txt) and
+  © 1988‑1989 Yoshizaki, © 1994 Grunenberg, Mandel, © 1996‑1997 Dirk Haun.
 
 * Individual [test cases](tests) may carry their own licenses.  Refer to each
   file for complete license information.
