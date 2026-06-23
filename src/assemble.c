@@ -8620,6 +8620,9 @@ process_preops (astate *a, const asm_preop *pre)
 
 /******************************************************************************/
 
+#if defined(_MSC_VER)
+# pragma warning( suppress : 6262 )
+#endif
 int
 asm_source (const char *path, dialect_t dialect, const char *outpath,
             const char *lstpath, const char *relpath, const char *hexpath,
