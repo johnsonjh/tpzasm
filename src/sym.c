@@ -8,7 +8,7 @@
 /******************************************************************************/
 
 /*
- * sym.c - symbol table (hash table with chaining) for the assembler clone.
+ * sym.c - symbol table (hash table with chaining) for the assembler.
  * Names are matched case-insensitively (TDL folds case for symbols).
  */
 
