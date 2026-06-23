@@ -258,7 +258,11 @@ development tools for several years.
   [clearly bugs](docs/re/pasm2-bugs.md), such as sometimes omitting the symbol
   table from listings when certain macros are defined.
 
-  **Emulation of this assembler is currently a work‑in‑progress.**
+  Note that the `.ZOP` mode of **TPZASM** has been lightly extended with
+  support for the undocumented Zilog `XH`/`XL` (and `IXH`/`IXL`) instructions
+  that access the high and low bytes of `IX`.
+
+  **Complete emulation of this assembler is currently a work‑in‑progress.**
 
 * An optional *extended error checking* mode may be added in a future release,
   enabling new features such as classifying errors or warnings by severity,

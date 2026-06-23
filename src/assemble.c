@@ -415,8 +415,11 @@ skipws (const char *p)
 
 static int
 idchar (int c)
-{ /* symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it */
-  return isalnum (c) || '.' == c || '$' == c || '%' == c;
+{ /* symbols use only the Radix-40 set (A-Z 0-9 $ % .); _ ? @ are NOT in it
+   * _ allowed with -L for sources using long readable names with underscores
+   */
+  return isalnum (c) || '.' == c || '$' == c || '%' == c
+         || (allow_long_symbols && '_' == c);
 }
 
 /******************************************************************************/
@@ -1974,6 +1977,26 @@ zparse (astate *a, const char **pp, zoperand *o)
           return;
         }
 
+      /* support XH/XL (and IXH/IXL) as aliases for undocumented IX high/low
+       * (used by some sources written against TDL-style Z80 tools)
+       */
+      if (0 == strcmp (t, "XH") || 0 == strcmp (t, "IXH"))
+        {
+          o->kind = ZO_R8;
+          o->reg = 4; /* H */
+          o->pfx = 0xDD;
+          *pp = p + n;
+          return;
+        }
+      if (0 == strcmp (t, "XL") || 0 == strcmp (t, "IXL"))
+        {
+          o->kind = ZO_R8;
+          o->reg = 5; /* L */
+          o->pfx = 0xDD;
+          *pp = p + n;
+          return;
+        }
+
       if (0 == strcmp (t, "BC") || 0 == strcmp (t, "DE")
           || 0 == strcmp (t, "HL") || 0 == strcmp (t, "SP"))
         {
@@ -2079,6 +2102,11 @@ zemit_alusrc (astate *a, const char *line, const zoperand *o, u8 regbase,
           emit (a, (u16)o->pfx);
           emit (a, (u16)(regbase | 6));
           emit (a, (u16)(o->val.value & 0xFF));
+        }
+      else if (o->pfx)
+        {
+          emit (a, (u16)o->pfx);
+          emit (a, (u16)(regbase | o->reg));
         }
       else
         emit (a, (u16)(regbase | o->reg));
@@ -2273,6 +2301,11 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
               emit (a, (u16)d.pfx);
               emit (a, op);
               emit (a, (u16)(d.val.value & 0xFF));
+            }
+          else if (d.pfx)
+            {
+              emit (a, (u16)d.pfx);
+              emit (a, op);
             }
           else
             emit (a, op);
@@ -2637,6 +2670,11 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
                   emit (a, (u16)s.pfx);
                   emit (a, op);
                   emit (a, (u16)(s.val.value & 0xFF));
+                }
+              else if (d.pfx || s.pfx)
+                {
+                  emit (a, (u16)(d.pfx ? d.pfx : s.pfx));
+                  emit (a, op);
                 }
               else
                 emit (a, op);

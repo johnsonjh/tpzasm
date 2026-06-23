@@ -41,8 +41,10 @@ idstart (int c)
    * -- '_' flags a macro subscript reference, '@' is the remainder operator.
    * A symbol may START with any of these but a digit (a leading digit is a
    * number); '$' is an ordinary symbol char, not the location counter ('.')
+   * With -L we also allow _ for sources using it (e.g. readable long names).
    */
-  return isalpha (c) || '$' == c || '.' == c || '%' == c;
+  return isalpha (c) || '$' == c || '.' == c || '%' == c
+         || (allow_long_symbols && '_' == c);
 }
 
 /******************************************************************************/
@@ -50,7 +52,8 @@ idstart (int c)
 static int
 idchar (int c)
 {
-  return isalnum (c) || '.' == c || '$' == c || '%' == c;
+  return isalnum (c) || '.' == c || '$' == c || '%' == c
+         || (allow_long_symbols && '_' == c);
 }
 
 /******************************************************************************/
