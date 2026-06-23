@@ -308,9 +308,13 @@ CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --quiet"
 CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --error-exitcode=2"
 CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -D__CPPCHECK__"
 CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -D__LINT__"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -j 1"
+CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -j $(nproc 2> /dev/null || echo 1)"
 
 ################################################################################
+
+cpp_build_dir="$(mktemp -d 2> /dev/null \
+  || printf '%s\n' "${TMPDIR:-/tmp}/cppcheck.$$$$")"
+mkdir -p "${cpp_build_dir:?}" || :
 
 command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> cppcheck unix64 <<<<<<<<<<<<<<<<"
@@ -318,16 +322,24 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=unix64 ./src/*.c
+      ${CPPCHECK_FLAGS:?} --cppcheck-build-dir="${cpp_build_dir:?}" \
+      --platform=unix64 ./src/*.c
   ); then
     :
   else
     printf '%s\n' "****** FAILURE DETECTED ******"
+    rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
     rc=1
   fi
 }
 
+rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
+
 ################################################################################
+
+cpp_build_dir="$(mktemp -d 2> /dev/null \
+  || printf '%s\n' "${TMPDIR:-/tmp}/cppcheck.$$$$")"
+mkdir -p "${cpp_build_dir:?}" || :
 
 command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> cppcheck unix32 <<<<<<<<<<<<<<<<"
@@ -335,16 +347,24 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=unix32 ./src/*.c
+      ${CPPCHECK_FLAGS:?} --cppcheck-build-dir="${cpp_build_dir:?}" \
+      --platform=unix32 ./src/*.c
   ); then
     :
   else
     printf '%s\n' "****** FAILURE DETECTED ******"
+    rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
     rc=1
   fi
 }
 
+rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
+
 ################################################################################
+
+cpp_build_dir="$(mktemp -d 2> /dev/null \
+  || printf '%s\n' "${TMPDIR:-/tmp}/cppcheck.$$$$")"
+mkdir -p "${cpp_build_dir:?}" || :
 
 command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> cppcheck win64 <<<<<<<<<<<<<<<<"
@@ -357,16 +377,24 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=win64 ./src/*.c
+      ${CPPCHECK_FLAGS:?} --cppcheck-build-dir="${cpp_build_dir:?}" \
+      --platform=win64 ./src/*.c
   ); then
     :
   else
     printf '%s\n' "****** FAILURE DETECTED ******"
+    rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
     rc=1
   fi
 }
 
+rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
+
 ################################################################################
+
+cpp_build_dir="$(mktemp -d 2> /dev/null \
+  || printf '%s\n' "${TMPDIR:-/tmp}/cppcheck.$$$$")"
+mkdir -p "${cpp_build_dir:?}" || :
 
 command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> cppcheck avr8 <<<<<<<<<<<<<<<<"
@@ -379,14 +407,18 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC2086
     "${CPPCHECK:-cppcheck}" \
-      ${CPPCHECK_FLAGS:?} --platform=avr8 ./src/*.c
+      ${CPPCHECK_FLAGS:?} --cppcheck-build-dir="${cpp_build_dir:?}" \
+      --platform=avr8 ./src/*.c
   ); then
     :
   else
     printf '%s\n' "****** FAILURE DETECTED ******"
+    rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
     rc=1
   fi
 }
+
+rm -f -r "${cpp_build_dir:?}" > /dev/null 2>&1 || :
 
 ################################################################################
 
@@ -474,7 +506,7 @@ command -v "${SCAN_BUILD_CMD:-scan-build}" > /dev/null 2>&1 && {
         --status-bugs \
         -o "${TMPFILE:?}" "${MAKE:-make}" all > /dev/null 2>&1
     ); then
-      rm -rf "${TMPFILE:?}" || :
+      rm -f -r "${TMPFILE:?}" || :
     else
       printf '%s\n' "****** FAILURE DETECTED ******"
       printf \
@@ -693,7 +725,7 @@ san_probe()
     && "${sp_d}/t" > /dev/null 2>&1; then
     sp_rc=0
   fi
-  rm -rf "${sp_d}" || :
+  rm -f -r "${sp_d}" || :
   return "${sp_rc}"
 }
 
@@ -721,7 +753,7 @@ asm_cycle()
     && ./hexcom "${ac_d}/h" > /dev/null 2>&1; then
     ac_rc=0
   fi
-  rm -rf "${ac_d}" || :
+  rm -f -r "${ac_d}" || :
   return "${ac_rc}"
 }
 
@@ -785,7 +817,7 @@ command -v valgrind > /dev/null 2>&1 && {
     printf '%s\n' "****** FAILURE DETECTED ******"
     rc=1
   fi
-  rm -rf "${vg_d}" || :
+  rm -f -r "${vg_d}" || :
 }
 
 ################################################################################
