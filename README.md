@@ -259,8 +259,9 @@ development tools for several years.
   table from listings when certain macros are defined.
 
   Note that the `.ZOP` mode of **TPZASM** has been lightly extended with
-  support for the undocumented Zilog `XH`/`XL` (and `IXH`/`IXL`) instructions
-  that access the high and low bytes of `IX`.
+  support for the undocumented Zilog `XH`/`XL`/`YH`/`YL` (and
+  `IXH`/`IXL`/`IYH`/`IYL`) instructions that access the high and low bytes of
+  `IX` and `IY`.
 
   **Complete emulation of this assembler is currently a work‑in‑progress.**
 

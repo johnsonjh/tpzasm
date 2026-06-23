@@ -1977,23 +1977,48 @@ zparse (astate *a, const char **pp, zoperand *o)
           return;
         }
 
-      /* support XH/XL (and IXH/IXL) as aliases for undocumented IX high/low
-       * (used by some sources written against TDL-style Z80 tools)
+      /*
+       * Support XH/XL (IXH/IXL) and YH/YL (IYH/IYL) as aliases for
+       * the undocumented high/low bytes of the index registers
        */
+
       if (0 == strcmp (t, "XH") || 0 == strcmp (t, "IXH"))
         {
           o->kind = ZO_R8;
           o->reg = 4; /* H */
           o->pfx = 0xDD;
           *pp = p + n;
+
           return;
         }
+
       if (0 == strcmp (t, "XL") || 0 == strcmp (t, "IXL"))
         {
           o->kind = ZO_R8;
           o->reg = 5; /* L */
           o->pfx = 0xDD;
           *pp = p + n;
+
+          return;
+        }
+
+      if (0 == strcmp (t, "YH") || 0 == strcmp (t, "IYH"))
+        {
+          o->kind = ZO_R8;
+          o->reg = 4; /* H */
+          o->pfx = 0xFD;
+          *pp = p + n;
+
+          return;
+        }
+
+      if (0 == strcmp (t, "YL") || 0 == strcmp (t, "IYL"))
+        {
+          o->kind = ZO_R8;
+          o->reg = 5; /* L */
+          o->pfx = 0xFD;
+          *pp = p + n;
+
           return;
         }
 
