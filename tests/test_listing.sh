@@ -95,7 +95,7 @@ asm="${ref}/asm"
 # in the operand field exactly as the originals.
 fixtures="macro macro2 mconcat macnest maclc sall sallxl lall clabel page dref \
 go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon goto \
-gotoedge regnum numquirk spell11"
+gotoedge regnum numquirk titles spell11"
 
 # .GOTO is a PASM/pasm2 directive absent from zasm.com 2.21, so these fixtures
 # are compared under -p (vs pasm.com) only; zasm.com rejects the directive.

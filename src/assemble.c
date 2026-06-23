@@ -326,8 +326,8 @@ typedef struct
    *   subtitle -- .SBTTL   text: heading line B, on its own
    */
 
-  char title[64];
-  char subtitle[64];
+  char title[81];
+  char subtitle[81];
 
   /* macro support */
   unsigned genctr; /* counter for %-generated local labels                    */
@@ -697,6 +697,8 @@ err_letter (const char *msg)
               { "extra operand",                'Q' },
               { "register value range",         'Q' },
               { "questionable number",          'Q' },
+              { "title string too long",        'Q' },
+              { "subtitle string too long",     'Q' },
               { "bad index register",           'X' },
               { NULL,                             0 } };
   int i;
@@ -4554,22 +4556,19 @@ svalue_close (const astate *a, char open)
 /******************************************************************************/
 
 /*
- * Capture a single-line string value (a .TITLE/.SBTTL operand) into dst.  The
- * first non-blank character is the delimiter; the text runs from just after it
- * to the matching delimiter (see svalue_close) or to the end of the line.  An
- * absent operand clears dst.  Either quote (' or "), a slash, or any other
- * delimiter works, matching the originals -- the delimiters are not kept.
- * TAB characters within the text are dropped, as the originals do: a tab
- * anywhere in the captured string is simply not copied (spaces are kept), so a
- * `.TITLE "<TAB>text"' heading renders flush after the "modname - " prefix.
+ * Capture a single-line string value (a .TITLE/.SBTTL operand) into dst.
+ * The first non-blank char is the delimiter; text runs to the matching
+ * delimiter (or end).  Delimiters not kept.  All chars less than ASCII
+ * space dropped.  TITLE/SBTTL are simple delimited only (no nesting).
+ * Max len per dialect (80 ZASM/PASM, 70 PASM2); note a Q if exceeded.
  */
 
 static void
-capture_svalue (const astate *a, const char *operands, char *dst, size_t dstsz)
+capture_svalue (const astate *a, const char *o, char *d, size_t s, int nst)
 {
-  const char *p = skipws (operands);
+  const char *p = skipws (o);
 
-  dst[0] = '\0';
+  d[0] = '\0';
 
   if ('\0' != *p && ';' != *p)
     {
@@ -4577,25 +4576,25 @@ capture_svalue (const astate *a, const char *operands, char *dst, size_t dstsz)
       int depth = 0;
       size_t n = 0;
 
-      for (p++; '\0' != *p && n + 1 < dstsz; p++)
+      for (p++; '\0' != *p && n + 1 < s; p++)
         {
-          if ('\t' == *p)
-            continue; /* the originals drop TABs from .TITLE/.SBTTL text */
+          if ((unsigned char)*p < ' ')
+            continue;
 
-          if (']' == close && '[' == *p)
+          if (nst && ']' == close && '[' == *p)
             depth++;
           else if (close == *p)
             {
-              if (']' == close && depth > 0)
+              if (nst && ']' == close && depth > 0)
                 depth--;
               else
                 break;
             }
 
-          dst[n++] = *p;
+          d[n++] = *p;
         }
 
-      dst[n] = '\0';
+      d[n] = '\0';
     }
 }
 
@@ -8182,13 +8181,35 @@ do_line (astate *a, const char *line)
            || (DIALECT_PASM2 == a->dialect && a->epop_mode
                && opeq (op, "TITLE", NULL)))
     { /*
-       * capture the page title -- heading line A, after "modname - ".
+       * Capture the page title -- heading line A, after "modname - ".
        * Done in both passes so pass 2's page-1 heading already has
        * whatever was set before the first listed line.  The directive
        * does not self-list.  The Intel `TITLE' spelling (PASM2 .EPOP)
        * is the same as `.TITLE'.
        */
-      capture_svalue (a, L.operands, a->title, sizeof (a->title));
+
+      /* TITLE: simple delim, drop <space, dialect max, err Q if over. */
+      {
+        char tmp[256];
+        size_t ms = (DIALECT_ZASM == a->dialect ||
+                     DIALECT_PASM == a->dialect) ? 80 : 70;
+        size_t qt = (DIALECT_ZASM == a->dialect ||
+                     DIALECT_PASM == a->dialect) ? 80 : 71;
+        size_t n;
+
+        capture_svalue (a, L.operands, tmp, sizeof (tmp), 0);
+
+        if (strlen (tmp) >= qt)
+          aerr (a, line, "title string too long");
+
+        n = strlen (tmp);
+
+        if (n > ms)
+          n = ms;
+
+        (void)memcpy (a->title, tmp, n);
+        a->title[n] = '\0';
+      }
 
       return; /* suppressed from the body listing (affects only header) */
     }
@@ -8196,10 +8217,31 @@ do_line (astate *a, const char *line)
            || (DIALECT_PASM2 == a->dialect && a->epop_mode
                && opeq (op, "SUBTTL", NULL)))
     { /*
-       * capture the page subtitle -- heading line B, on its own; same rules.
+       * Capture the page subtitle -- heading line B, on its own; same rules.
        * The Intel `SUBTTL' spelling (PASM2 .EPOP) is the same as `.SBTTL'.
        */
-      capture_svalue (a, L.operands, a->subtitle, sizeof (a->subtitle));
+
+      /* SBTTL: simple delim, drop <spc, dialect max, Q if over. */
+      {
+        char tmp[256];
+        size_t ms = (DIALECT_ZASM == a->dialect ||
+                     DIALECT_PASM == a->dialect) ? 80 : 70;
+        size_t qt = (DIALECT_ZASM == a->dialect ||
+                     DIALECT_PASM == a->dialect) ? 80 : 71;
+        size_t n;
+
+        capture_svalue (a, L.operands, tmp, sizeof (tmp), 0);
+
+        if (strlen (tmp) >= qt)
+          aerr(a, line, "subtitle string too long");
+
+        n = strlen (tmp);
+        if (n > ms)
+          n = ms;
+
+        (void)memcpy (a->subtitle, tmp, n);
+        a->subtitle[n]='\0';
+      }
 
       return; /* suppressed from the body listing */
     }
