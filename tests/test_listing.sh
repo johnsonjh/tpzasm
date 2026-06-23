@@ -89,9 +89,13 @@ asm="${ref}/asm"
 # MOV C,D; the d(H) == M index bug emitting 00 34 00; INR B(X) == INR 0(X); the
 # bare INR (X) == INR H); its listing must reproduce the originals' `?'/`??'
 # error marks (bad index register `X'+`Q', value > 7 `Q') exactly.
+# numquirk is the radix-suffix / out-of-range-digit premature-termination quirk
+# audit (100B101B==4 under rad10, 0AHCH==10, 9D8D==9, 100B101==4 under rad2,
+# etc.); its listings must reproduce the emitted values, any `Q' marks, and `?'
+# in the operand field exactly as the originals.
 fixtures="macro macro2 mconcat macnest maclc sall sallxl lall clabel page dref \
-go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon \
-goto gotoedge regnum spell11"
+go quotes ittl atu4 mtu4 cond3 relmode bios tapelib zapple zap1k ssmon goto \
+gotoedge regnum numquirk spell11"
 
 # .GOTO is a PASM/pasm2 directive absent from zasm.com 2.21, so these fixtures
 # are compared under -p (vs pasm.com) only; zasm.com rejects the directive.

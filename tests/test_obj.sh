@@ -86,9 +86,9 @@ set -eu
 cases="smoke data insn8080 objword sargon newkw seg blnk ext prgend longname \
 oprem limage extmod xlink i8080 intern cond2 mconcat ifbnb macnest dinsert \
 insnest psym temps varargs extop dref cinl laddr zapple zap1k dis maclc sall \
-clabel \
-page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes cond3 \
-relmode bios tapelib ssmon turbobs progid goto gotoedge regnum shift"
+clabel page cond imain macro macro2 str z80 z80b z80c go ittl atu4 mtu4 quotes \
+cond3 relmode bios tapelib ssmon turbobs progid goto gotoedge regnum shift \
+numquirk"
 
 # PASM 2.00G (.ZOP standard Zilog + .EPOP Intel/M80) fixtures, asserted with
 # --pasm2 against the ASCII (.hex) golden only.  zop is the full Zilog

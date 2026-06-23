@@ -109,9 +109,10 @@ scan_number (ectx *e)
   const char *p = e->p;
   char buf[80];
   int n = 0, radix = e->env->radix, ndig, i;
+  int had_end_suffix;
   unsigned long val = 0;
 
-  while (isalnum ((unsigned char)*p))
+  while (isalnum ((unsigned char)*p) || '.' == *p)
     {
       if (n < (int)sizeof (buf) - 1)
         buf[n++] = *p;
@@ -122,10 +123,10 @@ scan_number (ectx *e)
   buf[n] = '\0';
   ndig = n;
 
-  if ('.' == *p)
+  if (n > 0 && '.' == buf[n - 1])
     {
       radix = 10;
-      p++;
+      ndig = n - 1;
     }
   else if (n > 0)
     {
@@ -203,10 +204,39 @@ scan_number (ectx *e)
 
       if (!ok)
         {
-          radix = e->env->radix;
-          ndig = n;
+          /*
+           * Bug/quirk replication: fallback to "ambient" radix (so the
+           * offending letter acts as a digit) only if that letter is
+           * valid under the ambient radix.  Otherwise keep suffixed
+           * radix and truncate the value (handles 0AHCH->10 under
+           * rad10, 100B101B->4 etc).
+           */
+
+          int bad_d = -1;
+          int ii;
+
+          for (ii = 0; ii < ndig; ii++)
+            {
+              int d = digit_val ((unsigned char)buf[ii]);
+
+              if (d < 0 || d >= radix)
+                {
+                  bad_d = d;
+
+                  break;
+                }
+            }
+
+          if (bad_d >= 0 && bad_d < e->env->radix)
+            {
+              radix = e->env->radix;
+              ndig = n;
+            }
+          /* else: keep suffixed 'radix' and ndig; final loop will trunc */
         }
     }
+
+  had_end_suffix = (ndig < n);
 
   for (i = 0; i < ndig; i++)
     {
@@ -214,9 +244,15 @@ scan_number (ectx *e)
 
       if (d < 0 || d >= radix)
         {
-          efail (e, "bad digit for radix");
+          if (! had_end_suffix)
+            {
+              unsigned char bc = (unsigned char)buf[i];
 
-          return 0;
+              if (toupper (bc) != 'D')
+                efail (e, "questionable number");
+            }
+
+          break;
         }
 
       val = val * (unsigned long)radix + (unsigned long)d;

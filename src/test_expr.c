@@ -44,11 +44,13 @@ check (const char *expr, int radix, u16 ev, long er)
   value_t v;
   const char *err;
   eval_env e = ENV;
+  int rc;
 
   allow_long_symbols = 0;
   e.radix = radix;
 
-  if (expr_eval (expr, &e, &v, &err))
+  rc = expr_eval (expr, &e, &v, &err);
+  if (rc && (!err || !strstr (err, "questionable number")))
     {
       (void)printf ("FAIL  %-12s -> ERROR (%s)\n", expr, err);
       fails++;
@@ -62,8 +64,9 @@ check (const char *expr, int radix, u16 ev, long er)
       fails++;
     }
   else
-    (void)printf ("ok    %-12s = %u (0x%04X) r%ld b%d\n", expr, v.value,
-                  v.value, v.reloc, v.base);
+    (void)printf ("ok    %-12s = %u (0x%04X) r%ld b%d%s\n", expr, v.value,
+                  v.value, v.reloc, v.base,
+                  (rc ? " (Q)" : ""));
 }
 
 /******************************************************************************/
@@ -221,9 +224,92 @@ main (void)
   check ("100H-1", 10, 255,  0);
   check ("10",     16, 0x10, 0);
 
+
+  /*
+   * Number parsing quirks (bug-for-bug compat): premature stop on first
+   * out-of-range "digit" (unless it triggers a valid suffix), with
+   * suffix rules, fallback only when the bad digit would be valid in
+   * "ambient" radix, dot handling, case insensitivity, and garbage
+   * alphanum acceptance.  This table is intended to be exhaustive over
+   * the key permutations of radices, suffix letters (B/D/H/O/Q) in
+   * trailing/internal positions, dots, leading zeros, etc.
+   */
+
+  check ("100B101B",     10, 4,  0);
+  check ("7Q6Q",         10, 7,  0);
+  check ("9D8D",         10, 9,  0);
+  check ("9.8.",         10, 9,  0);
+  check ("0AHCH",        10, 10, 0);
+  check ("19DABZUW1234", 10, 19, 0);
+  check ("100B101",      2,  4,  0);
+  check ("7Q6",          8,  7,  0);
+  check ("9D8",          10, 9,  0);
+  check ("0AHC",         16, 10, 0);
+
+  /* more trailing suffix per radix */
+  check ("101B", 10, 5,   0);
+  check ("101b", 10, 5,   0);
+  check ("77Q",  10, 63,  0);
+  check ("77q",  10, 63,  0);
+  check ("0FFH", 10, 255, 0);
+  check ("0ffh", 10, 255, 0);
+  check ("12D",  10, 12,  0);
+  check ("12d",  10, 12,  0);
+
+  /* internal bad under default, value = prefix before first bad */
+  check ("100B1", 10, 100, 0); /* no trailing suffix; B internal -> "100"=100 */
+  check ("19DAB", 10, 19,  0); /* stops before D ->19 */
+  check ("19D",   10, 19,  0);
+
+  /* rad-specific from report + perms */
+  check ("100B101", 2, 4,  0);
+  check ("10102",   2, 10, 0); /* under rad2: "1010" (trunc before 2) = 10 */
+  check ("1010",    2, 10, 0);
+  check ("77Q8",    8, 63, 0);
+  check ("77O",     8, 63, 0);
+
+  /* fallback vs keep-suffixed-rad */
+  check ("0BD",  10, 0,    0);
+  check ("0BDH", 10, 0xbd, 0);
+  check ("0BD",  16, 0xbd, 0);
+  check ("0BDH", 16, 0xbd, 0);
+
+  /* dots permutations */
+  check ("12.",    10, 12, 0);
+  check ("1.2",    10, 1,  0);
+  check ("5.",     10, 5,  0);
+  check ("1.2.3.", 10, 1,  0);
+
+  /* high-radix ending B/D without H (guard + omit-H rule) */
+  check ("0AB",    16, 0xab, 0);
+  check ("0ABH",   16, 0xab, 0);
+  check ("0AHB",   16, 10,   0);
+  check ("01BH1B", 16, 0x1b, 0);
+
+  /* other letters inside (non-suffix) cause early stop */
+  check ("1A2", 10, 1,    0);
+  check ("1G",  10, 1,    0);
+  check ("0F1", 16, 0xf1, 0); /* "0F1" all valid under 16 */
+  check ("0G1", 16, 0,    0);
+
+  /* 0 and edge */
+  check ("0B",  10, 0,  0);
+  check ("0H",  10, 0,  0);
+  check ("0",   16, 0,  0);
+  check ("10H", 10, 16, 0);
+
+  /* lowercase full */
+  check ("100b101b", 10, 4,    0);
+  check ("0ahch",    10, 10,   0);
+  check ("2+3*4",    10, 14,   0);
+  check ("2*3&6",    10, 4,    0);
+  check ("1<2+3",    10, 7,    0);
+  check ("100H-1",   10, 255,  0);
+  check ("10",       16, 0x10, 0);
+
   /* TDL/PSA logical operators: ^ XOR, # unary NOT, & AND, ! OR, < > shifts */
-  check ("5^3",  10, 6,      0); /* exclusive OR                     */
-  check ("#5",   10, 0xFFFA, 0); /* unary NOT (one's complement)     */
+  check ("5^3",  10, 6,      0); /* exclusive OR                    */
+  check ("#5",   10, 0xFFFA, 0); /* unary NOT (one's complement)    */
   check ("#0",   10, 0xFFFF, 0);
   check ("#5+1", 10, 0xFFFB, 0); /* # binds tighter than + : (#5)+1 */
   check ("1+#0", 10, 0x0000, 0); /* 1 + 0xFFFF, truncated           */

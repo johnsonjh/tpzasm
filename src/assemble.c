@@ -696,6 +696,7 @@ err_letter (const char *msg)
               { "subscript",                    'S' },
               { "extra operand",                'Q' },
               { "register value range",         'Q' },
+              { "questionable number",          'Q' },
               { "bad index register",           'X' },
               { NULL,                             0 } };
   int i;
@@ -835,6 +836,10 @@ eval1 (astate *a, const char **pp, value_t *v)
       v->reloc = 0;
       v->base = 0;
       v->ext = NULL;
+
+      a->ppos = line_off (a->cur_line, endp ? endp : *pp);
+
+      aerr (a, a->cur_line, (err && *err) ? err : "bad expression");
     }
 
   *pp = endp;
@@ -2996,8 +3001,7 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
           long k;
 
           /* emit 0, keep size */
-          if (eval1 (a, &p, &v))
-            aerr (a, line, "bad expression");
+          (void)eval1 (a, &p, &v);
 
           for (k = 0; k < rep; k++)
             {
@@ -3136,8 +3140,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
           value_t v;
           const char *q = p + 1;
 
-          if (eval1 (a, &q, &v))
-            aerr (a, line, "bad expression");
+          (void)eval1 (a, &q, &v);
 
           q = skipws (q);
 
@@ -3154,8 +3157,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
         { /* bare byte expression */
           value_t v;
 
-          if (eval1 (a, &p, &v))
-            aerr (a, line, "bad expression");
+          (void)eval1 (a, &p, &v);
 
           last_lc = a->lc;
           emit_imm8 (a, line, &v);
