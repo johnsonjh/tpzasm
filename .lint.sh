@@ -298,17 +298,34 @@ command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
 
 ################################################################################
 
-CPPCHECK_FLAGS="--enable=warning,style,performance"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?},portability,unusedFunction"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --force ${CHECK_LEVEL:-}"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --std=c89"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --inline-suppr"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --inconclusive"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --quiet"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --error-exitcode=2"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -D__CPPCHECK__"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -D__LINT__"
-CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -j $(nproc 2> /dev/null || echo 1)"
+command -v "${CPPCHECK:-cppcheck}" > /dev/null 2>&1 && {
+  printf '\n%s\n' ">>>>>>>>>>>>>>>> cppcheck setup <<<<<<<<<<<<<<<<"
+  CPPCHECK_FLAGS="--enable=warning,style,performance"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?},portability,unusedFunction"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --quiet"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --std=c89"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --inline-suppr"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --inconclusive"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --error-exitcode=2"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -D__CPPCHECK__"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -D__LINT__"
+  CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} -j $(nproc 2> /dev/null || echo 1)"
+  test -z "${CPPCHECK_FULL:-}" \
+    || {
+      CPPCHECK_FLAGS="${CPPCHECK_FLAGS:?} --force ${CHECK_LEVEL:-}"
+      printf '\n%s\n' \
+        "*** Full Cppcheck enabled; using 'cppcheck --force ${CHECK_LEVEL:-}'"
+    }
+  test -n "${CPPCHECK_FULL:-}" \
+    || {
+      printf '\n%s\n' \
+        "**********************************************************************"
+      printf '%s\n' \
+        "** Fast Cppcheck enabled; set CPPCHECK_FULL=1 for exhaustive checks **"
+      printf '%s\n' \
+        "**********************************************************************"
+    }
+}
 
 ################################################################################
 
