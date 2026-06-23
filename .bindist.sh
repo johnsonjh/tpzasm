@@ -219,7 +219,7 @@ env \
   PATH="${WATCOM:?}/binl64:${PATH:-}" \
   "${MAKE:?}" \
   CC="${WATCOM:?}/binl64/owcc" \
-  CFLAGS="-blinux -std=c89 -march=i386 -Wall -Wextra -g0 -O3 \
+  CFLAGS="-D__linux__ -blinux -std=c89 -march=i386 -Wall -Wextra -g0 -O3 \
   -frerun-optimizer -mstack-size=1024k -fgrow-stack" \
   LDFLAGS="-blinux"
 
