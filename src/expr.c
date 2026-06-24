@@ -123,7 +123,7 @@ scan_number (ectx *e)
   buf[n] = '\0';
   ndig = n;
 
-  if (n > 0 && '.' == buf[n - 1])
+  if (n > 0 && '.' == buf[(long)n - 1])
     {
       radix = 10;
       ndig = n - 1;

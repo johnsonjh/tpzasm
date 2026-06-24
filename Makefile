@@ -190,12 +190,10 @@ dmd:
 hexcom: $(SRCDIR)/hexcom.o
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
-		-o $@ $(SRCDIR)/hexcom.o "$${CFLAGS:-$(XCFLAGS)}" \
-		"$${LDFLAGS:-$(XLDFLAGS)}"
+		-o $@ $(SRCDIR)/hexcom.o "$${LDFLAGS:-$(XLDFLAGS)}"
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
-		-o $@ $(SRCDIR)/hexcom.o "$${CFLAGS:-$(XCFLAGS)}" \
-		"$${LDFLAGS:-$(XLDFLAGS)}"
+		-o $@ $(SRCDIR)/hexcom.o "$${LDFLAGS:-$(XLDFLAGS)}"
 
 $(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c
 	@eval echo \

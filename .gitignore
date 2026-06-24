@@ -36,7 +36,7 @@ main
 *.map
 *.MAP
 massif.out*
-NOTE.txt
+/NOTE*
 *.o
 *.O
 *.obj

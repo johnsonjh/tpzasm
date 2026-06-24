@@ -75,13 +75,18 @@
 
 /******************************************************************************/
 
-# if defined(HAVE_UTSNAME_H) || (defined(_WIN32) && !defined(__CYGWIN__))
+# if defined(HAVE_UTSNAME_H) || (defined(_WIN32) && !defined(__CYGWIN__)) || \
+     defined(__VBCC__)
 #  define HAVE_SYSARCH
 # endif
 
 /******************************************************************************/
 
-# if defined(__SICORTEX__) && (defined(__linux__) || defined(__linux))
+# if defined(__VBCC__)
+#  ifndef HAVE_SIGNAL_H
+#   define HAVE_SIGNAL_H
+#  endif
+# elif defined(__SICORTEX__) && (defined(__linux__) || defined(__linux))
 #  ifndef HAVE_SIGNAL_H
 #   define HAVE_SIGNAL_H
 #  endif

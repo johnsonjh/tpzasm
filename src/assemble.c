@@ -1828,7 +1828,7 @@ zcond (const char **pp, int jr)
 {
   const char *p = skipws (*pp);
   char t[8];
-  int n = zid (p, t, sizeof (t));
+  int n = zid (p, t, (int)sizeof (t));
   int cc = -1;
 
   if (0 == n)
@@ -1888,7 +1888,7 @@ zparse (astate *a, const char **pp, zoperand *o)
     {
       const char *inner = skipws (p + 1);
       char it[NAMEBUF];
-      int in = zid (inner, it, sizeof (it));
+      int in = zid (inner, it, (int)sizeof (it));
       const char *after = skipws (inner + in);
 
       if (in > 0 && ')' == *after
@@ -1971,7 +1971,7 @@ zparse (astate *a, const char **pp, zoperand *o)
     }
 
   /* not parenthesized: a bare register / pair / I / R, else an immediate */
-  n = zid (p, t, sizeof (t));
+  n = zid (p, t, (int)sizeof (t));
 
   if (n > 0 && !idchar ((unsigned char)p[n]))
     {
@@ -4572,7 +4572,7 @@ capture_svalue (const astate *a, const char *o, char *d, size_t s, int nst)
 
   if ('\0' != *p && ';' != *p)
     {
-      const char close = svalue_close (a, *p);
+      const char closer = svalue_close (a, *p);
       int depth = 0;
       size_t n = 0;
 
@@ -4581,11 +4581,11 @@ capture_svalue (const astate *a, const char *o, char *d, size_t s, int nst)
           if ((unsigned char)*p < ' ')
             continue;
 
-          if (nst && ']' == close && '[' == *p)
+          if (nst && ']' == closer && '[' == *p)
             depth++;
-          else if (close == *p)
+          else if (closer == *p)
             {
-              if (nst && ']' == close && depth > 0)
+              if (nst && ']' == closer && depth > 0)
                 depth--;
               else
                 break;
@@ -7716,17 +7716,17 @@ do_line (astate *a, const char *line)
 
       if ('\0' != *q)
         {
-          const char close = svalue_close (a, *q);
+          const char closer = svalue_close (a, *q);
           int depth = 0;
           const char *p;
 
           for (p = q + 1; '\0' != *p; p++)
             {
-              if (']' == close && '[' == *p)
+              if (']' == closer && '[' == *p)
                 depth++;
-              else if (close == *p)
+              else if (closer == *p)
                 {
-                  if (']' == close && depth > 0)
+                  if (']' == closer && depth > 0)
                     depth--;
                   else
                     break;
@@ -7735,7 +7735,7 @@ do_line (astate *a, const char *line)
 
           if ('\0' == *p) /* delimiter never closed: spills onto later lines */
             {
-              a->remark_close = close;
+              a->remark_close = closer;
               a->remark_depth = depth;
               a->in_remark = 1;
             }

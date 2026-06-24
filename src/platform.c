@@ -116,13 +116,76 @@ const char *sysarch(void)
 
   /*******************************************************************/
 
-# elif !defined(HAVE_UTSNAME_H)
+# elif !defined(HAVE_UTSNAME_H) && !defined(__VBCC__)
   return NULL;
 # else
 
   /*******************************************************************/
 
-#  if defined(__SICORTEX__) && defined(__mips64)
+#  if defined(__VBCC__) && defined(__COLDFIRE)
+  return "Coldfire";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__6502__)
+  return "6502";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__65816__)
+  return "65816";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__PPC__)
+  return "powerpc";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__ALPHA__)
+  return "alpha";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && (defined(__X86__) || defined(__I386__))
+  return "i386";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && (defined(__C16X__) || \
+        defined(__C167_) || defined(__ST10__))
+  return "C16X";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__VIDEOCORE__)
+  return "VCIV";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__HC12__)
+  return "HC12";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__6809__)
+  return "6809";
+
+  /*******************************************************************/
+
+#  elif defined(__VBCC__) && defined(__6309__)
+  return "6309";
+
+  /*******************************************************************/
+
+#  elif defined(__M68K__) || defined(__m68k__) || \
+        defined(__M68000__) || defined(__mc68000) || \
+        defined(__mc68000__) || defined(__m68k)
+  return "m68k";
+
+  /*******************************************************************/
+
+#  elif defined(__SICORTEX__) && defined(__mips64)
   return "mips64";
 
   /*******************************************************************/
@@ -229,7 +292,22 @@ const char *platform_name (void)
 
   /*******************************************************************/
 
-#if defined(__SICORTEX__) && (defined(__linux__) || defined(__linux))
+#if defined(__serenity__)
+  return "SerenityOS";
+
+  /*******************************************************************/
+
+#elif defined(__MORPHOS__)
+  return "MorphOS";
+
+  /*******************************************************************/
+
+#elif defined(__VBCC__)
+  return "VBCC"; /* VBCC defines no platform-detection macros */
+
+  /*******************************************************************/
+
+#elif defined(__SICORTEX__) && (defined(__linux__) || defined(__linux))
   return "Linux/SiCortex";
 
   /*******************************************************************/
