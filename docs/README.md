@@ -17,10 +17,10 @@ The **TDL&nbsp;ZASM&nbsp;1.2** manual is provided for completeness.
 
 | File | Description | View |
 |---:|:---|:---|
+| [**`Z80_Assm.zip`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/Z80_Assm.zip) | Breton,&nbsp;R.&nbsp;R.&nbsp;(2003).&nbsp;“*Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS*”&nbsp;(4th&nbsp;ed.). | [Download‑only](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/Z80_Assm.zip) |
+| [**`PSA_PASM.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/PSA_PASM.pdf) | `PSA PASM 1.0 Manual`&nbsp;(02/01/1980) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/PSA_PASM.pdf) |
 | [**`TDL_ZASM22.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/TDL_ZASM22.pdf) | `TDL ZASM 2.2 Manual`&nbsp;(10/15/1977) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/TDL_ZASM22.pdf) |
 | [**`TDL_ZASM12.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/TDL_ZASM12.pdf) | `TDL ZASM 1.2 Manual`&nbsp;(12/09/1976) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/TDL_ZASM12.pdf) |
-| [**`PSA_PASM.pdf`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/PSA_PASM.pdf) | `PSA PASM 1.0 Manual`&nbsp;(02/01/1980) | [**PDF**&nbsp;(*nbviewer*)](https://nbviewer.org/github/johnsonjh/tpzasm/blob/master/docs/PSA_PASM.pdf) |
-| [**`Z80_Assm.zip`**](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/Z80_Assm.zip) | Breton,&nbsp;R.&nbsp;R.&nbsp;(2003).&nbsp;“*Z‑80&nbsp;assembly&nbsp;language&nbsp;under&nbsp;TurboDOS*”&nbsp;(4th&nbsp;ed.). | [Download‑only](https://raw.githubusercontent.com/johnsonjh/tpzasm/refs/heads/master/docs/Z80_Assm.zip) |
 
 The [`re/`](re) subdirectory contains reverse engineering notes.
 
