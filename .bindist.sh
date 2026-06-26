@@ -96,6 +96,11 @@ CROSSMINT_GCC="${CROSSMINT:?}/usr/bin/m68k-atari-mintelf-gcc"
 
 ##############################################################################
 
+export VBCC=/opt/vbcc
+export PATH="${VBCC:?}/bin:${PATH:-}"
+
+##############################################################################
+
 export FIND_COMMAND_FATAL=0
 
 if out=$(
@@ -126,7 +131,8 @@ export FIND_COMMAND_FATAL=1
 find_command "${AWK:-awk}" "${CROSSMINT_GCC:?}" "${DJGPPGCC:?}" "${DU:?}" \
   "${EXE2COFF:?}" "${MAKE:?}" "${WATCOM:?}/binl64/owcc" advzip ./asm cat cp \
   docker grep i686-w64-mingw32-gcc lha mkdir musl-gcc mkdir mv pigz rm sed \
-  sleep strip tar upx x86_64-w64-mingw32ucrt-gcc zip
+  sleep strip tar upx x86_64-w64-mingw32ucrt-gcc zip cranker \
+  "${VBCC:?}/bin/vc"
 
 ################################################################################
 
@@ -467,6 +473,29 @@ rm -f -r ./tpzasm > /dev/null 2>&1
 ################################################################################
 :
 
+# AmigaOS (68020)
+
+rm -f -r ./pasm ./zasm ./hexcom ./asm ./TPZASMAM.LHA > /dev/null 2>&1
+
+"${MAKE:?}" distclean CC="${CROSSMINT_GCC:?}"
+"${MAKE:?}" CC=vc CFLAGS="+aos68k -cpu=68020 -c89 -no-trigraphs -speed -O3 \
+  -maxoptpasses=1 -dontwarn=172" LDFLAGS="-final"
+
+cranker -f hexcom -o hexcom.out -d minimal
+mv -f hexcom.out hexcom
+
+cranker -f asm -o asm.out -d minimal
+mv -f asm.out asm
+
+lha -c -z -0 TPZASMAM.LHA hexcom asm
+rm -f ./hexcom ./asm
+
+:
+################################################################################
+: :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
+################################################################################
+:
+
 mkdir -p ./bindist
 
 mv -f ./TPZASMO2.ZIP ./bindist
@@ -474,6 +503,7 @@ mv -f ./TPZASM86.ZIP ./bindist
 mv -f ./TPZASM64.ZIP ./bindist
 mv -f ./TPZASM32.ZIP ./bindist
 mv -f ./TPZASMST.LZH ./bindist
+mv -f ./TPZASMAM.LHA ./bindist
 mv -f ./tpzasm-linux64.tar.gz ./bindist
 mv -f ./tpzasm-linux32.tar.gz ./bindist
 mv -f ./tpzasm-linuxarm64.tar.gz ./bindist

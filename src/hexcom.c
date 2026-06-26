@@ -275,10 +275,12 @@ main (int argc, char **argv)
   try_size = ADDRSP;
 
 #ifndef __CPM__
+# ifndef __VBCC__
   /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
   hnp = getenv ("HEXCOM_NO_PAD");
-#else
+# else
   hnp = "1";
+# endif
 #endif
 
   for (;;)
@@ -317,8 +319,10 @@ main (int argc, char **argv)
         "Usage:\n"
         "  hexcom <basename>  (Reads basename.hex, writes basename.com)\n"
 #ifndef __CPM__
+# ifndef __VBCC__
         "\n"
         "Set 'HEXCOM_NO_PAD=1' in the environment to disable record padding.\n"
+# endif
 #endif
         "\n");
 
