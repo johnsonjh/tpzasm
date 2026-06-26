@@ -9125,7 +9125,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
     (void)fprintf(stderr, "*** %d %s %s detected%s\n", a.errors,
                   (1 == a.errors ? "error" : "errors"),
                   (1 == a.errors ? "was" : "were"),
-                  (lstpath ? "; review listing" : ""));
+                  (lstpath && 0 != a.errors ? "; review listing" : ""));
 
   /*
    * -o absolute image: the object records were already streamed per module
