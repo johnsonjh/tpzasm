@@ -441,18 +441,18 @@ const char *platform_name (void)
   /*******************************************************************/
 
 #elif defined(__DJGPP) || defined(__DJGPP__) || defined(DJGPP)
-  return "MS-DOS/DJGPP";
+  return "DOS/DJGPP";
 
   /*******************************************************************/
 
 #elif defined(__MSDOS__) || defined(__MS_DOS__) || defined(MSDOS) \
     || defined(_DOS) || defined(__DOS__) || defined(__IA16_SYS_MSDOS)
-  return "MS-DOS";
+  return "DOS";
 
   /*******************************************************************/
 
 #elif defined(__CYGWIN__)
-  return "Windows/Cygwin";
+  return "Cygwin";
 
   /*******************************************************************/
 
