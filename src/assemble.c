@@ -71,9 +71,9 @@ install_sigint (void)
 #if defined(HAVE_SIGNAL_H) && defined(USE_SIGACTION) && defined(SIGINT)
   struct sigaction sa; /* Depends on globally available/unhidden sigaction! */
 
-  memset (&sa, 0, sizeof (sa));
+  (void)memset (&sa, 0, sizeof (sa));
   sa.sa_handler = on_sigint;
-  sigemptyset (&sa.sa_mask);
+  (void)sigemptyset (&sa.sa_mask);
   sa.sa_flags = 0;
 
   (void)sigaction (SIGINT, &sa, NULL);
