@@ -11,7 +11,7 @@ All three share one keyword-table format.
 Each keyword is a **10-byte record**:
 
 ```
-<NAME:4> <00 00> <TYPE:1> <IDX:1> <ATTR:2>
+<NAME:4> <CHAIN:2> <TYPE:1> <IDX:1> <ATTR:2>
 ```
 * **NAME** = the keyword's first 6 characters packed as two big-endian
   RAD40 words (bytes `[0:2]` and `[2:4]`), 3 chars each.
@@ -20,6 +20,12 @@ Each keyword is a **10-byte record**:
     (letter code = ASCII−'A'+11).
   * Confirmed by Mark Ogden's disassembly and email to me about how TDL stores
     the first 6 chars; round-trip verified; every stored key re-encodes exactly.
+* **CHAIN** = hash chain link address (2 bytes), written during table
+  initialization.  The hash table has 32 buckets indexed by
+  `(name[0] XOR name[1]) & 0x1F` where `name[0]` and `name[1]` are the first
+  two bytes of the packed (RAD40) NAME field.  Each bucket holds the address of
+  the first matching record which is the forward-chain pointer to the next
+  record (in the same bucket).
 * **TYPE/IDX** = the operand-format / encoding class.
 * **ATTR** = the opcode / prefix bytes, e.g. `ed57`=`LD A,I`, `cb40`=`BIT 0,B`,
   `ed4a`=`ADC HL,BC`, `dd09`=`ADD IX,BC`, `eda0`/`edb0`=`LDI`/`LDIR`.

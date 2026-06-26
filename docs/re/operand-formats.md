@@ -1,7 +1,10 @@
 # TDL / PSA operand-format classes (TYPE / IDX / ATTR)
 
 Companion to `keyword-tables.md`.
-Each keyword record is `<NAME:4> 00 00 <TYPE> <IDX> <ATTR:2>`.
+
+Each keyword record is `<NAME:4> <CHAIN:2> <TYPE> <IDX> <ATTR:2>` where `CHAIN`
+is the hash chain link address written during initialization
+(see the `keyword-tables.md` file for more info).
 
 * **TYPE** = keyword *category* (which dispatch/mnemonic-set).
 * **IDX**  = *operand-format class* within the category (or directive handler id).
