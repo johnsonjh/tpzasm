@@ -233,9 +233,6 @@
 #  ifndef USE_TERMIOS
 #   define USE_TERMIOS
 #  endif
-#  ifndef USE_SIGACTION
-#   define USE_SIGACTION
-#  endif
 # endif
 
 /******************************************************************************/
