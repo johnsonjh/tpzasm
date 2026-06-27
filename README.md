@@ -91,7 +91,7 @@ error‑handling semantics, plus user‑configurable control of output padding.
 
 ```
 TPZASM - TDL ZASM / PSA PASM compatible 8080 / Z80 assembler (Linux/x86_64)
-Release 0.94 (Built Jun 26 2026) https://github.com/johnsonjh/tpzasm
+Release 0.94 (Built Jun 27 2026) https://github.com/johnsonjh/tpzasm
 Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
 
 Usage: asm [options] <source[.asm]>
@@ -124,7 +124,7 @@ symbolic link).  Invoke the assembler as `zasm` to select **TDL ZASM 2.21**,
 |-----------------------------------------------------------------------------------------------------------------------:|-------------:|:-------------------------------------|
 | [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 196&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
 | [TPZASMST.LZH](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMST.LZH)                         | 176&nbsp;KiB | **Atari&nbsp;ST**&nbsp;(TOS/MINT)    |
-| [TPZASMAM.LHA](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMAM.LHA)                         | 80&nbsp;KiB | **AmigaOS**&nbsp;(68020)              |
+| [TPZASMAM.LHA](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMAM.LHA)                         | 84&nbsp;KiB | **AmigaOS**&nbsp;(68000)  |
 | [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                         | 68&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
 | [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 72&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
 | [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                         | 76&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
