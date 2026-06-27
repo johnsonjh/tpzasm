@@ -31,6 +31,7 @@ core-*
 /GTAGS
 /hexcom
 log.pvs
+/*.lst
 /m80
 main
 *.map
@@ -68,6 +69,7 @@ symtab.txt
 *.TMP
 /tpzasm/
 /tpzasm.c
+*.uaem
 /*UME.md
 *.unittest
 /work/
