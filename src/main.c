@@ -37,7 +37,21 @@ long _stksize = -1L;
 /******************************************************************************/
 
 #if defined(__VBCC__)
-long __stack = 160 * 1024;
+long __stack = (160 * 1024);
+#endif
+
+/******************************************************************************/
+
+#if (defined(__amiga) || defined(__amiga__) || defined(amiga) || \
+     defined(__AMIGA) || defined(__AMIGA__) || defined(AMIGA) || \
+     defined(__amigaos) || defined(__amigaos__) || defined(amigaos) || \
+     defined(__amigaos3) || defined(__amigaos3__) || defined(amigaos3)) && \
+    (defined(__libnix) || defined(__libnix__) || defined(libnix)) && \
+    (defined(__MCH_AMIGA) || defined(__MCH_AMIGA__) || defined(MCH_AMIGA)) && \
+    defined(__GNUC__)
+extern void __stkinit(void) __attribute__((used));
+void * __x __attribute__((used)) = __stkinit;
+unsigned long __stack __attribute__((used)) = (160*1024);
 #endif
 
 /******************************************************************************/

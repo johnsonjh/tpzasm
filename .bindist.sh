@@ -96,8 +96,28 @@ CROSSMINT_GCC="${CROSSMINT:?}/usr/bin/m68k-atari-mintelf-gcc"
 
 ##############################################################################
 
-export VBCC=/opt/vbcc
-export PATH="${VBCC:?}/bin:${PATH:-}"
+export VBCC="/opt/vbcc"
+test -d "${VBCC:-}" && {
+  export PATH="${VBCC:?}/bin:${PATH:-}"
+  export AMIGA_COMPILER="${VBCC:?}/bin/vc"
+  export AMIGA_MODE="VBCC"
+} || :
+
+##############################################################################
+
+export BEBBO="/opt/amiga"
+test -d "${BEBBO:-}" && {
+  export PATH="${BEBBO:?}/bin:${PATH:-}"
+  export AMIGA_COMPILER="${BEBBO:?}/bin/m68k-amigaos-gcc"
+  export AMIGA_MODE="BEBBO"
+} || :
+
+##############################################################################
+
+test -z "${AMIGA_COMPILER:-}" && {
+  printf '\n%s\n\n' "ERROR: Could not find Bebbo Amiga-GCC nor Vbcc; aborting!"
+  exit 1
+}
 
 ##############################################################################
 
@@ -132,7 +152,11 @@ find_command "${AWK:-awk}" "${CROSSMINT_GCC:?}" "${DJGPPGCC:?}" "${DU:?}" \
   "${EXE2COFF:?}" "${MAKE:?}" "${WATCOM:?}/binl64/owcc" advzip ./asm cat cp \
   docker grep i686-w64-mingw32-gcc lha mkdir musl-gcc mkdir mv pigz rm sed \
   sleep strip tar upx x86_64-w64-mingw32ucrt-gcc zip cranker \
-  "${VBCC:?}/bin/vc"
+  "${AMIGA_COMPILER:?}"
+
+################################################################################
+
+USAGE="$(./asm -h 2>&1)"
 
 ################################################################################
 
@@ -167,10 +191,6 @@ test "${NEED_PAUSE:-0}" -ne 1 || {
 
 ################################################################################
 
-USAGE="$(./asm -h 2>&1)"
-
-################################################################################
-
 # shellcheck disable=SC2119
 TMP_README="$(mktemp 2> /dev/null || mktemp_local)"
 # shellcheck disable=SC2119
@@ -190,7 +210,7 @@ set -eux
 
 rm -f ./pasm ./zasm ./hexcom.exe ./asm.exe ./TPZASM86.ZIP > /dev/null 2>&1
 
-"${MAKE:?}" distclean CC="${DJGPPGCC:?}"
+"${MAKE:?}" distclean
 "${MAKE:?}" CC="${DJGPPGCC:?}" LDFLAGS="-s"
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
@@ -219,7 +239,7 @@ advzip -z4 ./TPZASM86.ZIP
 rm -f -r ./tpzasm ./tpzasm-linux32.tar* > /dev/null 2>&1
 mkdir -p ./tpzasm
 
-"${MAKE:?}" distclean CC="${WATCOM:?}/binl64/owcc"
+"${MAKE:?}" distclean
 env \
   INCLUDE="${WATCOM:?}/lh:/usr/include" \
   PATH="${WATCOM:?}/binl64:${PATH:-}" \
@@ -258,7 +278,7 @@ OS2HEX="This HEXCOM requires 32-bit OS/2."
 
 rm -f ./pasm ./zasm ./asm.exe ./hexcom.exe ./TPZASMO2.ZIP > /dev/null 2>&1
 
-"${MAKE:?}" distclean CC="${WATCOM:?}/binl64/owcc"
+"${MAKE:?}" distclean
 env \
   INCLUDE="${WATCOM:?}/h" \
   PATH="${WATCOM:?}/binl64:${PATH:-}" \
@@ -289,7 +309,7 @@ rm -f -r ./pasm ./zasm ./hexcom ./asm ./tpzasm ./tpzasm-linux64.tar* \
   > /dev/null 2>&1
 mkdir -p ./tpzasm
 
-"${MAKE:?}" distclean CC="musl-gcc"
+"${MAKE:?}" distclean
 "${MAKE:?}" CC="musl-gcc" LDFLAGS="-s -static"
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
@@ -320,7 +340,7 @@ rm -f -r ./tpzasm > /dev/null 2>&1
 
 rm -f -r ./pasm ./zasm ./hexcom.exe ./asm.exe ./TPZASM32.ZIP > /dev/null 2>&1
 
-"${MAKE:?}" distclean CC="i686-w64-mingw32-gcc"
+"${MAKE:?}" distclean
 "${MAKE:?}" CC="i686-w64-mingw32-gcc" LDFLAGS="-s"
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
@@ -342,7 +362,7 @@ advzip -z4 ./TPZASM32.ZIP
 
 rm -f -r ./pasm ./zasm ./hexcom.exe ./asm.exe ./TPZASM64.ZIP > /dev/null 2>&1
 
-"${MAKE:?}" distclean CC="x86_64-w64-mingw32ucrt-gcc"
+"${MAKE:?}" distclean
 "${MAKE:?}" CC="x86_64-w64-mingw32ucrt-gcc" LDFLAGS="-s"
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
@@ -364,7 +384,7 @@ advzip -z4 ./TPZASM64.ZIP
 
 rm -f -r ./pasm ./zasm ./hexcom.ttp ./asm.ttp ./TPZASMST.LZH > /dev/null 2>&1
 
-"${MAKE:?}" distclean CC="${CROSSMINT_GCC:?}"
+"${MAKE:?}" distclean
 env PATH="${CROSSMINT_ARCH:?}/bin:${CROSSMINT_ARCH:?}/usr/bin:${PATH:-}" \
   LDFLAGS="-s" \
   "${MAKE:?}" \
@@ -473,22 +493,65 @@ rm -f -r ./tpzasm > /dev/null 2>&1
 ################################################################################
 :
 
-# AmigaOS (68020)
+# AmigaOS (Vbcc 68020)
 
-rm -f -r ./pasm ./zasm ./hexcom ./asm ./TPZASMAM.LHA > /dev/null 2>&1
+test "${AMIGA_MODE:-}" = "VBCC" && {
 
-"${MAKE:?}" distclean CC="${CROSSMINT_GCC:?}"
-"${MAKE:?}" CC=vc CFLAGS="+aos68k -cpu=68020 -c89 -no-trigraphs -speed -O3 \
-  -maxoptpasses=1 -dontwarn=172" LDFLAGS="-final"
+  printf '%s\n' "*** Using VBCC for AmigaOS build..."
 
-cranker -f hexcom -o hexcom.out -d minimal
-mv -f hexcom.out hexcom
+  rm -f -r ./pasm ./zasm ./hexcom ./asm ./TPZASMAM.LHA > /dev/null 2>&1
 
-cranker -f asm -o asm.out -d minimal
-mv -f asm.out asm
+  # Only 68020+ builds are supported and working with Vbcc! :(
+  "${MAKE:?}" distclean
+  "${MAKE:?}" \
+    CC="${AMIGA_COMPILER:?}" \
+    CFLAGS="+aos68k -cpu=68020 -c89 -no-trigraphs -speed -O3 \
+    -maxoptpasses=1 -dontwarn=172" \
+    LDFLAGS="-final"
 
-lha -c -z -0 TPZASMAM.LHA hexcom asm
-rm -f ./hexcom ./asm
+  cranker -f hexcom -o hexcom.out -d minimal
+  mv -f hexcom.out hexcom
+  chmod a+x hexcom
+
+  cranker -f asm -o asm.out -d minimal
+  mv -f asm.out asm
+  chmod a+x asm
+
+  lha -c -z -0 TPZASMAM.LHA hexcom asm
+  rm -f ./hexcom ./asm
+}
+
+:
+################################################################################
+: :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: :
+################################################################################
+:
+
+# AmigaOS (Bebbo Amiga-GCC 68000)
+
+test "${AMIGA_MODE:-}" = "BEBBO" && {
+
+  printf '%s\n' "*** Using Bebbo Amiga-GCC for AmigaOS build..."
+
+  rm -f -r ./pasm ./zasm ./hexcom ./asm ./TPZASMAM.LHA > /dev/null 2>&1
+
+  "${MAKE:?}" distclean
+  env PATH="${BEBBO:?}/m68k-amigaos/bin:${PATH:-}" "${MAKE:?}" \
+    CC="${AMIGA_COMPILER:?}" \
+    CFLAGS="-m68000 -mcrt=nix13 -O3 -std=gnu90 -flto" \
+    LDFLAGS="-flto"
+
+  cranker -f hexcom -o hexcom.out -d minimal
+  mv -f hexcom.out hexcom
+  chmod a+x hexcom
+
+  cranker -f asm -o asm.out -d minimal
+  mv -f asm.out asm
+  chmod a+x asm
+
+  lha -c -z -0 TPZASMAM.LHA hexcom asm
+  rm -f ./hexcom ./asm
+}
 
 :
 ################################################################################
