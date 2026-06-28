@@ -36,7 +36,7 @@
 #  define ASM_NORETURN
 # elif defined(__GNUC__) || defined(__clang__)
 #  define ASM_NORETURN __attribute__ ((noreturn))
-# elif defined(_MSC_VER)
+# elif defined(_MSC_VER) && (_MSC_VER >= 1200)
 #  define ASM_NORETURN __declspec (noreturn)
 # else
 #  define ASM_NORETURN
