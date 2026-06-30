@@ -38,6 +38,7 @@ tool, is also included.
   * [Original documentation](#original-documentation)
 - [Security](#security)
 - [SAST and linters](#sast-and-linters)
+- [Code statistics](#code-statistics)
 - [License](#license)
   * [Third‑party materials](#third%E2%80%91party-materials)
 
@@ -348,6 +349,85 @@ automatically via the [`.lint.sh`](.lint.sh) script):
 | [SoftIntegration Ch](https://www.softintegration.com/)                                                             | C/C++ interpreter and interactive platform for scientific computing                |
 | [Valgrind](https://valgrind.org/)                                                                                  | Tools for memory debugging, memory leak detection, and profiling                   |
 | [Visual&nbsp;Studio&nbsp;Code&nbsp;Analyzer](https://learn.microsoft.com/en-us/cpp/code-quality/)                  | Tools to analyze and improve C/C++ source code quality                             |
+
+## Code statistics
+
+<!-- scc-start -->
+<table id="scc-table">
+        <thead><tr>
+                <th>Language</th>
+                <th>Files</th>
+                <th>Lines</th>
+                <th>Blank</th>
+                <th>Comment</th>
+                <th>Code</th>
+                <th>Complexity</th>
+                <th>Bytes</th>
+                <th>Uloc</th>
+        </tr></thead>
+        <tbody><tr>
+                <th>C</th>
+                <th>10</th>
+                <th>14285</th>
+                <th>2407</th>
+                <th>2046</th>
+                <th>9832</th>
+                <th>3143</th>
+                <th>390807</th>
+                <th>6858</th>
+        </tr><tr>
+                <th>Shell</th>
+                <th>9</th>
+                <th>2431</th>
+                <th>384</th>
+                <th>333</th>
+                <th>1714</th>
+                <th>327</th>
+                <th>70574</th>
+                <th>1118</th>
+        </tr><tr>
+                <th>C Header</th>
+                <th>3</th>
+                <th>722</th>
+                <th>117</th>
+                <th>156</th>
+                <th>449</th>
+                <th>27</th>
+                <th>23565</th>
+                <th>329</th>
+        </tr><tr>
+                <th>Makefile</th>
+                <th>3</th>
+                <th>696</th>
+                <th>113</th>
+                <th>160</th>
+                <th>423</th>
+                <th>91</th>
+                <th>22468</th>
+                <th>335</th>
+        </tr><tr>
+                <th>Batch</th>
+                <th>1</th>
+                <th>20</th>
+                <th>3</th>
+                <th>13</th>
+                <th>4</th>
+                <th>0</th>
+                <th>690</th>
+                <th>18</th>
+        </tr></tbody>
+        <tfoot><tr>
+                <th>Total</th>
+                <th>26</th>
+                <th>18154</th>
+                <th>3024</th>
+                <th>2708</th>
+                <th>12422</th>
+                <th>3588</th>
+                <th>508104</th>
+                <th>8604</th>
+        </tr></tfoot></table>
+<!-- scc-end -->
 
 ## License
 

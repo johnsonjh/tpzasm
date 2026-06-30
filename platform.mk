@@ -9,6 +9,9 @@
 ifdef SKIP_AUTO
  SKIP_DETECTION:=1
 endif
+ifeq ($(MAKECMDGOALS),scc)
+ SKIP_DETECTION:=1
+endif
 ifeq ($(MAKECMDGOALS),amalgamation)
  SKIP_DETECTION:=1
 endif

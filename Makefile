@@ -244,6 +244,30 @@ amalgamation amalgamate: src/asm.h src/assemble.c src/expr.c src/hexcom.c \
 
 ################################################################################
 
+scc: README.md
+	"$${MAKE:-$(MAKE)}" distclean
+	awk '/<!-- scc-start -->/ { \
+		print; system("scc \
+			--exclude-file LICENSE,README.md,README.awk \
+			--exclude-file log.pvs,.ref_results.log \
+			--exclude-file compile_commands.json \
+			--exclude-file REUSE.toml,docs,pasm2-records.txt \
+			--exclude-file answer.exp,vedit-listing.exp \
+			--exclude-file vedit-build.exp,jr_audit.py \
+			--exclude-file keyword-tables.md,operand-formats.md \
+			--exclude-file pasm2-bugs.md,pasm2-notes.md \
+			--exclude-dir tests,LICENSES,.git,pvsreport \
+			--no-cocomo -u --no-size -s lines -f html-table; \
+			printf \"\n%s\n\" \"<!-- scc-end -->\""); \
+			skip=1; next } \
+		skip && /<!-- scc-end -->/ { skip=0; next } \
+		!skip' README.md > README.awk && \
+	mv -f README.awk README.md && \
+	expand README.md > README.out && \
+	mv -f README.out README.md
+
+################################################################################
+
 tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 	@command -v etags > /dev/null 2>&1 && \
 		{ { echo etags...; etags src/*.c && exit 0; };\
@@ -262,7 +286,7 @@ tags etags ctags gtags TAGS GPATH GRTAGS GTAGS cscope cscope.out tag:
 
 .PHONY: all clean distclean test longtest tags etags ctags gtags TAGS GPATH \
 		GRTAGS GTAGS cscope cscope.out tag lint dmd bindist \
-		amalgamation amalgamate
+		amalgamation amalgamate scc
 
 ################################################################################
 
