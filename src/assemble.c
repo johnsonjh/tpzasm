@@ -2458,8 +2458,9 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
     {
       zparse (a, &p, &d);
       emit (a, 0xED);
-      emit (a, (u16)(0 == d.val.value ? 0x46 : (1 == d.val.value ? 0x56
-                                                                 : 0x5E)));
+      emit (a, (u16)(0 == d.val.value ? 0x46
+                                      : (1 == d.val.value ? 0x56
+                                                          : 0x5E)));
 
       return 1;
     }
