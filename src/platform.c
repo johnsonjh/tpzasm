@@ -394,11 +394,6 @@ const char *platform_name (void)
 
   /*******************************************************************/
 
-#elif defined(__serenity__)
-  return "SerenityOS";
-
-  /*******************************************************************/
-
 #elif defined(__GNU__) && !defined(__linux__)
   return "GNU/Hurd";
 
