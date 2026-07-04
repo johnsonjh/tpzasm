@@ -588,8 +588,9 @@ ch_check()
 
 command -v "${CH_CMD:-ch}" > /dev/null 2>&1 && {
   printf '\n%s\n\n' ">>>>>>>>>>>>>>>> ch <<<<<<<<<<<<<<<<"
-  cat src/assemble.c src/expr.c src/insn.c src/lex.c src/main.c src/sym.c \
-    src/objout.c src/platform.c > src/_chtmp.c
+  cat src/asm.h src/error.h src/platform.h src/version.h src/assemble.c \
+    src/expr.c src/insn.c src/lex.c src/main.c src/sym.c src/objout.c \
+    src/platform.c src/error.c > src/_chtmp.c
   # shellcheck disable=SC2310
   (cd src && ch_check ./_chtmp.c) || rc=1
   rm -f src/_chtmp.c
@@ -927,6 +928,15 @@ NetBSD)
     if (
       set -x
       lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/platform.c
+    ); then
+      :
+    else
+      printf '%s\n' "****** FAILURE DETECTED ******"
+      rc=1
+    fi
+    if (
+      set -x
+      lint -a -aa -b -c -e -g -h -P -r -u -w -z ./src/error.c
     ); then
       :
     else

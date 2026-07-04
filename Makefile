@@ -19,7 +19,7 @@ LINKS    = pasm zasm pasm2
 
 OBJ = $(SRCDIR)/main.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o \
 	$(SRCDIR)/lex.o $(SRCDIR)/insn.o $(SRCDIR)/assemble.o \
-	$(SRCDIR)/objout.o $(SRCDIR)/platform.o
+	$(SRCDIR)/objout.o $(SRCDIR)/error.o $(SRCDIR)/platform.o
 
 ################################################################################
 
@@ -43,14 +43,21 @@ $(LINKS): $(PROG)
 ################################################################################
 
 $(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h \
-	$(SRCDIR)/platform.h $(SRCDIR)/version.h
+	$(SRCDIR)/platform.h $(SRCDIR)/version.h $(SRCDIR)/error.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/main.c
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/main.c
-$(SRCDIR)/expr.o: $(SRCDIR)/expr.c $(SRCDIR)/asm.h
+$(SRCDIR)/error.o: $(SRCDIR)/error.c $(SRCDIR)/error.h
+	@eval echo \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/error.c
+	@eval \
+		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
+		-c -o $@ $(SRCDIR)/error.c
+$(SRCDIR)/expr.o: $(SRCDIR)/expr.c $(SRCDIR)/asm.h $(SRCDIR)/asm.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/expr.c
@@ -78,7 +85,8 @@ $(SRCDIR)/insn.o: $(SRCDIR)/insn.c $(SRCDIR)/asm.h
 	@eval \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/insn.c
-$(SRCDIR)/assemble.o: $(SRCDIR)/assemble.c $(SRCDIR)/asm.h
+$(SRCDIR)/assemble.o: $(SRCDIR)/assemble.c $(SRCDIR)/asm.h \
+		$(SRCDIR)/error.h $(SRCDIR)/platform.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/assemble.c
@@ -161,7 +169,8 @@ test_expr: $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o \
 
 ################################################################################
 
-$(SRCDIR)/test_expr.o: $(SRCDIR)/test_expr.c $(SRCDIR)/asm.h
+$(SRCDIR)/test_expr.o: $(SRCDIR)/test_expr.c $(SRCDIR)/asm.h \
+		$(SRCDIR)/platform.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/test_expr.c
@@ -235,12 +244,14 @@ distclean: clean
 ################################################################################
 
 amalgamation amalgamate: src/asm.h src/assemble.c src/expr.c src/hexcom.c \
-		src/insn.c src/lex.c src/main.c src/objout.c src/platform.c \
-		src/platform.h src/sym.c src/test_expr.c src/version.h
+		src/insn.c src/lex.c src/error.c src/main.c src/objout.c \
+		src/platform.c src/platform.h src/error.h src/sym.c \
+		src/test_expr.c src/version.h
 	printf '%s\n' '#define AMALGAMATION' > tpzasm.c
-	cat src/asm.h src/platform.h src/version.h src/assemble.c src/expr.c \
-		src/insn.c src/lex.c src/main.c src/sym.c src/objout.c \
-		src/platform.c | grep -v '^#.*include ".*"' >> tpzasm.c
+	cat src/asm.h src/platform.h src/version.h src/error.h src/assemble.c \
+		src/expr.c src/insn.c src/lex.c src/error.c src/main.c \
+		src/sym.c src/objout.c src/platform.c | \
+		grep -v '^#.*include ".*"' >> tpzasm.c
 
 ################################################################################
 

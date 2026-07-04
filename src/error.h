@@ -1,25 +1,18 @@
 /*
- * TPZASM: TDL ZASM / PSA PASM compatible assembler - version.h
+ * TPZASM: TDL ZASM / PSA PASM compatible assembler - error.h
  * Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>
  * SPDX-License-Identifier: MIT-0
- * scspell-id: c151d874-63fd-11f1-9cd0-80ee73e9b8e7
+ * scspell-id: 92e7a332-778b-11f1-aff8-80ee73e9b8e7
  */
 
 /******************************************************************************/
 
-#ifndef VERSION_H
-# define VERSION_H
+#ifndef ERROR_H
+# define ERROR_H
 
 /******************************************************************************/
 
-# ifdef ASM_VERSION
-#  undef ASM_VERSION
-# endif
-
-/******************************************************************************/
-
-# define ASM_VERSION "Release 0.96"
-# define ASM_URL " https://github.com/johnsonjh/tpzasm\n"
+void error_msg (const char * m, const char * n, const int e);
 
 /******************************************************************************/
 

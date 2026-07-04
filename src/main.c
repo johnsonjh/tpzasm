@@ -14,6 +14,7 @@
 
 /******************************************************************************/
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +24,7 @@
 #include "asm.h"
 #include "platform.h"
 #include "version.h"
+#include "error.h"
 
 /******************************************************************************/
 
@@ -556,9 +558,7 @@ main (int argc, char **argv)
 
               if (NULL == freopen (argv[++i], "r", stdin))
                 {
-                  (void)fprintf (stderr,
-                                 "%s: cannot open response file '%s'\n", prog,
-                                 argv[i]);
+                  error_msg ("cannot open response file", argv[i], errno);
 
                   free_preops (preops);
 

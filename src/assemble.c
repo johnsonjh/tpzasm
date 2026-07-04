@@ -18,6 +18,7 @@
 /******************************************************************************/
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +28,7 @@
 
 #include "asm.h"
 #include "platform.h"
+#include "error.h"
 
 /******************************************************************************/
 
@@ -457,7 +459,8 @@ em_record (astate *a, u8 v)
     {
       long nc = a->em_cap * 2;
 
-#if ASM_SIZE_T_NARROW /* 16-bit size_t: keep the request inside 64 KiB */
+/* 16-bit size_t: keep the request inside 64 KiB */
+#if ASM_SIZE_T_NARROW
       if (nc > 65535L)
         nc = 65535L;
 #endif
@@ -510,7 +513,8 @@ em_record (astate *a, u8 v)
         {
           long nsc = (long)a->span_cap * 2;
 
-#if ASM_SIZE_T_NARROW /* 16-bit size_t: keep the byte size inside 64 KiB */
+/* 16-bit size_t: keep the byte size inside 64 KiB */
+#if ASM_SIZE_T_NARROW
           if (nsc > 65535L / (long)sizeof (u16))
             nsc = 65535L / (long)sizeof (u16);
 #endif
@@ -568,7 +572,8 @@ emit (astate *a, u16 v)
     {
       if (NULL != a->image)
         {
-#if ASM_SIZE_T_NARROW /* 16-bit size_t: the top byte (0xFFFF) is not storable */
+/* 16-bit size_t: the top byte (0xFFFF) is not storable */
+#if ASM_SIZE_T_NARROW
           if (a->lc < 65535U)
 #endif
             {
@@ -3183,7 +3188,8 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
     {
       if (NULL != a->image)
         {
-#if ASM_SIZE_T_NARROW /* 16-bit size_t: the top byte (0xFFFF) is not storable */
+/* 16-bit size_t: the top byte (0xFFFF) is not storable */
+#if ASM_SIZE_T_NARROW
           if (last_lc < 65535U)
 #endif
             a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
@@ -8483,7 +8489,7 @@ process_file (astate *a, const char *path)
 
   if (NULL == f)
     {
-      (void)fprintf (stderr, "cannot open '%s'\n", path);
+      error_msg ("cannot open", path, errno);
       a->errors++;
 
       return;
@@ -8596,7 +8602,7 @@ process_module (astate *a, const char *path, int modidx)
 
   if (NULL == f)
     {
-      (void)fprintf (stderr, "cannot open '%s'\n", path);
+      error_msg ("cannot open", path, errno);
       a->errors++;
 
       return;
@@ -8806,7 +8812,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   if (NULL == tf)
     {
-      (void)fprintf (stderr, "cannot open '%s'\n", srcpath);
+      error_msg ("cannot open", srcpath, errno);
 
       if (NULL != lf)
         (void)fclose (lf);
@@ -8903,7 +8909,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         relf = obj_open (relpath);
 
         if (NULL == relf)
-          (void)fprintf (stderr, "cannot write '%s'\n", relpath);
+          error_msg ("cannot write", relpath, errno);
       }
 
     if (NULL != hexpath)
@@ -8911,7 +8917,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
         hexf = obj_open (hexpath);
 
         if (NULL == hexf)
-          (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
+          error_msg ("cannot write", hexpath, errno);
       }
 
     for (modidx = 0; modidx < nmod; modidx++)
@@ -9098,10 +9104,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
      */
 
     if (NULL != relpath && NULL != relf && 0 != obj_close (relf))
-      (void)fprintf (stderr, "cannot write '%s'\n", relpath);
+      error_msg ("cannot write", relpath, errno);
 
     if (NULL != hexpath && NULL != hexf && 0 != obj_close (hexf))
-      (void)fprintf (stderr, "cannot write '%s'\n", hexpath);
+      error_msg ("cannot write", hexpath, errno);
   }
 
   /*
