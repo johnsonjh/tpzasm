@@ -7,7 +7,7 @@
 REM === Compile ASM ===
 cl /Ob3 /GS- /Oi /O2 /W4 /wd4996 /Feasm.exe ^
   src/main.c src/expr.c src/sym.c src/lex.c src/insn.c ^
-  src/assemble.c src/objout.c src/platform.c
+  src/error.c src/assemble.c src/objout.c src/platform.c
 
 REM === Compile HEXCOM ===
 cl /Ob3 /GS- /Oi /O2 /W4 /wd4996 /Fehexcom.exe src/hexcom.c
