@@ -123,16 +123,16 @@ symbolic link).  Invoke the assembler as `zasm` to select **TDL ZASM 2.21**,
 
 |                                                                                                                  File  |         Size | Platform                             |
 |-----------------------------------------------------------------------------------------------------------------------:|-------------:|:-------------------------------------|
-| [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 196&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
-| [TPZASMST.LZH](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMST.LZH)                         | 176&nbsp;KiB | **Atari&nbsp;ST**&nbsp;(TOS/MINT)    |
+| [TPZASM86.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM86.ZIP)                         | 200&nbsp;KiB | **MS‑DOS**&nbsp;(80386&nbsp;DPMI)    |
+| [TPZASMST.LZH](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMST.LZH)                         | 320&nbsp;KiB | **Atari&nbsp;ST**&nbsp;(TOS/MINT)    |
 | [TPZASMAM.LHA](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMAM.LHA)                         | 84&nbsp;KiB | **AmigaOS**&nbsp;(68000)  |
 | [TPZASMO2.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASMO2.ZIP)                         | 68&nbsp;KiB | **OS/2**&nbsp;(32‑bit&nbsp;i386)      |
-| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 72&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
+| [TPZASM32.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM32.ZIP)                         | 76&nbsp;KiB | **Windows**&nbsp;(32‑bit&nbsp;MSVCRT) |
 | [TPZASM64.ZIP](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/TPZASM64.ZIP)                         | 76&nbsp;KiB | **Windows**&nbsp;(64‑bit&nbsp;UCRT)   |
-| [tpzasm-linuxarm32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm32.tar.gz) | 108&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;ARMv5)   |
-| [tpzasm-linuxarm64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm64.tar.gz) | 116&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;ARMv8)   |
+| [tpzasm-linuxarm32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm32.tar.gz) | 96&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;ARMv5)   |
+| [tpzasm-linuxarm64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linuxarm64.tar.gz) | 112&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;ARMv8)   |
 | [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz)       | 64&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
-| [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 128&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
+| [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 124&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
 
 > If you need an Atari&nbsp;ST TOS/MINT LHA/LZH utility,
 [`LHarc`](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/.utils/lharc.ttp)

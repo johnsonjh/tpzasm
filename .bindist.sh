@@ -155,7 +155,7 @@ export FIND_COMMAND_FATAL=1
 find_command "${AWK:-awk}" "${CROSSMINT_GCC:?}" "${DJGPPGCC:?}" "${DU:?}" \
   "${EXE2COFF:?}" "${MAKE:?}" "${WATCOM:?}/binl64/owcc" advzip ./asm cat cp \
   docker grep i686-w64-mingw32-gcc lha mkdir musl-gcc mkdir mv pigz rm sed \
-  sleep strip tar upx x86_64-w64-mingw32ucrt-gcc zip cranker \
+  sleep strip tar x86_64-w64-mingw32ucrt-gcc zip cranker \
   "${AMIGA_COMPILER:?}"
 
 ################################################################################
@@ -224,9 +224,6 @@ rm -f ./pasm ./zasm > /dev/null 2>&1
 
 cat "${CWSDSTUB:?}" ./hexcom > ./hexcom.exe && rm -f ./hexcom
 cat "${CWSDSTUB:?}" ./asm > ./asm.exe && rm -f ./asm
-
-(upx -q --best ./hexcom.exe ./asm.exe 2> /dev/null \
-  | grep ' \-> ' 2> /dev/null) || :
 
 zip -0 -X -D -j ./TPZASM86.ZIP hexcom.exe asm.exe
 rm -f ./hexcom.exe ./asm.exe
@@ -324,9 +321,6 @@ sstrip -z ./hexcom > /dev/null 2>&1 || :
 strip --strip-all ./asm
 sstrip -z ./asm > /dev/null 2>&1 || :
 
-(upx -q --best ./hexcom ./asm 2> /dev/null \
-  | grep ' \-> ' 2> /dev/null) || :
-
 mv -f ./hexcom ./asm ./tpzasm/
 
 tar cf ./tpzasm-linux64.tar tpzasm
@@ -349,9 +343,6 @@ rm -f -r ./pasm ./zasm ./hexcom.exe ./asm.exe ./TPZASM32.ZIP > /dev/null 2>&1
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
 
-(upx -q --best ./hexcom.exe ./asm.exe 2> /dev/null \
-  | grep ' \-> ' 2> /dev/null) || :
-
 zip -0 -X -D -j ./TPZASM32.ZIP hexcom.exe asm.exe
 rm -f ./hexcom.exe ./asm.exe
 advzip -z4 ./TPZASM32.ZIP
@@ -370,9 +361,6 @@ rm -f -r ./pasm ./zasm ./hexcom.exe ./asm.exe ./TPZASM64.ZIP > /dev/null 2>&1
 "${MAKE:?}" CC="x86_64-w64-mingw32ucrt-gcc" LDFLAGS="-s"
 
 rm -f ./pasm ./zasm > /dev/null 2>&1
-
-(upx -q --best ./hexcom.exe ./asm.exe 2> /dev/null \
-  | grep ' \-> ' 2> /dev/null) || :
 
 zip -0 -X -D -j ./TPZASM64.ZIP hexcom.exe asm.exe
 rm -f ./hexcom.exe ./asm.exe
@@ -398,9 +386,6 @@ rm -f ./pasm ./zasm > /dev/null 2>&1
 
 mv -f asm asm.ttp
 mv -f hexcom hexcom.ttp
-
-(upx -q --best ./hexcom.ttp ./asm.ttp 2> /dev/null \
-  | grep ' \-> ' 2> /dev/null) || :
 
 lha -c -z -0 TPZASMST.LZH hexcom.ttp asm.ttp
 rm -f ./hexcom.ttp ./asm.ttp
@@ -437,9 +422,6 @@ rm -f asm
 mv -f asm.out asm
 
 sstrip -z ./asm > /dev/null 2>&1 || :
-
-(upx -q --best ./hexcom ./asm 2> /dev/null \
-  | grep ' \-> ' 2> /dev/null) || :
 
 mv -f ./hexcom ./asm ./tpzasm/
 
@@ -480,9 +462,6 @@ rm -f asm
 mv -f asm.out asm
 
 sstrip -z ./asm > /dev/null 2>&1 || :
-
-(upx -q --best ./hexcom ./asm 2> /dev/null \
-  | grep ' \-> ' 2> /dev/null) || :
 
 mv -f ./hexcom ./asm ./tpzasm/
 
