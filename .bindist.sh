@@ -492,12 +492,7 @@ test "${AMIGA_MODE:-}" = "VBCC" && {
     -maxoptpasses=1 -dontwarn=172" \
     LDFLAGS="-final"
 
-  cranker -f hexcom -o hexcom.out -d minimal
-  mv -f hexcom.out hexcom
   chmod a+x hexcom
-
-  cranker -f asm -o asm.out -d minimal
-  mv -f asm.out asm
   chmod a+x asm
 
   lha -c -z -0 TPZASMAM.LHA hexcom asm
@@ -524,12 +519,7 @@ test "${AMIGA_MODE:-}" = "BEBBO" && {
     CFLAGS="-m68000 -mcrt=nix13 -O3 -std=gnu90 -flto" \
     LDFLAGS="-flto"
 
-  cranker -f hexcom -o hexcom.out -d minimal
-  mv -f hexcom.out hexcom
   chmod a+x hexcom
-
-  cranker -f asm -o asm.out -d minimal
-  mv -f asm.out asm
   chmod a+x asm
 
   lha -c -z -0 TPZASMAM.LHA hexcom asm
