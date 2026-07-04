@@ -97,6 +97,8 @@ CROSSMINT_GCC="${CROSSMINT:?}/usr/bin/m68k-atari-mintelf-gcc"
 ##############################################################################
 
 export VBCC="/opt/vbcc"
+
+# shellcheck disable=SC2015
 test -d "${VBCC:-}" && {
   export PATH="${VBCC:?}/bin:${PATH:-}"
   export AMIGA_COMPILER="${VBCC:?}/bin/vc"
@@ -106,6 +108,8 @@ test -d "${VBCC:-}" && {
 ##############################################################################
 
 export BEBBO="/opt/amiga"
+
+# shellcheck disable=SC2015
 test -d "${BEBBO:-}" && {
   export PATH="${BEBBO:?}/bin:${PATH:-}"
   export AMIGA_COMPILER="${BEBBO:?}/bin/m68k-amigaos-gcc"
