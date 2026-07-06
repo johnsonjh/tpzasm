@@ -567,8 +567,7 @@ main (int argc, char **argv)
 
               break;
 
-            case 'i':
-            case 'a':
+            case 'i': case 'a':
               {
                 asm_preop *p;
 

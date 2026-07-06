@@ -132,15 +132,13 @@ scan_number (ectx *e)
     {
       switch (buf[(long)n - 1])
         {
-        case 'H':
-        case 'h':
+        case 'H': case 'h':
           radix = 16;
           ndig = n - 1;
 
           break;
 
-        case 'B':
-        case 'b':
+        case 'B': case 'b':
           if (e->env->radix <= 11) /* 'B' is a digit at radix 12+ (hex) */
             {
               radix = 2;
@@ -149,17 +147,14 @@ scan_number (ectx *e)
 
           break;
 
-        case 'O':
-        case 'o':
-        case 'Q':
-        case 'q':
+        case 'O': case 'o':
+        case 'Q': case 'q':
           radix = 8;
           ndig = n - 1;
 
           break;
 
-        case 'D':
-        case 'd':
+        case 'D': case 'd':
           if (e->env->radix <= 13) /* 'D' is a digit at radix 14+ (hex) */
             {
               radix = 10;
@@ -792,8 +787,7 @@ v_absop (ectx *e, value_t a, value_t b, int op)
 
       break;
 
-    case '<':
-    case '>':
+    case '<': case '>':
       { /*
          * Logical 16-bit shift.  The count y is a two's-complement value:
          * a NEGATIVE count (top bit set) reverses the shift direction (PASM

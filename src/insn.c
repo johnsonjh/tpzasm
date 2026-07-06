@@ -246,16 +246,8 @@ insn_is_z80 (const insn *in)
 
   switch ((int)in->fmt) /* (int) cast: switch on the value, not the enum type */
     {
-    case FMT_REL:
-    case FMT_ED16:
-    case FMT_EDHL:
-    case FMT_ED0:
-    case FMT_EDDST:
-    case FMT_CBR:
-    case FMT_CBB:
-    case FMT_IXP:
-    case FMT_IXADD:
-    case FMT_IXADDR:
+    case FMT_REL: case FMT_ED16: case FMT_EDHL: case FMT_ED0: case FMT_EDDST:
+    case FMT_CBR: case FMT_CBB: case FMT_IXP: case FMT_IXADD: case FMT_IXADDR:
       return 1;
 
     case FMT_NONE:
@@ -288,23 +280,17 @@ insn_value (const insn *in)
 
   switch ((int)in->fmt) /* (int) cast: switch on the value, not the enum type */
     {
-    case FMT_ED16:
-    case FMT_EDHL:
-    case FMT_ED0:
-    case FMT_EDDST:
+    case FMT_ED16: case FMT_EDHL: case FMT_ED0: case FMT_EDDST:
       pfx = 0xED;
 
       break;
 
-    case FMT_CBR:
-    case FMT_CBB:
+    case FMT_CBR: case FMT_CBB:
       pfx = 0xCB;
 
       break;
 
-    case FMT_IXP:
-    case FMT_IXADD:
-    case FMT_IXADDR:
+    case FMT_IXP: case FMT_IXADD: case FMT_IXADDR:
       /* index prefix from the mnemonic's register letter: X -> DD, Y -> FD */
       pfx = (NULL != strchr (in->name, 'Y') ? 0xFD : 0xDD);
 

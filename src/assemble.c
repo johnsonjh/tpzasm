@@ -1105,15 +1105,10 @@ fmt_opw (insn_fmt_t fmt)
 
   switch (f)
     {
-    case FMT_MVI:
-    case FMT_IMM8:
-    case FMT_REL:
+    case FMT_MVI: case FMT_IMM8: case FMT_REL:
       return 1;
 
-    case FMT_LXI:
-    case FMT_ADDR:
-    case FMT_ED16:
-    case FMT_IXADDR:
+    case FMT_LXI: case FMT_ADDR: case FMT_ED16: case FMT_IXADDR:
       return 2;
 
     default:
@@ -1809,14 +1804,29 @@ zreg8 (int c)
 {
   switch (toupper (c))
     {
-    case 'B': return 0;
-    case 'C': return 1;
-    case 'D': return 2;
-    case 'E': return 3;
-    case 'H': return 4;
-    case 'L': return 5;
-    case 'A': return 7;
-    default: return -1;
+    case 'B':
+      return 0;
+
+    case 'C':
+      return 1;
+
+    case 'D':
+      return 2;
+
+    case 'E':
+      return 3;
+
+    case 'H':
+      return 4;
+
+    case 'L':
+      return 5;
+
+    case 'A':
+      return 7;
+
+    default:
+      return -1;
     }
 }
 

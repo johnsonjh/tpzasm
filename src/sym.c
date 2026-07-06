@@ -183,8 +183,7 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
 
             break;
 
-          case 'u':
-          case 'X':
+          case 'u': case 'X':
             {
               unsigned v = va_arg (ap, unsigned);
               unsigned base = (('X' == *f) ? 16u : 10u);
