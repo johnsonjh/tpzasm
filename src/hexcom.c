@@ -150,7 +150,7 @@ dump_record (unsigned recaddr, const unsigned char *data, int n)
       if (0 == i % 16)
         (void)printf ("%04X: ", (recaddr + (unsigned)i) & 0xFFFF);
 
-      (void)printf ("%02X ", data[i]);
+      (void)printf ("%02X ", data [i]);
 
       if (0 == (i + 1) % 16)
         (void)printf ("\n");
@@ -218,13 +218,13 @@ static size_t xstrcpy (char *dst, const char *src, size_t dstsz)
   if (0 == dstsz)
     return 0;
 
-  while (n + 1 < dstsz && '\0' != src[n])
+  while (n + 1 < dstsz && '\0' != src [n])
     {
-      dst[n] = src[n];
+      dst [n] = src [n];
       n++;
     }
 
-  dst[n] = '\0';
+  dst [n] = '\0';
 
   return n;
 }
@@ -235,7 +235,7 @@ static size_t xstrcat (char *dst, const char *src, size_t dstsz)
 {
   size_t n = 0;
 
-  while (n < dstsz && '\0' != dst[n])
+  while (n < dstsz && '\0' != dst [n])
     n++;
 
   if (n == dstsz)
@@ -244,10 +244,10 @@ static size_t xstrcat (char *dst, const char *src, size_t dstsz)
   {
     size_t m = 0;
 
-    while (n + 1 < dstsz && '\0' != src[m])
-      dst[n++] = src[m++];
+    while (n + 1 < dstsz && '\0' != src [m])
+      dst [n++] = src [m++];
 
-    dst[n] = '\0';
+    dst [n] = '\0';
   }
 
   return n;
@@ -258,14 +258,14 @@ static size_t xstrcat (char *dst, const char *src, size_t dstsz)
 int
 main (int argc, char **argv)
 {
-  char base[256];
-  char srcname[300];
-  char dstname[300];
+  char base [256];
+  char srcname [300];
+  char dstname [300];
   char *dot;
   const char *hnp;
   FILE *src;
   FILE *out;
-  unsigned char data[256] = { 0 };
+  unsigned char data [256] = { 0 };
   unsigned long span, records;
   unsigned long try_size;
 
@@ -311,7 +311,7 @@ main (int argc, char **argv)
   (void)fflush (stdout);
   (void)fflush (stderr);
 
-  if (argc < 2 || strlen (argv[1]) >= sizeof (base))
+  if (argc < 2 || strlen (argv [1]) >= sizeof (base))
     {
       (void)fprintf (stderr,
         "Copyright (c) 2026 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>\n"
@@ -332,8 +332,8 @@ main (int argc, char **argv)
       return 1;
     }
 
-  (void)strncpy (base, argv[1], sizeof (base) - 1);
-  base[sizeof (base) - 1] = '\0';
+  (void)strncpy (base, argv [1], sizeof (base) - 1);
+  base [sizeof (base) - 1] = '\0';
   dot = strrchr (base, '.');
 
   if (NULL != dot && (0 == strcmp (dot, ".hex") || 0 == strcmp (dot, ".HEX")))
@@ -428,7 +428,7 @@ main (int argc, char **argv)
           if (!ok)
             record_error (IHD, addr, (addr + (unsigned)i) & 0xFFFF, data, i);
 
-          data[i] = (unsigned char)b;
+          data [i] = (unsigned char)b;
           sum += b;
         }
 
@@ -450,7 +450,7 @@ main (int argc, char **argv)
           if ((size_t)addr_masked >= imagesz)
             fatal_load ("LOAD ADDRESS TOO HIGH", addr_masked);
 
-          image[addr_masked] = data[i];
+          image [addr_masked] = data [i];
         }
 
       if (ll > 0 && (addr + (unsigned)ll - 1) > last_addr)

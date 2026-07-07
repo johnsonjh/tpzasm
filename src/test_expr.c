@@ -384,7 +384,7 @@ main (void)
 
   /* predefined base symbols resolve to the live per-segment high-water */
   {
-    static const u16 hw[4] = { 0, 0x10, 0x20, 0x30 };
+    static const u16 hw [4] = { 0, 0x10, 0x20, 0x30 };
     value_t v;
     const char *err;
     eval_env e = ENV;
@@ -422,13 +422,13 @@ main (void)
   check_err ("2*D1");      /* relocatable coefficient 2                    */
 
   {
-    symbol *buf[64];
+    symbol *buf [64];
     value_t v2;
     const char *endp2, *err2;
     int n = sym_count (t);
     sym_collect (t, buf);
 
-    if (9 != n || NULL == buf[0])
+    if (9 != n || NULL == buf [0])
       {
         (void)printf ("FAIL  sym_count/collect (n=%d)\n", n);
         fails++;

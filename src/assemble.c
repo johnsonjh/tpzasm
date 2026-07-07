@@ -160,10 +160,10 @@ typedef struct
 typedef struct macrodef
 {
   char *name;
-  char *params[8];
-  char *defval[8]; /* per-param `PARAM(def)' default (NULL = none) */
+  char *params [8];
+  char *defval [8]; /* per-param `PARAM(def)' default (NULL = none) */
   int nparams;
-  char *body[64];
+  char *body [64];
   int nbody;
   struct macrodef *next;
 } macrodef;
@@ -178,20 +178,20 @@ typedef struct
   u16 lc;
   int lc_reloc;
   int base;        /* active relocation base: 1 .PROG., 2 .DATA., 3 .BLNK. */
-  u16 seg_hw[4];   /* per-base high-water (size); [1]=.PROG. [2]=.DATA. ... */
+  u16 seg_hw [4];  /* per-base high-water (size); [1]=.PROG. [2]=.DATA. ... */
   /* .LOC/.RELOC LIFO stack of (lc, base, reloc-mode) */
   struct
   {
     u16 lc;
     int base;
     int reloc;
-  } loc_stk[LOC_STK_DEPTH];
+  } loc_stk [LOC_STK_DEPTH];
   int loc_sp;
   int next_ebase;   /* next external relocation-base number to assign (>=4)   */
   int next_decl;    /* next .INTERN/.ENTRY declaration sequence number        */
   int next_defseq;  /* next symbol definition-order number (for `&' .PSYM)    */
-  char modname[8];  /* `!' module name (.IDENT), default ".MAIN."             */
-  char progid[8];   /* `+' program id (.PROGID); empty -> 6 blanks            */
+  char modname [8]; /* `!' module name (.IDENT), default ".MAIN."             */
+  char progid [8];  /* `+' program id (.PROGID); empty -> 6 blanks            */
   unsigned progid_ver; /* `+' record version byte (.PROGID)                   */
   unsigned progid_rev; /* `+' record revision byte (.PROGID)                  */
   int errors;       /* error count of the CURRENT pass (pass-2 = the total)   */
@@ -202,24 +202,24 @@ typedef struct
   int mdef_page;    /* leading-page pass: list only `M'/`F' (report) lines    */
   int cur_mdef;     /* this line redefines a multiply-defined label: on the   */
                     /* report page its operand forward refs render undefined  */
-  char lst_ec[2];   /* up to two error-code letters for this line's column 1  */
+  char lst_ec [2];  /* up to two error-code letters for this line's column 1  */
   int lst_nec;      /* number of error codes recorded for this line           */
-  int lst_qoff[2];  /* per-error `?' marker offsets into the line (one each)  */
+  int lst_qoff [2]; /* per-error `?' marker offsets into the line (one each)  */
   const char *cur_line; /* the source line currently being assembled          */
   int ppos;         /* current parse offset into cur_line, for the `?' marker */
   int eval_undef;   /* the last eval failed on an undefined symbol (-> `U')   */
   int ended;
-  u8 bytes[64];
+  u8 bytes [64];
   int nbytes;
   int long_symbols;
 
-  /* .OPSYN aliases: alias_from[i] is a synonym for alias_to[i] */
-  char alias_from[MAXALIAS][NAMEBUF];
-  char alias_to[MAXALIAS][NAMEBUF];
+  /* .OPSYN aliases: alias_from [i] is a synonym for alias_to [i] */
+  char alias_from [MAXALIAS] [NAMEBUF];
+  char alias_to [MAXALIAS] [NAMEBUF];
   int nalias;
 
   /* conditional ([...]) stack */
-  cframe cstack[MAXCOND];
+  cframe cstack [MAXCOND];
   int cdepth;
   /*
    * A conditional whose block just closed with a dangling `]' may still take an
@@ -248,7 +248,7 @@ typedef struct
   int def_depth;
 
   /* directory of the top-level source, for resolving .INSERT */
-  char basedir[512];
+  char basedir [512];
 
   /* assembly-time console input (the '\' operator) */
   int in_prompt;
@@ -283,7 +283,7 @@ typedef struct
   int epop_mode;     /* PASM2 .EPOP: the Intel/M80 pseudo-op spellings        */
                      /* (DB/DW/DS/ORG/END/ASEG/...) on; .XEPOP turns off      */
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn         */
-  value_t temps[MAXTEMPS]; /* .TEMPS local array, referenced as `![sub]'      */
+  value_t temps [MAXTEMPS]; /* .TEMPS local array, referenced as `! [sub]'    */
   int ntemps;        /* number of .TEMPS elements currently allocated         */
   int mac_argc;      /* `&': arg count of the macro invocation being expanded */
   u16 obj_start;     /* start address from `.END expr' (0 if none)            */
@@ -295,7 +295,7 @@ typedef struct
    * each .LOC/ORG address discontinuity, so a program that revisits
    * an earlier region (e.g. SARGON) interleaves records AND preserves
    * each byte's emission-time value even when a later store overwrites
-   * that address.  em_byte[k]/em_rel[k] are the k-th emitted byte and
+   * that address.  em_byte [k]/em_rel [k] are the k-th emitted byte and
    * its REL_* class; spans group consecutive emitted bytes into
    * contiguous-address runs.
    */
@@ -328,8 +328,8 @@ typedef struct
    *   subtitle -- .SBTTL   text: heading line B, on its own
    */
 
-  char title[81];
-  char subtitle[81];
+  char title [81];
+  char subtitle [81];
 
   /* macro support */
   unsigned genctr; /* counter for %-generated local labels                    */
@@ -344,14 +344,14 @@ typedef struct
   int pending;
   int pend_depth;
   int pend_len;
-  char pend_op[NAMEBUF];
-  char pend_args[1024];
+  char pend_op [NAMEBUF];
+  char pend_args [1024];
   u16 lc_stmt; /* statement-start LC, for '.' in operands */
 
   /* listing format (TDL ZASM vs PSA PASM) */
   dialect_t dialect; /* selects the TDL vs PSA listing layout    */
   unsigned lst_ctl;  /* listing-control flags (LSTC_*)           */
-  unsigned lst_save[LSTC_SAVES]; /* .SLIST push-down stack       */
+  unsigned lst_save [LSTC_SAVES]; /* .SLIST push-down stack      */
   int lst_nsave;   /* number of saved entries on that stack      */
   int lst_ctlstmt; /* this line is a listing-control statement   */
   int lst_kind;    /* this line: 0 insn, 1 data bytes, 2 words   */
@@ -368,7 +368,7 @@ typedef struct
                    /* width->wrap (1st arg) is not yet implemented            */
   int lst_lbase;   /* LC relocation base: -1 derive from lc_reloc/base else # */
   int lst_obase;   /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext)  */
-  u8 wreloc[32];   /* per-.WORD-value relocation base (0 abs, 1/2/3/ext)      */
+  u8 wreloc [32];  /* per-.WORD-value relocation base (0 abs, 1/2/3/ext)      */
 
   /*
    * .LIMAGE multi-line byte image: source-line offsets at which the source
@@ -376,7 +376,7 @@ typedef struct
    * one value ahead of the 6-byte / per-word image it sits beside)
    */
 
-  int limg_split[68];
+  int limg_split [68];
   int limg_ns;
 
   /*
@@ -488,10 +488,10 @@ em_record (astate *a, u8 v)
   if (a->em_n >= a->em_cap)
     return; /* out of memory */
 
-  a->em_byte[a->em_n] = v;
-  a->em_rel[a->em_n] = cls;
+  a->em_byte [a->em_n] = v;
+  a->em_rel [a->em_n] = cls;
   /* the target base rides with the low byte of a relocatable datum */
-  a->em_tbase[a->em_n]
+  a->em_tbase [a->em_n]
       = (u8)((REL_LO == cls || REL_EXT8 == cls) ? a->em_pend_base : 0);
   a->em_n++;
 
@@ -505,8 +505,8 @@ em_record (astate *a, u8 v)
   u8 seg = (u8)(a->lc_reloc ? a->base : 0);
 
   if (a->nspans > 0 && a->emit_prev >= 0 && (long)a->lc == a->emit_prev + 1
-      && a->span_seg[(long)a->nspans - 1] == seg && !a->loc_break)
-    a->span_n[(long)a->nspans - 1]++;
+      && a->span_seg [(long)a->nspans - 1] == seg && !a->loc_break)
+    a->span_n [(long)a->nspans - 1]++;
   else
     {
       if (a->nspans >= a->span_cap) /* grow the span arrays */
@@ -543,9 +543,9 @@ em_record (astate *a, u8 v)
 
       if (a->nspans < a->span_cap)
         {
-          a->span_a[a->nspans] = a->lc;
-          a->span_n[a->nspans] = 1;
-          a->span_seg[a->nspans] = seg;
+          a->span_a [a->nspans] = a->lc;
+          a->span_n [a->nspans] = 1;
+          a->span_seg [a->nspans] = seg;
           a->nspans++;
         }
     }
@@ -566,7 +566,7 @@ emit (astate *a, u16 v)
    */
 
   if ((2 == a->pass || a->mdef_page) && a->nbytes < (int)sizeof (a->bytes))
-    a->bytes[a->nbytes++] = (u8)(v & 0xFFu);
+    a->bytes [a->nbytes++] = (u8)(v & 0xFFu);
 
   if (2 == a->pass)
     {
@@ -577,7 +577,7 @@ emit (astate *a, u16 v)
           if (a->lc < 65535U)
 #endif
             {
-              a->image[a->lc] = (u8)(v & 0xFFu);
+              a->image [a->lc] = (u8)(v & 0xFFu);
 
               if (!a->img_any || a->lc < a->img_min)
                 a->img_min = a->lc;
@@ -595,8 +595,8 @@ emit (astate *a, u16 v)
 
   a->lc = (u16)(a->lc + 1);
 
-  if (a->lc > a->seg_hw[a->base])
-    a->seg_hw[a->base] = a->lc;
+  if (a->lc > a->seg_hw [a->base])
+    a->seg_hw [a->base] = a->lc;
 }
 
 /******************************************************************************/
@@ -687,30 +687,30 @@ err_letter (const char *msg)
   {
     const char *msg;
     char code;
-  } map[] = { { "unknown operator",             'O' },
-              { "user .ERROR",                  '*' },
-              { "phase error",                  'P' },
-              { "multiply-defined symbol",      'M' },
-              { "8-bit relocation illegal",     'R' },
-              { "8-bit external out of range",  'R' },
-              { "8-bit external illegal",       'R' },
-              { "size must be absolute",        'R' },
-              { "z80 instruction in 8080 mode", 'Z' },
-              { "nested .INSERT",               'F' },
-              { "multiply-defined reference",   'D' },
-              { "subscript",                    'S' },
-              { "extra operand",                'Q' },
-              { "register value range",         'Q' },
-              { "questionable number",          'Q' },
-              { "title string too long",        'Q' },
-              { "subtitle string too long",     'Q' },
-              { "bad index register",           'X' },
-              { NULL,                             0 } };
+  } map [] = { { "unknown operator",             'O' },
+               { "user .ERROR",                  '*' },
+               { "phase error",                  'P' },
+               { "multiply-defined symbol",      'M' },
+               { "8-bit relocation illegal",     'R' },
+               { "8-bit external out of range",  'R' },
+               { "8-bit external illegal",       'R' },
+               { "size must be absolute",        'R' },
+               { "z80 instruction in 8080 mode", 'Z' },
+               { "nested .INSERT",               'F' },
+               { "multiply-defined reference",   'D' },
+               { "subscript",                    'S' },
+               { "extra operand",                'Q' },
+               { "register value range",         'Q' },
+               { "questionable number",          'Q' },
+               { "title string too long",        'Q' },
+               { "subtitle string too long",     'Q' },
+               { "bad index register",           'X' },
+               { NULL,                             0 } };
   int i;
 
-  for (i = 0; NULL != map[i].msg; i++)
-    if (0 == strcmp (msg, map[i].msg))
-      return map[i].code;
+  for (i = 0; NULL != map [i].msg; i++)
+    if (0 == strcmp (msg, map [i].msg))
+      return map [i].code;
 
   return 'A'; /* "argument error": the broad class for operand faults */
 }
@@ -762,8 +762,8 @@ aerr (astate *a, const char *line, const char *msg)
            * each error places a `?' at its own parse position (two errors at
            * the same spot therefore render as `??')
            */
-          a->lst_qoff[a->lst_nec] = a->ppos;
-          a->lst_ec[a->lst_nec] = code;
+          a->lst_qoff [a->lst_nec] = a->ppos;
+          a->lst_ec [a->lst_nec] = code;
           a->lst_nec++;
         }
     }
@@ -822,7 +822,7 @@ eval1 (astate *a, const char **pp, value_t *v)
   env.ext_next = &a->next_ebase; /* the `SYM#' modifier auto-declares externs */
   env.ext_decl = &a->next_decl;
   /*
-   * `![sub]' .TEMPS locals are a PASM feature (temps non-NULL => PASM), legal
+   * `! [sub]' .TEMPS locals are a PASM feature (temps non-NULL => PASM), legal
    * only inside a macro expansion (tmp_ok); ZASM leaves temps NULL so a `!['
    * there is just the OR operator hitting a bad primary
    */
@@ -918,20 +918,20 @@ static int
 parse_rp (astate *a, const char **pp, int psw, int *pfx)
 {
   const char *p = skipws (*pp);
-  char t[8];
+  char t [8];
   int n = 0, code = -1;
 
   *pfx = 0;
 
-  while (n < 7 && isalpha ((unsigned char)p[n]))
+  while (n < 7 && isalpha ((unsigned char)p [n]))
     {
-      t[n] = (char)toupper ((unsigned char)p[n]);
+      t [n] = (char)toupper ((unsigned char)p [n]);
       n++;
     }
 
-  t[n] = '\0';
+  t [n] = '\0';
 
-  if (idchar ((unsigned char)p[n]))
+  if (idchar ((unsigned char)p [n]))
     return -1;
 
   if (0 == strcmp (t, "B"))
@@ -1009,7 +1009,7 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
   const char *p = skipws (*pp);
   const char *ip, *cp;
   value_t v;
-  char t[8];
+  char t [8];
   int n;
 
   *pfx = 0;
@@ -1041,26 +1041,26 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
   ip = skipws (p + 1);
   n = 0;
 
-  while (n < 7 && isalpha ((unsigned char)ip[n]))
+  while (n < 7 && isalpha ((unsigned char)ip [n]))
     {
-      t[n] = (char)toupper ((unsigned char)ip[n]);
+      t [n] = (char)toupper ((unsigned char)ip [n]);
       n++;
     }
 
-  t[n] = '\0';
+  t [n] = '\0';
   cp = skipws (ip + n);
 
-  if (')' == *cp && 1 == n && 'X' == t[0])
+  if (')' == *cp && 1 == n && 'X' == t [0])
     {
       *pfx = 0xDD;
       a->idx_pfx = 1;
     }
-  else if (')' == *cp && 1 == n && 'Y' == t[0])
+  else if (')' == *cp && 1 == n && 'Y' == t [0])
     {
       *pfx = 0xFD;
       a->idx_pfx = 1;
     } /*LINTED E_NOP_IF_STMT*/
-  else if (')' == *cp && 1 == n && 'H' == t[0])
+  else if (')' == *cp && 1 == n && 'H' == t [0])
     {
       /* the `d(H)' == M bug: a 0 prefix, no diagnostic */
     }
@@ -1126,22 +1126,22 @@ fmt_opw (insn_fmt_t fmt)
 static int
 is_reg_token (const char *t)
 {
-  char w[4];
+  char w [4];
   int n = 0;
 
-  while (n < 3 && isalpha ((unsigned char)t[n]))
+  while (n < 3 && isalpha ((unsigned char)t [n]))
     {
-      w[n] = (char)toupper ((unsigned char)t[n]);
+      w [n] = (char)toupper ((unsigned char)t [n]);
       n++;
     }
 
-  w[n] = '\0';
+  w [n] = '\0';
 
-  if (idchar ((unsigned char)t[n])) /* a longer token: not a bare register */
+  if (idchar ((unsigned char)t [n])) /* a longer token: not a bare register */
     return 0;
 
   if (1 == n)
-    return (NULL != strchr ("ABCDEHLMXY", w[0]));
+    return (NULL != strchr ("ABCDEHLMXY", w [0]));
 
   return (0 == strcmp (w, "SP") || 0 == strcmp (w, "PSW"));
 }
@@ -1618,8 +1618,8 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_IXP:
       {
-        int pf = (('\0' != mnem[0] && 'Y' == mnem[strlen (mnem) - 1]) ? 0xFD
-                                                                      : 0xDD);
+        int pf = (('\0' != mnem [0] && 'Y' == mnem [strlen (mnem) - 1]) ? 0xFD
+                                                                        : 0xDD);
         emit (a, (u16)pf);
         emit (a, in->opcode);
 
@@ -1628,19 +1628,19 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
     case FMT_IXADD:
       {
-        int pf = (('\0' != mnem[0] && 'Y' == mnem[strlen (mnem) - 1]) ? 0xFD
-                                                                      : 0xDD);
+        int pf = (('\0' != mnem [0] && 'Y' == mnem [strlen (mnem) - 1]) ? 0xFD
+                                                                        : 0xDD);
         const char *q = skipws (p);
-        char t[4];
+        char t [4];
         int n = 0, rp = -1;
 
-        while (n < 3 && isalpha ((unsigned char)q[n]))
+        while (n < 3 && isalpha ((unsigned char)q [n]))
           {
-            t[n] = (char)toupper ((unsigned char)q[n]);
+            t [n] = (char)toupper ((unsigned char)q [n]);
             n++;
           }
 
-        t[n] = '\0';
+        t [n] = '\0';
 
         if (0 == strcmp (t, "B"))
           rp = 0;
@@ -1773,7 +1773,7 @@ typedef struct
 /******************************************************************************/
 
 /*
- * Read a maximal identifier run at p, uppercased, into out[cap]; return its
+ * Read a maximal identifier run at p, uppercased, into out [cap]; return its
  * length.  Used to recognize register / pair / condition tokens.
  */
 
@@ -1782,13 +1782,13 @@ zid (const char *p, char *out, int cap)
 {
   int n = 0;
 
-  while (n < cap - 1 && idchar ((unsigned char)p[n]))
+  while (n < cap - 1 && idchar ((unsigned char)p [n]))
     {
-      out[n] = (char)toupper ((unsigned char)p[n]);
+      out [n] = (char)toupper ((unsigned char)p [n]);
       n++;
     }
 
-  out[n] = '\0';
+  out [n] = '\0';
 
   return n;
 }
@@ -1842,7 +1842,7 @@ static int
 zcond (const char **pp, int jr)
 {
   const char *p = skipws (*pp);
-  char t[8];
+  char t [8];
   int n = zid (p, t, (int)sizeof (t));
   int cc = -1;
 
@@ -1879,7 +1879,7 @@ static void
 zparse (astate *a, const char **pp, zoperand *o)
 {
   const char *p = skipws (*pp);
-  char t[NAMEBUF];
+  char t [NAMEBUF];
   int n;
 
   o->kind = ZO_NONE;
@@ -1902,7 +1902,7 @@ zparse (astate *a, const char **pp, zoperand *o)
   if ('(' == *p)
     {
       const char *inner = skipws (p + 1);
-      char it[NAMEBUF];
+      char it [NAMEBUF];
       int in = zid (inner, it, (int)sizeof (it));
       const char *after = skipws (inner + in);
 
@@ -1988,12 +1988,12 @@ zparse (astate *a, const char **pp, zoperand *o)
   /* not parenthesized: a bare register / pair / I / R, else an immediate */
   n = zid (p, t, (int)sizeof (t));
 
-  if (n > 0 && !idchar ((unsigned char)p[n]))
+  if (n > 0 && !idchar ((unsigned char)p [n]))
     {
-      if (1 == n && zreg8 (t[0]) >= 0)
+      if (1 == n && zreg8 (t [0]) >= 0)
         {
           o->kind = ZO_R8;
-          o->reg = zreg8 (t[0]);
+          o->reg = zreg8 (t [0]);
           *pp = p + n;
 
           return;
@@ -2179,7 +2179,7 @@ static const struct
 {
   const char *name;
   u8 op;
-} ZNOP1[] = {
+} ZNOP1 [] = {
   {  "NOP", 0x00 }, { "HALT", 0x76 }, {  "DI", 0xF3 }, {  "EI", 0xFB },
   {  "DAA", 0x27 }, {  "CPL", 0x2F }, { "CCF", 0x3F }, { "SCF", 0x37 },
   { "RLCA", 0x07 }, { "RRCA", 0x0F }, { "RLA", 0x17 }, { "RRA", 0x1F },
@@ -2193,7 +2193,7 @@ static const struct
 {
   const char *name;
   u8 op;
-} ZNOPED[] = {
+} ZNOPED [] = {
   {  "NEG", 0x44 }, { "RETI", 0x4D }, { "RETN", 0x45 }, {  "RLD", 0x6F },
   {  "RRD", 0x67 }, {  "LDI", 0xA0 }, { "LDIR", 0xB0 }, {  "LDD", 0xA8 },
   { "LDDR", 0xB8 }, {  "CPI", 0xA1 }, { "CPIR", 0xB1 }, {  "CPD", 0xA9 },
@@ -2212,7 +2212,7 @@ static const struct
 {
   const char *name;
   u8 rb, ib;
-} ZALU[] = {
+} ZALU [] = {
   { "SUB", 0x90, 0xD6 }, { "AND", 0xA0, 0xE6 }, { "XOR", 0xA8, 0xEE },
   {  "OR", 0xB0, 0xF6 }, {  "CP", 0xB8, 0xFE }, {  NULL,    0, 0 }
 };
@@ -2227,7 +2227,7 @@ static const struct
 {
   const char *name;
   u8 base;
-} ZROT[] = {
+} ZROT [] = {
   { "RLC", 0x00 }, { "RRC", 0x08 }, {  "RL", 0x10 }, { "RR", 0x18 },
   { "SLA", 0x20 }, { "SRA", 0x28 }, { "SRL", 0x38 }, { NULL, 0 }
 };
@@ -2251,34 +2251,34 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
   a->idx_pfx = 0;
 
   /* no-operand forms (1-byte, then ED 2-byte) */
-  for (i = 0; NULL != ZNOP1[i].name; i++)
-    if (0 == strcmp (mnem, ZNOP1[i].name))
+  for (i = 0; NULL != ZNOP1 [i].name; i++)
+    if (0 == strcmp (mnem, ZNOP1 [i].name))
       {
-        emit (a, ZNOP1[i].op);
+        emit (a, ZNOP1 [i].op);
 
         return 1;
       }
 
-  for (i = 0; NULL != ZNOPED[i].name; i++)
-    if (0 == strcmp (mnem, ZNOPED[i].name))
+  for (i = 0; NULL != ZNOPED [i].name; i++)
+    if (0 == strcmp (mnem, ZNOPED [i].name))
       {
         emit (a, 0xED);
-        emit (a, ZNOPED[i].op);
+        emit (a, ZNOPED [i].op);
 
         return 1;
       }
 
   /* SUB AND OR XOR CP : a single source operand, implied accumulator */
-  for (i = 0; NULL != ZALU[i].name; i++)
-    if (0 == strcmp (mnem, ZALU[i].name))
+  for (i = 0; NULL != ZALU [i].name; i++)
+    if (0 == strcmp (mnem, ZALU [i].name))
       {
         zparse (a, &p, &d);
 
-        if (!zemit_alusrc (a, line, &d, ZALU[i].rb, ZALU[i].ib))
+        if (!zemit_alusrc (a, line, &d, ZALU [i].rb, ZALU [i].ib))
           {
             aerr (a, line, "bad operand");
 
-            emit (a, (u16)(ZALU[i].rb | 7));
+            emit (a, (u16)(ZALU [i].rb | 7));
           }
 
         return 1;
@@ -2438,10 +2438,10 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
     }
 
   /* RLC RRC RL RR SLA SRA SRL : r / (HL) / (IX+d) */
-  for (i = 0; NULL != ZROT[i].name; i++)
-    if (0 == strcmp (mnem, ZROT[i].name))
+  for (i = 0; NULL != ZROT [i].name; i++)
+    if (0 == strcmp (mnem, ZROT [i].name))
       {
-        u8 base = ZROT[i].base;
+        u8 base = ZROT [i].base;
 
         zparse (a, &p, &d);
 
@@ -2884,7 +2884,7 @@ limg_rec (astate *a, const char *line, const char *p, int cap)
   if (2 == a->pass && (a->lst_ctl & LSTC_LIMAGE))
     while (a->nbytes > (a->limg_ns + 1) * cap
            && a->limg_ns < (int)(sizeof (a->limg_split) / sizeof (int)))
-      a->limg_split[a->limg_ns++] = line_off (line, p);
+      a->limg_split [a->limg_ns++] = line_off (line, p);
 }
 
 /******************************************************************************/
@@ -2910,7 +2910,7 @@ db_string (const char *p, const char **endp, int *pure)
     {
       if (d == *q)
         {
-          if (d == q[1]) /* a doubled delimiter is one literal character */
+          if (d == q [1]) /* a doubled delimiter is one literal character */
             {
               q += 2;
 
@@ -2998,7 +2998,7 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
 
           while (r < endq - 1)
             {
-              if (d == *r && r + 1 < endq - 1 && d == r[1])
+              if (d == *r && r + 1 < endq - 1 && d == r [1])
                 {
                   emit (a, (u16)(unsigned char)d);
                   r += 2;
@@ -3025,7 +3025,7 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
             {
               if (2 == a->pass && 2 == width
                   && a->nbytes / 2 < (int)sizeof (a->wreloc))
-                a->wreloc[a->nbytes / 2] = (u8)(0 != v.reloc ? v.base : 0);
+                a->wreloc [a->nbytes / 2] = (u8)(0 != v.reloc ? v.base : 0);
 
               if (2 == width)
                 emit_word (a, v.value, 0 != v.reloc, v.base);
@@ -3098,8 +3098,8 @@ do_blk (astate *a, const char *line, const char *p, int width)
   for (i = 0; i < n; i++)
     a->lc = (u16)(a->lc + 1);
 
-  if (a->lc > a->seg_hw[a->base])
-    a->seg_hw[a->base] = a->lc;
+  if (a->lc > a->seg_hw [a->base])
+    a->seg_hw [a->base] = a->lc;
 }
 
 /******************************************************************************/
@@ -3202,7 +3202,7 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
 #if ASM_SIZE_T_NARROW
           if (last_lc < 65535U)
 #endif
-            a->image[last_lc] = (u8)(a->image[last_lc] | 0x80u);
+            a->image [last_lc] = (u8)(a->image [last_lc] | 0x80u);
         }
 
       /*
@@ -3212,11 +3212,11 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
        */
 
       if (NULL != a->em_byte && a->em_n > 0)
-        a->em_byte[a->em_n - 1] = (u8)(a->em_byte[a->em_n - 1] | 0x80u);
+        a->em_byte [a->em_n - 1] = (u8)(a->em_byte [a->em_n - 1] | 0x80u);
 
       if (a->nbytes > 0)
-        a->bytes[(long)a->nbytes - 1]
-            = (u8)(a->bytes[(long)a->nbytes - 1] | 0x80u);
+        a->bytes [(long)a->nbytes - 1]
+            = (u8)(a->bytes [(long)a->nbytes - 1] | 0x80u);
     }
 }
 
@@ -3233,14 +3233,14 @@ do_ascii (astate *a, const char *line, const char *p, int mode)
 static void
 do_datetime (astate *a, int want_time)
 {
-  char buf[16];
+  char buf [16];
   /* Flawfinder: ignore */ /* False positive CWE-807/CWE-20 */
   const char *epoch = getenv ("SOURCE_DATE_EPOCH");
   const struct tm *tmv = NULL;
   time_t t;
   int i;
 
-  if (NULL != epoch && '\0' != epoch[0])
+  if (NULL != epoch && '\0' != epoch [0])
     {
       char *end = NULL;
       long secs = strtol (epoch, &end, 10);
@@ -3266,7 +3266,7 @@ do_datetime (astate *a, int want_time)
   a->lst_kind = 1; /* listing: byte stream */
 
   for (i = 0; i < 8; i++)
-    emit (a, (u16)(unsigned char)buf[i]);
+    emit (a, (u16)(unsigned char)buf [i]);
 }
 
 /******************************************************************************/
@@ -3318,7 +3318,7 @@ do_rad40 (astate *a, const char *line, const char *p)
 
   for (;;)
     {
-      int ch[6];
+      int ch [6];
       int n = 0, bad = 0, i;
       unsigned long w;
 
@@ -3340,7 +3340,7 @@ do_rad40 (astate *a, const char *line, const char *p)
             }
 
           if (n < 6)
-            ch[n++] = v; /* characters past the sixth are ignored */
+            ch [n++] = v; /* characters past the sixth are ignored */
 
           p++;
         }
@@ -3355,15 +3355,15 @@ do_rad40 (astate *a, const char *line, const char *p)
         }
 
       for (i = n; i < 6; i++)
-        ch[i] = 0; /* space-pad the trailing positions */
+        ch [i] = 0; /* space-pad the trailing positions */
 
-      w = (unsigned long)ch[0] * 1600UL + (unsigned long)ch[1] * 40UL
-          + (unsigned long)ch[2];
+      w = (unsigned long)ch [0] * 1600UL + (unsigned long)ch [1] * 40UL
+          + (unsigned long)ch [2];
       emit (a, (u16)((w >> 8) & 0xFFUL));
       emit (a, (u16)(w & 0xFFUL));
 
-      w = (unsigned long)ch[3] * 1600UL + (unsigned long)ch[4] * 40UL
-          + (unsigned long)ch[5];
+      w = (unsigned long)ch [3] * 1600UL + (unsigned long)ch [4] * 40UL
+          + (unsigned long)ch [5];
       emit (a, (u16)((w >> 8) & 0xFFUL));
       emit (a, (u16)(w & 0xFFUL));
 
@@ -3391,14 +3391,14 @@ do_rad40 (astate *a, const char *line, const char *p)
 static int
 is_noop_dir (const char *op)
 {
-  static const char *list[]
+  static const char *list []
       = { ".PHEX",   ".PBIN",    ".TITLE",   ".SBTTL", ".SUBTTL", ".REQUEST",
           ".NAME",   "PUBLIC",   ".PUBLIC",  ".PRNTX",
           ".PRINTX", "COMMON",   ".COMMON",  NULL };
   int i;
 
-  for (i = 0; NULL != list[i]; i++)
-    if (0 == strcmp (op, list[i]))
+  for (i = 0; NULL != list [i]; i++)
+    if (0 == strcmp (op, list [i]))
       return 1;
 
   return 0;
@@ -3441,12 +3441,12 @@ parse_opname (const char *p, char *out)
   while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p || '%' == *p)
     {
       if (n < NAMEBUF - 1)
-        out[n++] = (char)toupper ((unsigned char)*p);
+        out [n++] = (char)toupper ((unsigned char)*p);
 
       p++;
     }
 
-  out[n] = '\0';
+  out [n] = '\0';
 
   return p;
 }
@@ -3464,9 +3464,9 @@ resolve_alias (const astate *a, char *op)
       int found = 0;
 
       for (i = 0; i < a->nalias; i++)
-        if (0 == strcmp (op, a->alias_from[i]))
+        if (0 == strcmp (op, a->alias_from [i]))
           {
-            (void)xstrlcpy (op, a->alias_to[i], NAMEBUF);
+            (void)xstrlcpy (op, a->alias_to [i], NAMEBUF);
             found = 1;
 
             break;
@@ -3496,19 +3496,19 @@ canon_dir (char *op)
   {
     const char *prefix6; /* first six significant characters */
     const char *canon;   /* canonical full spelling          */
-  } tab[] = { { ".DEFIN", ".DEFINE" }, { ".EXTER", ".EXTERN" },
-              { ".INSER", ".INSERT" }, { ".INTER", ".INTERN" },
-              { ".REMAR", ".REMARK" }, { ".IFNDE", ".IFNDEF" },
-              { ".PRGEN", ".PRGEND" }, {     NULL,      NULL } };
+  } tab [] = { { ".DEFIN", ".DEFINE" }, { ".EXTER", ".EXTERN" },
+               { ".INSER", ".INSERT" }, { ".INTER", ".INTERN" },
+               { ".REMAR", ".REMARK" }, { ".IFNDE", ".IFNDEF" },
+               { ".PRGEN", ".PRGEND" }, {     NULL,      NULL } };
   int i;
 
-  if ('.' != op[0] || strlen (op) < 6)
+  if ('.' != op [0] || strlen (op) < 6)
     return;
 
-  for (i = 0; NULL != tab[i].prefix6; i++)
-    if (0 == strncmp (op, tab[i].prefix6, 6))
+  for (i = 0; NULL != tab [i].prefix6; i++)
+    if (0 == strncmp (op, tab [i].prefix6, 6))
       {
-        (void)xstrlcpy (op, tab[i].canon, NAMEBUF);
+        (void)xstrlcpy (op, tab [i].canon, NAMEBUF);
 
         return;
       }
@@ -3527,7 +3527,7 @@ casm (const astate *a)
   int i;
 
   for (i = 0; i < a->cdepth; i++)
-    if (!a->cstack[i].assemble)
+    if (!a->cstack [i].assemble)
       return 0;
 
   return 1;
@@ -3555,18 +3555,18 @@ casm (const astate *a)
 static int
 is_string_dir (const char *s)
 {
-  char op[NAMEBUF];
+  char op [NAMEBUF];
   int n = 0;
 
   s = skipws (s);
 
   while (n < NAMEBUF - 1 && '\0' != *s && ' ' != *s && '\t' != *s)
     {
-      op[n++] = (char)toupper ((unsigned char)*s);
+      op [n++] = (char)toupper ((unsigned char)*s);
       s++;
     }
 
-  op[n] = '\0';
+  op [n] = '\0';
 
   return 0 == strcmp (op, ".ASCII") || 0 == strcmp (op, ".ASCIZ")
       || 0 == strcmp (op, ".ASCIS") || 0 == strcmp (op, ".DC")
@@ -3685,12 +3685,12 @@ parse_str_arg (const char *p, char *out)
             }
 
           if (n < 127)
-            out[n++] = *p;
+            out [n++] = *p;
 
           p++;
         }
 
-      out[n] = '\0';
+      out [n] = '\0';
 
       return p;
     }
@@ -3701,7 +3701,7 @@ parse_str_arg (const char *p, char *out)
       p++;
 
       while ('\0' != *p && q != *p && n < 127)
-        out[n++] = *p++;
+        out [n++] = *p++;
 
       if (q == *p)
         p++;
@@ -3709,9 +3709,9 @@ parse_str_arg (const char *p, char *out)
   else
     while ('\0' != *p && ' ' != *p && '\t' != *p && ',' != *p && ';' != *p
            && n < 127)
-      out[n++] = *p++;
+      out [n++] = *p++;
 
-  out[n] = '\0';
+  out [n] = '\0';
 
   return p;
 }
@@ -3734,8 +3734,8 @@ rstrip (char *s)
 {
   size_t n = strlen (s);
 
-  while (n > 0 && (' ' == s[n - 1] || '\t' == s[n - 1]))
-    s[--n] = '\0';
+  while (n > 0 && (' ' == s [n - 1] || '\t' == s [n - 1]))
+    s [--n] = '\0';
 }
 
 /******************************************************************************/
@@ -3743,16 +3743,16 @@ rstrip (char *s)
 static int
 str_cond_test (const char *op, const char *operands)
 {
-  char s1[128], s2[128];
+  char s1 [128], s2 [128];
   const char *p = parse_str_arg (operands, s1);
 
   rstrip (s1);
 
   if (0 == strcmp (op, ".IFB"))
-    return '\0' == s1[0];
+    return '\0' == s1 [0];
 
   if (0 == strcmp (op, ".IFNB"))
-    return '\0' != s1[0];
+    return '\0' != s1 [0];
 
   (void)parse_str_arg (p, s2);
   rstrip (s2);
@@ -3810,7 +3810,7 @@ cond_test (const char *op, const value_t *v)
 static const char *
 seg_flag (int base, dialect_t dialect)
 {
-  static char buf[8];
+  static char buf [8];
 
   if (base <= 0)
     return "";
@@ -3841,7 +3841,7 @@ lst_bytes (const astate *a, char *col, size_t cap)
 
       for (i = 0; i + 1 < a->nbytes && i < maxw; i += 2)
         {
-          int wb = a->wreloc[i / 2];
+          int wb = a->wreloc [i / 2];
           const char *fl = ((wb > 0) ? seg_flag (wb, a->dialect) : " ");
           /*
            * .XADDR (default) shows the 16-bit value; .LADDR shows the bytes in
@@ -3849,13 +3849,14 @@ lst_bytes (const astate *a, char *col, size_t cap)
            */
           unsigned shown
               = ((a->lst_ctl & LSTC_LADDR)
-                     ? (unsigned)((a->bytes[i] << 8) | a->bytes[(long)i + 1])
-                     : (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8)));
+                     ? (unsigned)((a->bytes [i] << 8) | a->bytes [(long)i + 1])
+                     : (unsigned)(a->bytes [i] | (a->bytes [(long)i + 1] << 8))
+                );
           cn += xsnprintf (col + cn, cap - (size_t)cn, "%s%04X%s",
                            (i ? "   " : ""), shown, fl);
         }
 
-      while (cn > 0 && ' ' == col[(long)cn - 1])
+      while (cn > 0 && ' ' == col [(long)cn - 1])
         cn--; /* trim trailing pad */
     }
   else if (1 == a->lst_kind)
@@ -3863,7 +3864,7 @@ lst_bytes (const astate *a, char *col, size_t cap)
       for (i = 0; i < a->nbytes && i < 6; i++)
         {
           cn += xsnprintf (col + cn, cap - (size_t)cn, "%02X",
-                           (unsigned)a->bytes[i]);
+                           (unsigned)a->bytes [i]);
         }
     }
   else
@@ -3876,18 +3877,18 @@ lst_bytes (const astate *a, char *col, size_t cap)
       for (i = 0; i < nop && cn < 16; i++)
         {
           cn += xsnprintf (col + cn, cap - (size_t)cn, "%02X",
-                           (unsigned)a->bytes[i]);
+                           (unsigned)a->bytes [i]);
         }
 
       if (1 == a->lst_opw && nop < a->nbytes)
         {
           if (a->lst_obase > 0) /* 8-bit external: space + byte + base flag */
             cn += xsnprintf (col + cn, cap - (size_t)cn, " %02X%s",
-                             (unsigned)a->bytes[nop],
+                             (unsigned)a->bytes [nop],
                              seg_flag (a->lst_obase, a->dialect));
           else
             cn += xsnprintf (col + cn, cap - (size_t)cn, "%02X",
-                             (unsigned)a->bytes[nop]);
+                             (unsigned)a->bytes [nop]);
         }
       else if (2 == a->lst_opw && nop + 1 < a->nbytes)
         {
@@ -3898,17 +3899,17 @@ lst_bytes (const astate *a, char *col, size_t cap)
              */
             cn += xsnprintf (
                 col + cn, cap - (size_t)cn, "%04X%s",
-                (unsigned)((a->bytes[nop] << 8) | a->bytes[(long)nop + 1]),
+                (unsigned)((a->bytes [nop] << 8) | a->bytes [(long)nop + 1]),
                 seg_flag (a->lst_obase, a->dialect));
           else /* .XADDR (default): the 16-bit value, spaced off the opcode */
             cn += xsnprintf (
                 col + cn, cap - (size_t)cn, " %04X%s",
-                (unsigned)(a->bytes[nop] | (a->bytes[(long)nop + 1] << 8)),
+                (unsigned)(a->bytes [nop] | (a->bytes [(long)nop + 1] << 8)),
                 seg_flag (a->lst_obase, a->dialect));
         }
     }
 
-  col[cn] = '\0';
+  col [cn] = '\0';
 }
 
 /******************************************************************************/
@@ -3985,7 +3986,7 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
   for (; '\0' != *s; s++, si++)
     {
       for (k = 0; k < nq; k++) /* a `?' just before each error's position */
-        if (si == qoff[k])
+        if (si == qoff [k])
           {
             col = lst_wrap (a, col, wrapw, indent);
 
@@ -4057,7 +4058,7 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
     }
 
   for (k = 0; k < nq; k++) /* error(s) at the end of the statement text */
-    if (si == qoff[k])
+    if (si == qoff [k])
       {
         col = lst_wrap (a, col, wrapw, indent);
 
@@ -4111,9 +4112,9 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
       int b0 = k * cap;
       long bend = (long)b0 + cap; /* widen the sum (op +) to a long */
       int b1 = (int)((bend < a->nbytes) ? bend : a->nbytes);
-      int so = ((0 == k) ? 0 : a->limg_split[(long)k - 1]);
-      int se = ((k == a->limg_ns) ? srclen : a->limg_split[k]);
-      char bf[40];
+      int so = ((0 == k) ? 0 : a->limg_split [(long)k - 1]);
+      int se = ((k == a->limg_ns) ? srclen : a->limg_split [k]);
+      char bf [40];
       int bn = 0, i, col, indent;
 
       /*
@@ -4142,9 +4143,9 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
                i += 2)
             {
               int wi = i / 2;
-              int wf = ((wi < (int)sizeof (a->wreloc)) ? a->wreloc[wi] : 0);
+              int wf = ((wi < (int)sizeof (a->wreloc)) ? a->wreloc [wi] : 0);
               unsigned wv
-                  = (unsigned)(a->bytes[i] | (a->bytes[(long)i + 1] << 8));
+                  = (unsigned)(a->bytes [i] | (a->bytes [(long)i + 1] << 8));
 
               if (over) /* each word in an 8-column slot */
                 {
@@ -4153,7 +4154,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
                                    ((wf > 0) ? seg_flag (wf, a->dialect) : ""));
 
                   while (bn < 8 && (i + 2) < b1) /* pad all but the last word */
-                    bf[bn++] = ' ';
+                    bf [bn++] = ' ';
                 }
               else
                 bn += xsnprintf (bf + bn, sizeof (bf) - (size_t)bn, "%s%04X%s",
@@ -4165,10 +4166,10 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
         {
           for (i = b0; i < b1 && i < (int)sizeof (a->bytes); i++)
             bn += xsnprintf (bf + bn, sizeof (bf) - (size_t)bn, "%02X",
-                             (unsigned)a->bytes[i]);
+                             (unsigned)a->bytes [i]);
         }
 
-      bf[bn] = '\0';
+      bf [bn] = '\0';
       indent = 11 + bw;
 
       if (over)
@@ -4208,7 +4209,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
 
       for (i = so + (over ? ((k > 0) ? 1 : 2) : 0); i < se; i++)
         {
-          if ('\t' == rawline[i])
+          if ('\t' == rawline [i])
             {
               do
                 {
@@ -4219,7 +4220,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
             }
           else
             {
-              (void)fputc (rawline[i], a->lst);
+              (void)fputc (rawline [i], a->lst);
               col++;
             }
         }
@@ -4237,7 +4238,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
 static void
 print_lst (astate *a, u16 lc0, const char *rawline)
 {
-  char col[40];
+  char col [40];
   int bw = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect) ? 14
                                                  /* byte-field width */ : 13);
   long loc = ((-2 == a->lst_loc) ? (long)lc0 : a->lst_loc);
@@ -4259,7 +4260,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       int k, has_lead = 0;
 
       for (k = 0; k < a->lst_nec; k++)
-        if ('M' == a->lst_ec[k] || 'F' == a->lst_ec[k])
+        if ('M' == a->lst_ec [k] || 'F' == a->lst_ec [k])
           has_lead = 1;
 
       if (!has_lead)
@@ -4364,7 +4365,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       return;
     }
 
-  col[0] = '\0';
+  col [0] = '\0';
 
   if (a->nbytes > 0)
     lst_bytes (a, col, sizeof (col));
@@ -4433,7 +4434,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
          */
 
         const char *ts = skipws (rawline);
-        int nsp = (ts[0] == ';' ? 21 : 29);
+        int nsp = (ts [0] == ';' ? 21 : 29);
 
         (void)fprintf (a->lst, "%*s", nsp, "");
       }
@@ -4444,18 +4445,18 @@ print_lst (astate *a, u16 lc0, const char *rawline)
        * overwriting the leading blanks (three before the LC, eleven on a
        * blank-LC line); the rest of the line is unchanged
        */
-      char lead[12];
+      char lead [12];
       int lw = ((loc < 0) ? 11 : 3);
       int k;
 
       if (DIALECT_PASM2 == a->dialect)
         lw = 0; /* line# + force print above for blank p2 */
 
-      /* k < 2 pins the lst_ec[] index for static analyzers (nec is <= 2) */
+      /* k < 2 pins the lst_ec [] index for static analyzers (nec is <= 2) */
       for (k = 0; k < lw; k++)
-        lead[k] = ((k < a->lst_nec && k < 2) ? a->lst_ec[k] : ' ');
+        lead [k] = ((k < a->lst_nec && k < 2) ? a->lst_ec [k] : ' ');
 
-      lead[lw] = '\0';
+      lead [lw] = '\0';
       (void)fputs (lead, a->lst);
     }
 
@@ -4518,7 +4519,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
                        ? 79
                        : 72);
       int indent = 11 + bw;
-      int rq[2];
+      int rq [2];
       int off;
       int i;
 
@@ -4528,13 +4529,13 @@ print_lst (astate *a, u16 lc0, const char *rawline)
           indent = 32;
         }
 
-      rq[0] = -1;
-      rq[1] = -1;
+      rq [0] = -1;
+      rq [1] = -1;
       off = line_off (rawline, src);
 
       for (i = 0; i < a->lst_nec; i++) /* `?' offsets vs the source field */
         {
-          rq[i] = a->lst_qoff[i] - off;
+          rq [i] = a->lst_qoff [i] - off;
 
           /*
            * a `?' that lands on a macro body close `]' steps past it so it
@@ -4542,8 +4543,8 @@ print_lst (astate *a, u16 lc0, const char *rawline)
            * (`STA PPLNCN]?', not `STA PPLNCN?]')
            */
 
-          while (rq[i] >= 0 && ']' == src[rq[i]])
-            rq[i]++;
+          while (rq [i] >= 0 && ']' == src [rq [i]])
+            rq [i]++;
         }
 
       lst_source (a, src, scol, wrapw, indent, rq, a->lst_nec);
@@ -4585,7 +4586,7 @@ capture_svalue (const astate *a, const char *o, char *d, size_t s, int nst)
 {
   const char *p = skipws (o);
 
-  d[0] = '\0';
+  d [0] = '\0';
 
   if ('\0' != *p && ';' != *p)
     {
@@ -4608,10 +4609,10 @@ capture_svalue (const astate *a, const char *o, char *d, size_t s, int nst)
                 break;
             }
 
-          d[n++] = *p;
+          d [n++] = *p;
         }
 
-      d[n] = '\0';
+      d [n] = '\0';
     }
 }
 
@@ -4789,14 +4790,14 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
 
   for (i = 0; i < total; i++)
     {
-      if (all[i]->external)
-        es[ne++] = all[i];
+      if (all [i]->external)
+        es [ne++] = all [i];
 
-      if (all[i]->internal && !all[i]->entry)
-        is[ni++] = all[i]; /* plain internals (entries form their own group) */
+      if (all [i]->internal && !all [i]->entry)
+        is [ni++] = all [i]; /* plain internals/entries form their own group */
 
-      if (all[i]->entry)
-        ts[nt++] = all[i];
+      if (all [i]->entry)
+        ts [nt++] = all [i];
     }
 
   qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl); /* //-V525 */
@@ -4805,23 +4806,23 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
 
   for (i = 0; i < ne; i++)
     {
-      (void)xstrlcpy (exts[i].name, es[i]->name, sizeof (exts[i].name));
-      exts[i].base = es[i]->val.base;
-      exts[i].value = 0; /* external reference: size 0 */
+      (void)xstrlcpy (exts [i].name, es [i]->name, sizeof (exts [i].name));
+      exts [i].base = es [i]->val.base;
+      exts [i].value = 0; /* external reference: size 0 */
     }
 
   for (i = 0; i < ni; i++)
     {
-      (void)xstrlcpy (ints[i].name, is[i]->name, sizeof (ints[i].name));
-      ints[i].base = is[i]->val.base;
-      ints[i].value = is[i]->val.value;
+      (void)xstrlcpy (ints [i].name, is [i]->name, sizeof (ints [i].name));
+      ints [i].base = is [i]->val.base;
+      ints [i].value = is [i]->val.value;
     }
 
   for (i = 0; i < nt; i++)
     {
-      (void)xstrlcpy (ents[i].name, ts[i]->name, sizeof (ents[i].name));
-      ents[i].base = ts[i]->val.base;
-      ents[i].value = ts[i]->val.value;
+      (void)xstrlcpy (ents [i].name, ts [i]->name, sizeof (ents [i].name));
+      ents [i].base = ts [i]->val.base;
+      ents [i].value = ts [i]->val.value;
     }
 
   *nexts = ne;
@@ -4849,21 +4850,21 @@ static void
 collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
                unsigned blnksz, objsym *ps, int *nps)
 {
-  static const char *const segn[3] = { ".PROG.", ".DATA.", ".BLNK." };
-  unsigned segv[3];
+  static const char *const segn [3] = { ".PROG.", ".DATA.", ".BLNK." };
+  unsigned segv [3];
   int total = sym_count (t);
   symbol **all, **es, **ds;
   int n = 0, ne = 0, ndef = 0, i;
 
-  segv[0] = progsz;
-  segv[1] = datasz;
-  segv[2] = blnksz;
+  segv [0] = progsz;
+  segv [1] = datasz;
+  segv [2] = blnksz;
 
   for (i = 0; i < 3; i++) /* segment bases, always first */
     {
-      (void)xstrlcpy (ps[n].name, segn[i], sizeof (ps[n].name));
-      ps[n].base = i + 1;
-      ps[n].value = (u16)segv[i];
+      (void)xstrlcpy (ps [n].name, segn [i], sizeof (ps [n].name));
+      ps [n].base = i + 1;
+      ps [n].value = (u16)segv [i];
       n++;
     }
 
@@ -4883,13 +4884,13 @@ collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
 
   for (i = 0; i < total; i++)
     {
-      if (NULL != strchr (all[i]->name, ':')) /* a `..' local: excluded */
+      if (NULL != strchr (all [i]->name, ':')) /* a `..' local: excluded */
         continue;
 
-      if (all[i]->external)
-        es[ne++] = all[i];
-      else if (all[i]->defined)
-        ds[ndef++] = all[i];
+      if (all [i]->external)
+        es [ne++] = all [i];
+      else if (all [i]->defined)
+        ds [ndef++] = all [i];
     }
 
   qsort (es, (size_t)ne, sizeof (symbol *), cmp_decl); /* base order */
@@ -4897,17 +4898,17 @@ collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
 
   for (i = 0; i < ne; i++)
     {
-      (void)xstrlcpy (ps[n].name, es[i]->name, sizeof (ps[n].name));
-      ps[n].base = es[i]->val.base;
-      ps[n].value = 0; /* external reference: value 0 */
+      (void)xstrlcpy (ps [n].name, es [i]->name, sizeof (ps [n].name));
+      ps [n].base = es [i]->val.base;
+      ps [n].value = 0; /* external reference: value 0 */
       n++;
     }
 
   for (i = 0; i < ndef; i++)
     {
-      (void)xstrlcpy (ps[n].name, ds[i]->name, sizeof (ps[n].name));
-      ps[n].base = ds[i]->val.base;
-      ps[n].value = ds[i]->val.value;
+      (void)xstrlcpy (ps [n].name, ds [i]->name, sizeof (ps [n].name));
+      ps [n].base = ds [i]->val.base;
+      ps [n].value = ds [i]->val.value;
       n++;
     }
 
@@ -4983,26 +4984,26 @@ lst_symhead (astate *a)
 static void
 lst_symtab (astate *a)
 {
-  static const char *segname[3] = { ".BLNK.", ".DATA.", ".PROG." };
+  static const char *segname [3] = { ".BLNK.", ".DATA.", ".PROG." };
 
 #ifndef _CH_
   const
 #endif
-  char *segflag[3];
+  char *segflag [3];
   symbol **all;
   int total, nuser = 0, navail, i, col, perline;
 
   if (DIALECT_PASM2 == a->dialect)
     {
-      segflag[0] = "# X    ";
-      segflag[1] = "\" X    ";
-      segflag[2] = "' X    ";
+      segflag [0] = "# X    ";
+      segflag [1] = "\" X    ";
+      segflag [2] = "' X    ";
     }
   else
     {
-      segflag[0] = ":03 X ";
-      segflag[1] = ((DIALECT_PASM == a->dialect) ? "\"   X " : "*   X ");
-      segflag[2] = "'   X ";
+      segflag [0] = ":03 X ";
+      segflag [1] = ((DIALECT_PASM == a->dialect) ? "\"   X " : "*   X ");
+      segflag [2] = "'   X ";
     }
   perline = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect) ? 4
                                                                          : 3);
@@ -5016,9 +5017,9 @@ lst_symtab (astate *a)
 
   /* keep defined, external, or referenced-undefined non-local symbols */
   for (i = 0; i < navail; i++)
-    if ((all[i]->defined || all[i]->external || all[i]->udef)
-        && NULL == strchr (all[i]->name, ':'))
-      all[nuser++] = all[i];
+    if ((all [i]->defined || all [i]->external || all [i]->udef)
+        && NULL == strchr (all [i]->name, ':'))
+      all [nuser++] = all [i];
 
   if (DIALECT_PASM2 == a->dialect)
     qsort (all, (size_t)nuser, sizeof (symbol *), cmp_defseq);
@@ -5047,55 +5048,55 @@ lst_symtab (astate *a)
 
       if (i < nuser)
         {
-          char tcls = (all[i]->entry
+          char tcls = (all [i]->entry
                            ? 'E'
-                           : (all[i]->internal
+                           : (all [i]->internal
                                   ? 'I'
-                                  : (all[i]->external ? 'X' : ' ')));
-          char ecls = (all[i]->mdef ? 'M' : (all[i]->udef ? 'U' : ' '));
-          name = all[i]->name;
-          val = all[i]->val.value;
+                                  : (all [i]->external ? 'X' : ' ')));
+          char ecls = (all [i]->mdef ? 'M' : (all [i]->udef ? 'U' : ' '));
+          name = all [i]->name;
+          val = all [i]->val.value;
 
           if (DIALECT_PASM2 == a->dialect)
             {
-              char f[8];
+              char f [8];
 
-              if (all[i]->external)
+              if (all [i]->external)
                 {
                   /* p2 externals: val# X... attached # for BLNK; X is class */
-                  f[0] = '#';
-                  f[1] = ' ';
-                  f[2] = 'X';
-                  f[3] = (ecls != ' ' ? ecls : ' ');
-                  f[4] = ' ';
-                  f[5] = ' ';
-                  f[6] = ' ';
-                  f[7] = '\0';
+                  f [0] = '#';
+                  f [1] = ' ';
+                  f [2] = 'X';
+                  f [3] = (ecls != ' ' ? ecls : ' ');
+                  f [4] = ' ';
+                  f [5] = ' ';
+                  f [6] = ' ';
+                  f [7] = '\0';
                 }
               else
                 {
                   int fi = 0;
-                  f[fi++] = ' ';
-                  f[fi++] = ' ';
+                  f [fi++] = ' ';
+                  f [fi++] = ' ';
 
                   if (tcls != ' ')
-                    f[fi++] = tcls;
+                    f [fi++] = tcls;
 
                   if (ecls != ' ')
-                    f[fi++] = ecls;
+                    f [fi++] = ecls;
 
                   while (fi < 7)
-                    f[fi++] = ' ';
+                    f [fi++] = ' ';
 
-                  f[7] = '\0';
+                  f [7] = '\0';
                 }
 
               (void)fprintf (a->lst, "%-6s %04X%s", name, val & 0xFFFFu, f);
             }
           else
             {
-              static char ubuf[12];
-              const char *g = seg_flag ((int)all[i]->val.base, a->dialect);
+              static char ubuf [12];
+              const char *g = seg_flag ((int)all [i]->val.base, a->dialect);
               int gl = 0;
 
               /*
@@ -5106,18 +5107,18 @@ lst_symtab (astate *a)
                * predefined-segment rows below
                */
 
-              while (gl < 4 && '\0' != g[gl])
+              while (gl < 4 && '\0' != g [gl])
                 {
-                  ubuf[gl] = g[gl];
+                  ubuf [gl] = g [gl];
                   gl++;
                 }
 
               while (gl < 4)
-                ubuf[gl++] = ' ';
+                ubuf [gl++] = ' ';
 
-              ubuf[gl++] = tcls;
-              ubuf[gl++] = ecls;
-              ubuf[gl] = '\0';
+              ubuf [gl++] = tcls;
+              ubuf [gl++] = ecls;
+              ubuf [gl] = '\0';
               flag = ubuf;
               (void)fprintf (a->lst, "%-6s %04X%s", name, val & 0xFFFFu, flag);
             }
@@ -5131,13 +5132,13 @@ lst_symtab (astate *a)
            * reports size 0 here too -- matching the object `\\' record.
            */
 
-          name = segname[(long)i - nuser];
-          val = a->seg_hw[3 - ((long)i - nuser)];
+          name = segname [(long)i - nuser];
+          val = a->seg_hw [3 - ((long)i - nuser)];
 
           if (2 == (long)i - nuser && a->obj_org_used) /* pinned .PROG. */
             val = 0;
 
-          flag = segflag[(long)i - nuser];
+          flag = segflag [(long)i - nuser];
           (void)fprintf (a->lst, "%-6s %04X%s", name, val & 0xFFFFu, flag);
         }
 
@@ -5180,7 +5181,7 @@ static void process_file (astate *a, const char *path); /* forward */
 static void
 do_insert (astate *a, const char *field)
 {
-  char name[300], path[1024];
+  char name [300], path [1024];
   int n = 0, dot = 0;
   const char *p = skipws (field);
 
@@ -5190,34 +5191,34 @@ do_insert (astate *a, const char *field)
         dot = 1;
 
       if (n < 290)
-        name[n++] = (char)tolower ((unsigned char)*p);
+        name [n++] = (char)tolower ((unsigned char)*p);
 
       p++;
     }
-  name[n] = '\0';
+  name [n] = '\0';
 
   /*
    * an optional DOS/CP-M drive specifier `d:' prefixes the filename; the
    * originals accept it but resolve the file on the source's own disk, so we
    * strip it (a future extended-warnings mode could note the ignored drive).
    */
-  if ('\0' != name[0] && ':' == name[1])
+  if ('\0' != name [0] && ':' == name [1])
     {
       int k = 0;
 
-      while ('\0' != name[(long)k + 2])
+      while ('\0' != name [(long)k + 2])
         {
-          name[k] = name[(long)k + 2];
+          name [k] = name [(long)k + 2];
           k++;
         }
 
-      name[k] = '\0'; /* the `.'-vs-not (dot) test already excluded the `d:' */
+      name [k] = '\0'; /* the `.'-vs-not (dot) test already excluded the `d:' */
     }
 
   if (!dot)
     (void)xstrlcat (name, ".asm", sizeof (name));
 
-  if ('\0' != a->basedir[0])
+  if ('\0' != a->basedir [0])
     (void)xsnprintf (path, sizeof (path), "%s/%s", a->basedir, name);
   else
     (void)xstrlcpy (path, name, sizeof (path));
@@ -5227,7 +5228,7 @@ do_insert (astate *a, const char *field)
 
 /******************************************************************************/
 
-/* ---- macros: .DEFINE NAME[params] = [body] ------------------------- */
+/* ---- macros: .DEFINE NAME [params] = [body] ------------------------- */
 
 static void do_line (astate *a, const char *line); /* forward */
 
@@ -5264,7 +5265,7 @@ macro_addbody (macrodef *m, char *s)
     return;
 
   if (m->nbody < 64)
-    m->body[m->nbody++] = s;
+    m->body [m->nbody++] = s;
   else
     {
       /*LINTED E_CONSTANT_CONDITION*/
@@ -5301,21 +5302,21 @@ macro_free_all (astate *a)
       for (i = 0; i < m->nbody; i++)
         {
           /*LINTED E_CONSTANT_CONDITION*/
-          FREE (m->body[i]);
+          FREE (m->body [i]);
         }
 
       for (i = 0; i < 8; i++)
         {
-          if (NULL != m->params[i])
+          if (NULL != m->params [i])
             {
               /*LINTED E_CONSTANT_CONDITION*/
-              FREE (m->params[i]);
+              FREE (m->params [i]);
             }
 
-          if (NULL != m->defval[i])
+          if (NULL != m->defval [i])
             {
               /*LINTED E_CONSTANT_CONDITION*/
-              FREE (m->defval[i]);
+              FREE (m->defval [i]);
             }
         }
 
@@ -5335,7 +5336,7 @@ macro_free_all (astate *a)
  * the macro is added to the table when the matching ']' closes it.
  *
  * Every body line is malloc'd (dupstr) and handed to macro_addbody(), which
- * stores it in m->body[] or frees it; m itself is malloc'd in do_define() and
+ * stores it in m->body [] or frees it; m itself is malloc'd in do_define() and
  * linked into a->macros (and freed by macro_free_all()).  An older gcc
  * -fanalyzer cannot follow the pointer's escape through the array member and
  * the macro list and reports a spurious leak here; restructuring through the
@@ -5353,7 +5354,7 @@ static void
 macro_capture (astate *a, const char *p)
 {
   macrodef *m = a->defining;
-  char buf[512];
+  char buf [512];
   int n = 0;
 
   if (!a->def_started)
@@ -5387,7 +5388,7 @@ macro_capture (astate *a, const char *p)
 
           if (0 == a->def_depth)
             {
-              buf[n] = '\0';
+              buf [n] = '\0';
               macro_addbody (m, dupstr (buf));
 
               m->next = a->macros;
@@ -5400,12 +5401,12 @@ macro_capture (astate *a, const char *p)
         }
 
       if (n < 511)
-        buf[n++] = *p;
+        buf [n++] = *p;
 
       p++;
     }
 
-  buf[n] = '\0';
+  buf [n] = '\0';
   macro_addbody (m, dupstr (buf));
 }
 
@@ -5423,7 +5424,7 @@ do_define (astate *a, const char *operands)
 {
   macrodef *m = (macrodef *)malloc (sizeof (*m));
   const char *p = skipws (operands);
-  char buf[NAMEBUF];
+  char buf [NAMEBUF];
   int n = 0, i;
 
   if (NULL == m)
@@ -5436,26 +5437,26 @@ do_define (astate *a, const char *operands)
 
   for (i = 0; i < 8; i++)
     {
-      m->params[i] = NULL;
-      m->defval[i] = NULL;
+      m->params [i] = NULL;
+      m->defval [i] = NULL;
     }
 
   while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p || '%' == *p)
     {
       if (n < NAMEBUF - 1)
-        buf[n++] = (char)toupper ((unsigned char)*p);
+        buf [n++] = (char)toupper ((unsigned char)*p);
 
       p++;
     }
 
-  buf[n] = '\0';
+  buf [n] = '\0';
   m->name = dupstr (buf);
 
   p = skipws (p);
 
   if ('[' == *p)
     { /* parameter list */
-      char dbuf[NAMEBUF];
+      char dbuf [NAMEBUF];
 
       p++;
 
@@ -5469,13 +5470,13 @@ do_define (astate *a, const char *operands)
                  || '%' == *p)
             {
               if (pi < NAMEBUF - 1)
-                buf[pi++] = *p;
+                buf [pi++] = *p;
 
               p++;
             }
 
-          buf[pi] = '\0';
-          dbuf[0] = '\0';
+          buf [pi] = '\0';
+          dbuf [0] = '\0';
 
           if ('(' == *p)
             { /* `PARAM(default)': capture the parenthesized default value */
@@ -5494,12 +5495,12 @@ do_define (astate *a, const char *operands)
                     }
 
                   if (di < NAMEBUF - 1)
-                    dbuf[di++] = *p;
+                    dbuf [di++] = *p;
 
                   p++;
                 }
 
-              dbuf[di] = '\0';
+              dbuf [di] = '\0';
             }
 
           /*
@@ -5510,10 +5511,10 @@ do_define (astate *a, const char *operands)
 
           if (pi > 0 && m->nparams < 7)
             {
-              m->params[m->nparams] = dupstr (buf);
+              m->params [m->nparams] = dupstr (buf);
 
-              if ('\0' != dbuf[0])
-                m->defval[m->nparams] = dupstr (dbuf);
+              if ('\0' != dbuf [0])
+                m->defval [m->nparams] = dupstr (dbuf);
 
               m->nparams++;
             }
@@ -5553,7 +5554,7 @@ do_define (astate *a, const char *operands)
  */
 
 static void
-macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
+macro_subst (const macrodef *m, char *args [], int nargs, const char *in,
              char *out)
 {
   int oi = 0;
@@ -5563,19 +5564,19 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
       if ('\'' == *in)
         { /* concatenation if next token is a param */
           const char *q = in + 1;
-          char pk[NAMEBUF];
+          char pk [NAMEBUF];
           int pn = 0, k, isp = 0;
 
           while ((isalnum ((unsigned char)*q) || '.' == *q || '$' == *q
                   || '%' == *q)
                  && pn < NAMEBUF - 1)
-            pk[pn++] = *q++;
+            pk [pn++] = *q++;
 
-          pk[pn] = '\0';
+          pk [pn] = '\0';
 
           for (k = 0; k < m->nparams; k++)
             {
-              if (ci_eq (pk, m->params[k]))
+              if (ci_eq (pk, m->params [k]))
                 {
                   isp = 1;
 
@@ -5591,30 +5592,30 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
             } /* paste: drop the apostrophe */
 
           /* otherwise a literal 'string' */
-          out[oi++] = *in++;
+          out [oi++] = *in++;
 
           while ('\0' != *in && '\'' != *in && oi < 500)
-            out[oi++] = *in++;
+            out [oi++] = *in++;
 
           if ('\'' == *in && oi < 500)
-            out[oi++] = *in++;
+            out [oi++] = *in++;
         }
       else if (isalpha ((unsigned char)*in) || '.' == *in || '%' == *in
                || '$' == *in)
         {
-          char tok[NAMEBUF];
+          char tok [NAMEBUF];
           int tn = 0, j, pi = -1;
 
           while ((isalnum ((unsigned char)*in) || '.' == *in || '$' == *in
                   || '%' == *in)
                  && tn < NAMEBUF - 1)
-            tok[tn++] = *in++;
+            tok [tn++] = *in++;
 
-          tok[tn] = '\0';
+          tok [tn] = '\0';
 
           for (j = 0; j < m->nparams; j++)
             {
-              if (ci_eq (tok, m->params[j]))
+              if (ci_eq (tok, m->params [j]))
                 {
                   pi = j;
 
@@ -5623,10 +5624,10 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
             }
 
           {
-            const char *s = ((pi >= 0 && pi < nargs) ? args[pi] : tok);
+            const char *s = ((pi >= 0 && pi < nargs) ? args [pi] : tok);
 
             while ('\0' != *s && oi < 500)
-              out[oi++] = *s++;
+              out [oi++] = *s++;
           }
 
           /*
@@ -5639,10 +5640,10 @@ macro_subst (const macrodef *m, char *args[], int nargs, const char *in,
             in++;
         }
       else
-        out[oi++] = *in++;
+        out [oi++] = *in++;
     }
 
-  out[oi] = '\0';
+  out [oi] = '\0';
 }
 
 /******************************************************************************/
@@ -5686,12 +5687,12 @@ mac_label (const char *line, char *name_out)
   while (isalnum ((unsigned char)*p) || '.' == *p || '$' == *p || '%' == *p)
     {
       if (n < NAMEBUF - 1)
-        name_out[n++] = (char)toupper ((unsigned char)*p);
+        name_out [n++] = (char)toupper ((unsigned char)*p);
 
       p++;
     }
 
-  name_out[n] = '\0';
+  name_out [n] = '\0';
 
   return (n > 0 && '>' == *p);
 }
@@ -5707,11 +5708,11 @@ mac_label (const char *line, char *name_out)
 static int
 find_mac_label (const macrodef *m, const char *name)
 {
-  char lab[NAMEBUF];
+  char lab [NAMEBUF];
   int i;
 
   for (i = 0; i < m->nbody; i++)
-    if (mac_label (m->body[i], lab) && ci_eq (lab, name))
+    if (mac_label (m->body [i], lab) && ci_eq (lab, name))
       return i;
 
   return -1;
@@ -5723,8 +5724,8 @@ static void
 expand_macro (astate *a, const macrodef *m, const char *argstr,
               const char *callline, int labeled)
 {
-  char argbuf[1024];
-  char *args[8];
+  char argbuf [1024];
+  char *args [8];
   int nargs = 0, i, j = 0;
   int outer = 0, start = 0;
   int saved_mac = a->mac_active; /*
@@ -5760,20 +5761,20 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
   while ('\0' != *p && ';' != *p && ']' != *p && nargs < 8 && j < 1000)
     {
-      args[nargs] = argbuf + j;
+      args [nargs] = argbuf + j;
 
       if ('\\' == *p)
         { /* \expr -> decimal value */
           value_t vv;
           const char *ep = p + 1;
-          char num[16];
+          char num [16];
           const char *np;
 
           (void)eval1 (a, &ep, &vv);
           (void)xsnprintf (num, sizeof (num), "%u", (unsigned)vv.value);
 
           for (np = num; '\0' != *np && j < 1000; np++)
-            argbuf[j++] = *np;
+            argbuf [j++] = *np;
 
           p = ep;
         }
@@ -5799,7 +5800,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
                 }
 
               if (j < 1000)
-                argbuf[j++] = *p;
+                argbuf [j++] = *p;
 
               p++;
             }
@@ -5818,16 +5819,16 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
               if ('\'' == *p || '"' == *p)
                 {
                   char qc = *p;
-                  argbuf[j++] = *p++;
+                  argbuf [j++] = *p++;
 
                   while ('\0' != *p && *p != qc && j < 1000)
-                    argbuf[j++] = *p++;
+                    argbuf [j++] = *p++;
 
                   if (*p == qc && j < 1000)
-                    argbuf[j++] = *p++;
+                    argbuf [j++] = *p++;
                 }
               else
-                argbuf[j++] = *p++;
+                argbuf [j++] = *p++;
             }
 
           /*
@@ -5840,12 +5841,12 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
           if (DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
             while (j > s
-                   && (' ' == argbuf[(long)j - 1]
-                       || '\t' == argbuf[(long)j - 1]))
+                   && (' ' == argbuf [(long)j - 1]
+                       || '\t' == argbuf [(long)j - 1]))
               j--;
         }
 
-      argbuf[j++] = '\0';
+      argbuf [j++] = '\0';
       nargs++;
       p = skipws (p);
 
@@ -5882,30 +5883,30 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
     for (k = nargs; k < m->nparams && k < 8 && j < 1000; k++)
       {
-        args[k] = argbuf + j;
+        args [k] = argbuf + j;
 
-        if ('%' == m->params[k][0])
+        if ('%' == m->params [k] [0])
           {
-            char gl[24];
+            char gl [24];
             int gi;
 
             a->genctr++;
             (void)xsnprintf (gl, sizeof (gl), "..%04u", a->genctr);
 
-            for (gi = 0; '\0' != gl[gi] && j < 1000; gi++)
-              argbuf[j++] = gl[gi];
+            for (gi = 0; '\0' != gl [gi] && j < 1000; gi++)
+              argbuf [j++] = gl [gi];
           }
         else
           {
-            const char *dv = m->defval[k];
+            const char *dv = m->defval [k];
 
             if (NULL != dv)
               while ('\0' != *dv && j < 1000)
-                argbuf[j++] = *dv++;
+                argbuf [j++] = *dv++;
           }
 
         if (j < 1000)
-          argbuf[j++] = '\0';
+          argbuf [j++] = '\0';
       }
 
     if (m->nparams > nargs)
@@ -5949,9 +5950,9 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
       for (bi = 0; bi < m->nbody && !a->macro_exit; bi++)
         {
-          char lnb[512];
-          char labbuf[NAMEBUF];
-          macro_subst (m, args, nargs, m->body[bi], lnb);
+          char lnb [512];
+          char labbuf [NAMEBUF];
+          macro_subst (m, args, nargs, m->body [bi], lnb);
 
           if (mac_label (skipws (lnb), labbuf))
             continue; /* macro label `name>': emits nothing, not listed */
@@ -5963,7 +5964,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
                * closed text; a non-errored line is still collapsed away in
                * print_lst, where mac_plus is then irrelevant)
                */
-              char clb[600];
+              char clb [600];
               (void)xsnprintf (clb, sizeof (clb), "%s]", lnb);
               a->mac_src = clb;
               a->mac_plus = 1;
@@ -6021,8 +6022,8 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
   if (outer)
     {
-      char ln0[512];
-      char src[2048];
+      char ln0 [512];
+      char src [2048];
       u16 lc0;
 
       a->mac_active = 1;
@@ -6032,7 +6033,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
        * the call line) or merely open a conditional that spans the body
        */
 
-      macro_subst (m, args, nargs, m->body[0], ln0);
+      macro_subst (m, args, nargs, m->body [0], ln0);
       lc0 = a->lc;
       a->lst_suppress = 1;
       do_line (a, ln0);
@@ -6049,9 +6050,9 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
       /*
        * A LABELED call line carries the label's address (= lc0) even when
-       * body[0] emits nothing -- the originals list the label with its LC, as
-       * for any labeled line.  (An UNLABELED empty-body[0] call line stays
-       * blank: lst_loc == -1 here; an emitting body[0] already shows lc0 via
+       * body [0] emits nothing -- the originals list the label with its LC, as
+       * for any labeled line.  (An UNLABELED empty-body [0] call line stays
+       * blank: lst_loc == -1 here; an emitting body [0] already shows lc0 via
        * lst_loc == -2.)  Deriving lst_lbase reproduces the relocation flag.
        */
       if (labeled && -1 == a->lst_loc)
@@ -6061,7 +6062,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         }
 
       /*
-       * body[0]'s error `?' offsets were recorded against ln0, but the fold
+       * body [0]'s error `?' offsets were recorded against ln0, but the fold
        * renders it after "callline[" -- shift them into the call line's
        * coordinate space (as the inline-conditional path does with boff) so a
        * `?' on the folded body lands correctly: e.g. past the closing ']' at
@@ -6073,7 +6074,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
           int qi;
 
           for (qi = 0; qi < a->lst_nec; qi++)
-            a->lst_qoff[qi] += boff;
+            a->lst_qoff [qi] += boff;
         }
 
       a->mac_src = src;
@@ -6089,14 +6090,14 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
   for (i = start; i < m->nbody; i++)
     {
-      char ln[512];
-      char labbuf[NAMEBUF];
+      char ln [512];
+      char labbuf [NAMEBUF];
       const char *t;
 
       if (a->macro_exit) /* .EXIT terminated this expansion early */
         break;
 
-      macro_subst (m, args, nargs, m->body[i], ln);
+      macro_subst (m, args, nargs, m->body  [i], ln);
       t = skipws (ln);
 
       if (mac_label (t, labbuf))
@@ -6109,7 +6110,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
            * (under listed .SALL the body text is suppressed, so fall through;
            * under .XLIST the collapse is bypassed and this fold path runs)
            */
-          char src[600];
+          char src [600];
           (void)xsnprintf (src, sizeof (src), "%s]", ln);
           a->mac_src = src;
           a->mac_plus = 1;
@@ -6117,7 +6118,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
           a->mac_src = NULL;
           a->mac_plus = 0;
         }
-      else if ((a->lst_ctl & LSTC_LALL) && ';' == t[0] && ';' == t[1])
+      else if ((a->lst_ctl & LSTC_LALL) && ';' == t [0] && ';' == t [1])
         { /*
            * a ';;' macro-body comment lists as a BLANK '+' line under .LALL:
            * the originals suppress its text but keep the line (mac_src="" gives
@@ -6194,7 +6195,7 @@ static char *atarist_getline (char *buf, int size, int echo)
 
   if (size <= 1)
     {
-      buf[0] = '\0';
+      buf [0] = '\0';
 
       return buf;
     }
@@ -6211,8 +6212,8 @@ static char *atarist_getline (char *buf, int size, int echo)
               Cconout ('\n');
             }
 
-          buf[i++] = '\n';
-          buf[i] = '\0';
+          buf [i++] = '\n';
+          buf [i] = '\0';
 
           return buf;
         }
@@ -6222,7 +6223,7 @@ static char *atarist_getline (char *buf, int size, int echo)
           if (i == 0)
             return NULL;
 
-          buf[i] = '\0';
+          buf [i] = '\0';
 
           return buf;
         }
@@ -6246,14 +6247,14 @@ static char *atarist_getline (char *buf, int size, int echo)
 
       if (i < size - 1)
         {
-          buf[i++] = (char)c;
+          buf [i++] = (char)c;
 
           if (echo)
             Cconout (c);
         }
       else
         {
-          buf[i] = '\0';
+          buf [i] = '\0';
 
           return buf;
         }
@@ -6284,7 +6285,7 @@ static char *unix_getline (char *buf, int size)
 
   if (1 >= size)
     {
-      buf[0] = '\0';
+      buf [0] = '\0';
 
       return buf;
     }
@@ -6305,8 +6306,8 @@ static char *unix_getline (char *buf, int size)
 
       raw.c_lflag &= (tcflag_t)~(ICANON | ECHO);
       raw.c_lflag |= ISIG;
-      raw.c_cc[VMIN] = 1;
-      raw.c_cc[VTIME] = 0;
+      raw.c_cc [VMIN] = 1;
+      raw.c_cc [VTIME] = 0;
 # if defined(USE_TERMIOS)
       (void)tcsetattr (0, TCSANOW, &raw);
 # elif defined(USE_TERMIO)
@@ -6323,7 +6324,7 @@ static char *unix_getline (char *buf, int size)
         {
           if (errno == EINTR)
             {
-              buf[0] = '\0';
+              buf [0] = '\0';
 
               goto restore;
             }
@@ -6385,7 +6386,7 @@ static char *unix_getline (char *buf, int size)
           if (tty)
             wr = write (1, "\r\n", 2);
 
-          buf[i++] = '\n';
+          buf [i++] = '\n';
 
           break;
         }
@@ -6406,7 +6407,7 @@ static char *unix_getline (char *buf, int size)
 
               if (tty)
                 {
-                  if (buf[i] == '\t')
+                  if (buf [i] == '\t')
                     {
                       int n = col % 8;
 
@@ -6433,7 +6434,7 @@ static char *unix_getline (char *buf, int size)
         {
           if (i < size - 1)
             {
-              buf[i++] = (char)c;
+              buf [i++] = (char)c;
 
               if (tty)
                 {
@@ -6456,7 +6457,7 @@ static char *unix_getline (char *buf, int size)
 
       if (i < size - 1)
         {
-          buf[i++] = (char)c;
+          buf [i++] = (char)c;
 
           if (tty)
             {
@@ -6470,7 +6471,7 @@ static char *unix_getline (char *buf, int size)
 
   (void)wr;
 
-  buf[i] = '\0';
+  buf [i] = '\0';
 
 restore:
   if (tty)
@@ -6527,7 +6528,7 @@ static char *xgetline (char *buf, int size, FILE *fp)
 static void
 console_read (const astate *a, symbol *s)
 {
-  char ibuf[256];
+  char ibuf [256];
   long iv = 0;
 
   (void)fputc (':', stderr);
@@ -6559,7 +6560,7 @@ static void
 do_line (astate *a, const char *line)
 {
   line_t L;
-  char op[NAMEBUF];
+  char op [NAMEBUF];
   const char *bp;
   u16 lc0;
   const macrodef *mac;
@@ -6672,7 +6673,7 @@ do_line (astate *a, const char *line)
       const char *s = line;
 
       if (a->pend_len < 1022)
-        a->pend_args[a->pend_len++] = ' ';
+        a->pend_args [a->pend_len++] = ' ';
 
       while ('\0' != *s && ';' != *s && a->pend_len < 1022)
         {
@@ -6683,7 +6684,7 @@ do_line (astate *a, const char *line)
           else if (')' == c)
             a->pend_depth--;
 
-          a->pend_args[a->pend_len++] = c;
+          a->pend_args [a->pend_len++] = c;
 
           if (a->pend_depth <= 0)
             break;
@@ -6692,7 +6693,7 @@ do_line (astate *a, const char *line)
       if (a->pend_depth <= 0)
         {
           const macrodef *pm = macro_lookup (a, a->pend_op);
-          a->pend_args[a->pend_len] = '\0';
+          a->pend_args [a->pend_len] = '\0';
           a->pending = 0;
 
           if (NULL != pm) /* multi-line arg: no single call line to fold */
@@ -6741,10 +6742,10 @@ do_line (astate *a, const char *line)
           {
             if (a->cdepth < MAXCOND)
               {
-                a->cstack[a->cdepth].if_true = !a->pend_else_wt;
-                a->cstack[a->cdepth].assemble
+                a->cstack [a->cdepth].if_true = !a->pend_else_wt;
+                a->cstack [a->cdepth].assemble
                     = a->pend_else_outer && !a->pend_else_wt;
-                a->cstack[a->cdepth].is_else = 1;
+                a->cstack [a->cdepth].is_else = 1;
                 a->cdepth++;
               }
 
@@ -6761,8 +6762,8 @@ do_line (astate *a, const char *line)
 
         if (a->cdepth > 0)
           {
-            wt = a->cstack[(long)a->cdepth - 1].if_true;
-            was_else = a->cstack[(long)a->cdepth - 1].is_else;
+            wt = a->cstack [(long)a->cdepth - 1].if_true;
+            was_else = a->cstack [(long)a->cdepth - 1].is_else;
             a->cdepth--;
           }
 
@@ -6775,9 +6776,9 @@ do_line (astate *a, const char *line)
 
             if (a->cdepth < MAXCOND)
               {
-                a->cstack[a->cdepth].if_true = !wt;
-                a->cstack[a->cdepth].assemble = outer && !wt;
-                a->cstack[a->cdepth].is_else = 1;
+                a->cstack [a->cdepth].if_true = !wt;
+                a->cstack [a->cdepth].assemble = outer && !wt;
+                a->cstack [a->cdepth].is_else = 1;
                 a->cdepth++;
               }
 
@@ -6858,7 +6859,7 @@ do_line (astate *a, const char *line)
             p++;
 
           if (!eval1 (a, &p, &v) && sub >= 0 && sub < a->ntemps)
-            a->temps[sub] = v;
+            a->temps [sub] = v;
           else
             aerr (a, line, "subscript");
 
@@ -6881,16 +6882,16 @@ do_line (astate *a, const char *line)
    */
   a->ppos = line_off (line, L.operands);
 
-  op[0] = '\0';
+  op [0] = '\0';
 
-  if ('\0' != L.op[0])
+  if ('\0' != L.op [0])
     {
       int k;
 
-      for (k = 0; k < NAMEBUF - 1 && '\0' != L.op[k]; k++)
-        op[k] = (char)toupper ((unsigned char)L.op[k]);
+      for (k = 0; k < NAMEBUF - 1 && '\0' != L.op [k]; k++)
+        op [k] = (char)toupper ((unsigned char)L.op [k]);
 
-      op[k] = '\0';
+      op [k] = '\0';
       resolve_alias (a, op);
       canon_dir (op); /* accept the six-char-truncated directive spellings */
     }
@@ -6900,13 +6901,13 @@ do_line (astate *a, const char *line)
    * (e.g. "NEXTLF: IF POLLING, ["), so do it before the conditional dispatch.
    */
 
-  if ('\0' != L.label[0] && !L.assign && casm (a))
+  if ('\0' != L.label [0] && !L.assign && casm (a))
     {
-      char qn[NAMEBUF + 16];
+      char qn [NAMEBUF + 16];
       const char *dn = L.label;
       symbol *s;
 
-      if ('.' == L.label[0] && '.' == L.label[1])
+      if ('.' == L.label [0] && '.' == L.label [1])
         { /* local '..' label */
           (void)xsnprintf (qn, sizeof (qn), "%u:%s", a->scope, L.label);
           dn = qn;
@@ -6980,7 +6981,7 @@ do_line (astate *a, const char *line)
             t = (2 == a->pass);
           else if (0 == strcmp (op, ".IFDEF") || 0 == strcmp (op, ".IFNDEF"))
             {
-              char nm[NAMEBUF];
+              char nm [NAMEBUF];
               const symbol *s;
               (void)parse_opname (q, nm);
               s = sym_lookup (a->syms, nm);
@@ -7101,14 +7102,14 @@ do_line (astate *a, const char *line)
                  * suppressed; its `?' error offsets are shifted to the block's
                  * position within this line)
                  */
-                char bbuf[512];
+                char bbuf [512];
                 size_t bl = (size_t)line_off (body, body_end);
 
                 if (bl >= sizeof (bbuf))
                   bl = sizeof (bbuf) - 1;
 
                 (void)memcpy (bbuf, body, bl);
-                bbuf[bl] = '\0';
+                bbuf [bl] = '\0';
 
                 /*
                  * zasm.com quirk: an .ascii/.ascis/.asciz STRING whose closing
@@ -7123,11 +7124,11 @@ do_line (astate *a, const char *line)
                  */
                 if (!(DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
                     && bl >= 2
-                    && ('\'' == bbuf[bl - 1] || '"' == bbuf[bl - 1])
-                    && bbuf[bl - 1] != bbuf[bl - 2] && is_string_dir (bbuf))
+                    && ('\'' == bbuf [bl - 1] || '"' == bbuf [bl - 1])
+                    && bbuf [bl - 1] != bbuf [bl - 2] && is_string_dir (bbuf))
                   {
-                    bbuf[bl - 2] = bbuf[bl - 1]; /* slide the close quote in */
-                    bbuf[bl - 1] = '\0';
+                    bbuf [bl - 2] = bbuf [bl - 1]; /* slide close quote in */
+                    bbuf [bl - 1] = '\0';
                   }
 
                 a->lst_suppress = 1;
@@ -7140,7 +7141,7 @@ do_line (astate *a, const char *line)
                     int i;
 
                     for (i = 0; i < a->lst_nec; i++)
-                      a->lst_qoff[i] += boff;
+                      a->lst_qoff [i] += boff;
 
                     a->cur_line = line;
                     print_lst (a, lc0, line);
@@ -7170,14 +7171,14 @@ do_line (astate *a, const char *line)
              */
             if (outer && t)
               {
-                char bbuf[512];
+                char bbuf [512];
                 size_t bl = strlen (bare);
 
                 if (bl >= sizeof (bbuf))
                   bl = sizeof (bbuf) - 1;
 
                 (void)memcpy (bbuf, bare, bl);
-                bbuf[bl] = '\0';
+                bbuf [bl] = '\0';
 
                 a->lst_suppress = 1;
                 do_line (a, bbuf);
@@ -7189,7 +7190,7 @@ do_line (astate *a, const char *line)
                     int i;
 
                     for (i = 0; i < a->lst_nec; i++)
-                      a->lst_qoff[i] += boff;
+                      a->lst_qoff [i] += boff;
 
                     a->cur_line = line;
                     print_lst (a, lc0, line);
@@ -7216,22 +7217,22 @@ do_line (astate *a, const char *line)
 
             if (a->cdepth < MAXCOND)
               {
-                a->cstack[a->cdepth].if_true = t;
-                a->cstack[a->cdepth].assemble = outer && t;
-                a->cstack[a->cdepth].is_else = 0;
+                a->cstack [a->cdepth].if_true = t;
+                a->cstack [a->cdepth].assemble = outer && t;
+                a->cstack [a->cdepth].is_else = 0;
                 a->cdepth++;
               }
 
             if (outer && t && '\0' != *lead && ';' != *lead)
               {
-                char bbuf[512];
+                char bbuf [512];
                 size_t bl = strlen (lead);
 
                 if (bl >= sizeof (bbuf))
                   bl = sizeof (bbuf) - 1;
 
                 (void)memcpy (bbuf, lead, bl);
-                bbuf[bl] = '\0';
+                bbuf [bl] = '\0';
 
                 a->lst_suppress = 1;
                 do_line (a, bbuf);
@@ -7243,7 +7244,7 @@ do_line (astate *a, const char *line)
                     int i;
 
                     for (i = 0; i < a->lst_nec; i++)
-                      a->lst_qoff[i] += boff;
+                      a->lst_qoff [i] += boff;
 
                     a->cur_line = line;
                     print_lst (a, lc0, line);
@@ -7251,7 +7252,7 @@ do_line (astate *a, const char *line)
               }
             else if (2 == a->pass)
               { /* skipped, or a bare open: blank LC (label LC if labeled) */
-                a->lst_loc = (('\0' != L.label[0]) ? (long)lc0 : -1);
+                a->lst_loc = (('\0' != L.label [0]) ? (long)lc0 : -1);
                 a->lst_lbase = -1;
                 print_lst (a, lc0, line);
               }
@@ -7262,9 +7263,9 @@ do_line (astate *a, const char *line)
 
       if (a->cdepth < MAXCOND)
         {
-          a->cstack[a->cdepth].if_true = t;
-          a->cstack[a->cdepth].assemble = outer && t;
-          a->cstack[a->cdepth].is_else = 0;
+          a->cstack [a->cdepth].if_true = t;
+          a->cstack [a->cdepth].assemble = outer && t;
+          a->cstack [a->cdepth].is_else = 0;
           a->cdepth++;
         }
 
@@ -7275,7 +7276,7 @@ do_line (astate *a, const char *line)
            * in which case the label's address (= lc0) is shown, as for any
            * labeled line.
            */
-          a->lst_loc = (('\0' != L.label[0]) ? (long)lc0 : -1);
+          a->lst_loc = (('\0' != L.label [0]) ? (long)lc0 : -1);
           a->lst_lbase = -1;
           print_lst (a, lc0, line);
         }
@@ -7311,9 +7312,9 @@ do_line (astate *a, const char *line)
 
           if (a->cdepth < MAXCOND)
             {
-              a->cstack[a->cdepth].if_true = t;
-              a->cstack[a->cdepth].assemble = outer && t;
-              a->cstack[a->cdepth].is_else = 0;
+              a->cstack [a->cdepth].if_true = t;
+              a->cstack [a->cdepth].assemble = outer && t;
+              a->cstack [a->cdepth].is_else = 0;
               a->cdepth++;
             }
 
@@ -7329,7 +7330,7 @@ do_line (astate *a, const char *line)
         { /* invert the innermost frame, like the TDL bracket else */
           if (a->cdepth > 0)
             {
-              int wt = a->cstack[(long)a->cdepth - 1].if_true;
+              int wt = a->cstack [(long)a->cdepth - 1].if_true;
               int outer;
 
               a->cdepth--;
@@ -7337,9 +7338,9 @@ do_line (astate *a, const char *line)
 
               if (a->cdepth < MAXCOND)
                 {
-                  a->cstack[a->cdepth].if_true = !wt;
-                  a->cstack[a->cdepth].assemble = outer && !wt;
-                  a->cstack[a->cdepth].is_else = 1;
+                  a->cstack [a->cdepth].if_true = !wt;
+                  a->cstack [a->cdepth].assemble = outer && !wt;
+                  a->cstack [a->cdepth].is_else = 1;
                   a->cdepth++;
                 }
             }
@@ -7479,10 +7480,10 @@ do_line (astate *a, const char *line)
            * the same way) resolves it within the scope
            */
           const char *dn = L.label;
-          char qn[NAMEBUF + 16];
+          char qn [NAMEBUF + 16];
           symbol *s;
 
-          if ('.' == L.label[0] && '.' == L.label[1])
+          if ('.' == L.label [0] && '.' == L.label [1])
             {
               (void)xsnprintf (qn, sizeof (qn), "%u:%s", a->scope, L.label);
               dn = qn;
@@ -7522,11 +7523,11 @@ do_line (astate *a, const char *line)
    * line with no operator: a label-only line shows its LC, while a blank
    * or comment-only line has no location and blanks the LC column.
    */
-  if ('\0' == op[0])
+  if ('\0' == op [0])
     {
       if (2 == a->pass)
         {
-          if ('\0' == L.label[0])
+          if ('\0' == L.label [0])
             a->lst_loc = -1;
 
           print_lst (a, lc0, line);
@@ -7584,7 +7585,7 @@ do_line (astate *a, const char *line)
        * a synonym for sym1).  The four differ only in which symbol class the
        * original searches; we resolve them all through one alias table.
        */
-      char e1[NAMEBUF], e2[NAMEBUF];
+      char e1 [NAMEBUF], e2 [NAMEBUF];
       const char *q = parse_opname (L.operands, e1);
       q = skipws (q);
 
@@ -7593,11 +7594,11 @@ do_line (astate *a, const char *line)
 
       (void)parse_opname (q, e2);
 
-      if ('\0' != e1[0] && '\0' != e2[0] && a->nalias < MAXALIAS)
+      if ('\0' != e1 [0] && '\0' != e2 [0] && a->nalias < MAXALIAS)
         {
-          /* alias_from/alias_to elements are each char[NAMEBUF] */
-          (void)xstrlcpy (a->alias_from[a->nalias], e2, NAMEBUF);
-          (void)xstrlcpy (a->alias_to[a->nalias], e1, NAMEBUF);
+          /* alias_from/alias_to elements are each char [NAMEBUF] */
+          (void)xstrlcpy (a->alias_from [a->nalias], e2, NAMEBUF);
+          (void)xstrlcpy (a->alias_to [a->nalias], e1, NAMEBUF);
 
           a->nalias++;
         }
@@ -7621,10 +7622,10 @@ do_line (astate *a, const char *line)
 
       for (;;)
         {
-          char nm[NAMEBUF];
+          char nm [NAMEBUF];
           q = parse_opname (q, nm);
 
-          if ('\0' != nm[0])
+          if ('\0' != nm [0])
             {
               symbol *s = sym_intern (a->syms, nm);
 
@@ -7665,10 +7666,10 @@ do_line (astate *a, const char *line)
 
       for (;;)
         {
-          char nm[NAMEBUF];
+          char nm [NAMEBUF];
           q = parse_opname (q, nm);
 
-          if ('\0' != nm[0])
+          if ('\0' != nm [0])
             {
               symbol *s = sym_intern (a->syms, nm);
 
@@ -7694,10 +7695,10 @@ do_line (astate *a, const char *line)
     }
   else if (opeq (op, ".IDENT", NULL))
     { /* set the module name carried in the `!' object record */
-      char nm[NAMEBUF];
+      char nm [NAMEBUF];
       (void)parse_opname (L.operands, nm);
 
-      if ('\0' != nm[0])
+      if ('\0' != nm [0])
         (void)xstrlcpy (a->modname, nm, sizeof (a->modname));
 
       a->lst_loc = -1;
@@ -7708,7 +7709,7 @@ do_line (astate *a, const char *line)
        * `.PROGID id,ver,rev': the id (<=6 chars) fills the record's name
        * field; ver/rev are 8-bit values.  No bytes emitted (blank LC).
        */
-      char nm[NAMEBUF];
+      char nm [NAMEBUF];
       const char *q = parse_opname (L.operands, nm);
       value_t v;
 
@@ -7778,7 +7779,7 @@ do_line (astate *a, const char *line)
        * after the name) and the branch is abandoned, the expansion falling
        * through to the next body line.
        */
-      char nm[NAMEBUF];
+      char nm [NAMEBUF];
       const char *os = skipws (L.operands);
       const char *oe = parse_opname (os, nm);
 
@@ -7790,7 +7791,7 @@ do_line (astate *a, const char *line)
 
           aerr (a, line, "extra operand");
         }
-      else if ('\0' == nm[0])
+      else if ('\0' == nm [0])
         { /* no label operand */
           a->ppos = line_off (line, os);
 
@@ -7864,9 +7865,9 @@ do_line (astate *a, const char *line)
           if (a->loc_sp
               < LOC_STK_DEPTH)
             {
-              a->loc_stk[a->loc_sp].lc = a->lc;
-              a->loc_stk[a->loc_sp].base = a->base;
-              a->loc_stk[a->loc_sp].reloc = a->lc_reloc;
+              a->loc_stk [a->loc_sp].lc = a->lc;
+              a->loc_stk [a->loc_sp].base = a->base;
+              a->loc_stk [a->loc_sp].reloc = a->lc_reloc;
               a->loc_sp++;
             }
 
@@ -7904,9 +7905,9 @@ do_line (astate *a, const char *line)
       if (a->loc_sp > 0)
         {
           a->loc_sp--;
-          a->lc = a->loc_stk[a->loc_sp].lc;
-          a->base = a->loc_stk[a->loc_sp].base;
-          a->lc_reloc = a->loc_stk[a->loc_sp].reloc;
+          a->lc = a->loc_stk [a->loc_sp].lc;
+          a->base = a->loc_stk [a->loc_sp].base;
+          a->lc_reloc = a->loc_stk [a->loc_sp].reloc;
         }
       else
         {
@@ -8114,10 +8115,10 @@ do_line (astate *a, const char *line)
 
           for (i = 0; i < n; i++)
             {
-              a->temps[i].value = 0;
-              a->temps[i].reloc = 0;
-              a->temps[i].base = 0;
-              a->temps[i].ext = NULL;
+              a->temps [i].value = 0;
+              a->temps [i].reloc = 0;
+              a->temps [i].base = 0;
+              a->temps [i].ext = NULL;
             }
         }
 
@@ -8174,7 +8175,7 @@ do_line (astate *a, const char *line)
        * (it is not gated by .LCTL), so leave lst_ctlstmt clear.
        */
       if (a->lst_nsave < LSTC_SAVES)
-        a->lst_save[a->lst_nsave++] = a->lst_ctl;
+        a->lst_save [a->lst_nsave++] = a->lst_ctl;
 
       a->lst_loc = -1;
     }
@@ -8190,7 +8191,7 @@ do_line (astate *a, const char *line)
         print_lst (a, lc0, line);
 
       if (a->lst_nsave > 0)
-        a->lst_ctl = a->lst_save[--a->lst_nsave];
+        a->lst_ctl = a->lst_save [--a->lst_nsave];
 
       return;
     }
@@ -8207,7 +8208,7 @@ do_line (astate *a, const char *line)
 
       /* TITLE: simple delim, drop <space, dialect max, err Q if over. */
       {
-        char tmp[256];
+        char tmp [256];
         size_t ms = (DIALECT_ZASM == a->dialect ||
                      DIALECT_PASM == a->dialect) ? 80 : 70;
         size_t qt = (DIALECT_ZASM == a->dialect ||
@@ -8225,7 +8226,7 @@ do_line (astate *a, const char *line)
           n = ms;
 
         (void)memcpy (a->title, tmp, n);
-        a->title[n] = '\0';
+        a->title [n] = '\0';
       }
 
       return; /* suppressed from the body listing (affects only header) */
@@ -8240,7 +8241,7 @@ do_line (astate *a, const char *line)
 
       /* SBTTL: simple delim, drop <spc, dialect max, Q if over. */
       {
-        char tmp[256];
+        char tmp [256];
         size_t ms = (DIALECT_ZASM == a->dialect ||
                      DIALECT_PASM == a->dialect) ? 80 : 70;
         size_t qt = (DIALECT_ZASM == a->dialect ||
@@ -8257,7 +8258,7 @@ do_line (astate *a, const char *line)
           n = ms;
 
         (void)memcpy (a->subtitle, tmp, n);
-        a->subtitle[n]='\0';
+        a->subtitle [n]='\0';
       }
 
       return; /* suppressed from the body listing */
@@ -8315,7 +8316,7 @@ do_line (astate *a, const char *line)
            * a blank LOC column
            */
 
-          a->lst_loc = (('\0' != L.label[0]) ? (long)lc0 : -1);
+          a->lst_loc = (('\0' != L.label [0]) ? (long)lc0 : -1);
           a->lst_lbase = -1;
 
           if (2 == a->pass)
@@ -8412,11 +8413,11 @@ do_line (astate *a, const char *line)
             print_lst (a, lc0, line);
 
           (void)strncpy (a->pend_op, op, NAMEBUF - 1);
-          a->pend_op[NAMEBUF - 1] = '\0';
+          a->pend_op [NAMEBUF - 1] = '\0';
 
-          while (i < 1022 && '\0' != o[i] && ';' != o[i])
+          while (i < 1022 && '\0' != o [i] && ';' != o [i])
             {
-              a->pend_args[i] = o[i];
+              a->pend_args [i] = o [i];
               i++;
             }
 
@@ -8428,7 +8429,7 @@ do_line (astate *a, const char *line)
         }
 
       /* folds the call line itself; a label makes it carry the start LC */
-      expand_macro (a, mac, L.operands, line, ('\0' != L.label[0]));
+      expand_macro (a, mac, L.operands, line, ('\0' != L.label [0]));
 
       return;
     }
@@ -8493,7 +8494,7 @@ static void
 process_file (astate *a, const char *path)
 {
   FILE *f;
-  char buf[1024];
+  char buf [1024];
 
   f = fopen (path, "r");
 
@@ -8509,8 +8510,8 @@ process_file (astate *a, const char *path)
     {
       size_t n = strlen (buf);
 
-      while (n > 0 && ('\n' == buf[n - 1] || '\r' == buf[n - 1]))
-        buf[--n] = '\0';
+      while (n > 0 && ('\n' == buf [n - 1] || '\r' == buf [n - 1]))
+        buf [--n] = '\0';
 
       do_line (a, buf);
     }
@@ -8535,15 +8536,15 @@ line_op (const char *line, char *op)
   int k;
 
   lex_line (line, &L);
-  op[0] = '\0';
+  op [0] = '\0';
 
-  if ('\0' == L.op[0])
+  if ('\0' == L.op [0])
     return;
 
-  for (k = 0; k < NAMEBUF - 1 && '\0' != L.op[k]; k++)
-    op[k] = (char)toupper ((unsigned char)L.op[k]);
+  for (k = 0; k < NAMEBUF - 1 && '\0' != L.op [k]; k++)
+    op [k] = (char)toupper ((unsigned char)L.op [k]);
 
-  op[k] = '\0';
+  op [k] = '\0';
   canon_dir (op);
 }
 
@@ -8554,7 +8555,7 @@ line_op (const char *line, char *op)
 static int
 line_is_prgend (const char *line)
 {
-  char op[NAMEBUF];
+  char op [NAMEBUF];
 
   line_op (line, op);
 
@@ -8573,7 +8574,7 @@ static int
 count_modules (const char *path)
 {
   FILE *f = fopen (path, "r");
-  char buf[1024], op[NAMEBUF];
+  char buf [1024], op [NAMEBUF];
   int n = 1;
 
   if (NULL == f)
@@ -8607,7 +8608,7 @@ static void
 process_module (astate *a, const char *path, int modidx)
 {
   FILE *f = fopen (path, "r");
-  char buf[1024];
+  char buf [1024];
   int curmod = 0;
 
   if (NULL == f)
@@ -8624,9 +8625,9 @@ process_module (astate *a, const char *path, int modidx)
 
       check_interrupt (); /* ^C since the last line: abort with exit 255 */
 
-      while (n > 0 && ('\n' == buf[n - 1] || '\r' == buf[n - 1]))
+      while (n > 0 && ('\n' == buf [n - 1] || '\r' == buf [n - 1]))
         {
-          buf[--n] = '\0';
+          buf [--n] = '\0';
         }
 
       if (curmod == modidx)
@@ -8660,7 +8661,7 @@ init_pass (astate *a, int pass)
   a->next_ebase = 4;
   a->next_decl = 1;
   (void)xstrlcpy (a->modname, ".MAIN.", sizeof (a->modname));
-  a->progid[0] = '\0';
+  a->progid [0] = '\0';
   a->progid_ver = 0;
   a->progid_rev = 0;
 
@@ -8670,9 +8671,9 @@ init_pass (astate *a, int pass)
    * line) shows it blank, exactly as the originals do
    */
 
-  a->title[0] = '\0';
-  a->subtitle[0] = '\0';
-  a->seg_hw[0] = a->seg_hw[1] = a->seg_hw[2] = a->seg_hw[3] = 0;
+  a->title [0] = '\0';
+  a->subtitle [0] = '\0';
+  a->seg_hw [0] = a->seg_hw [1] = a->seg_hw [2] = a->seg_hw [3] = 0;
   a->loc_sp = 0;
   a->obj_abs = 0; /* default .PREL */
   a->obj_org_used = 0;
@@ -8754,7 +8755,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 {
   astate a;
   const char *slash, *base;
-  char srcpath[1024];
+  char srcpath [1024];
   FILE *tf, *lf = NULL;
 
   install_sigint (); /* ^C aborts the assembly with exit 255 (see above) */
@@ -8786,7 +8787,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   else
     {
       (void)strncpy (srcpath, path, sizeof (srcpath) - 1);
-      srcpath[sizeof (srcpath) - 1] = '\0';
+      srcpath [sizeof (srcpath) - 1] = '\0';
     }
 
   a.syms = sym_new ();
@@ -8834,7 +8835,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
   (void)fclose (tf);
 
-  a.basedir[0] = '\0';
+  a.basedir [0] = '\0';
   slash = strrchr (srcpath, '/');
 
   if (NULL != slash)
@@ -8848,7 +8849,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
       if (dl < sizeof (a.basedir))
         {
           (void)memcpy (a.basedir, srcpath, dl);
-          a.basedir[dl] = '\0';
+          a.basedir [dl] = '\0';
         }
     }
 
@@ -8990,7 +8991,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
          * leading lines shows on page 1 while one set lower down does not.
          */
         {
-          char modsave[8];
+          char modsave [8];
           int xlsave = a.obj_xlink;
           (void)xstrlcpy (modsave, a.modname, sizeof (modsave));
           init_pass (&a, 2);
@@ -9032,8 +9033,8 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             if (a.obj_psym)
               {
                 collect_psyms (a.syms,
-                               (a.obj_org_used ? 0u : (unsigned)a.seg_hw[1]),
-                               (unsigned)a.seg_hw[2], (unsigned)a.seg_hw[3],
+                               (a.obj_org_used ? 0u : (unsigned)a.seg_hw [1]),
+                               (unsigned)a.seg_hw [2], (unsigned)a.seg_hw [3],
                                psyms, &os.npsyms);
                 os.psym = 1;
               }
@@ -9056,9 +9057,9 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
              * the segment then reports size 0, matching the originals.
              */
 
-            os.prog_size = (a.obj_org_used ? 0u : a.seg_hw[1]);
-            os.data_size = a.seg_hw[2];
-            os.blnk_size = a.seg_hw[3];
+            os.prog_size = (a.obj_org_used ? 0u : a.seg_hw [1]);
+            os.data_size = a.seg_hw [2];
+            os.blnk_size = a.seg_hw [3];
             os.abs_mode = a.obj_abs;
 
             /*
@@ -9071,7 +9072,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
             os.start_reloc = a.obj_start_rel;
             os.emit_progid
                 = (DIALECT_PASM == dialect || DIALECT_PASM2 == dialect);
-            os.progid = ('\0' != a.progid[0]) ? a.progid : NULL;
+            os.progid = ('\0' != a.progid [0]) ? a.progid : NULL;
             os.progid_ver = a.progid_ver;
             os.progid_rev = a.progid_rev;
             os.xlink = a.obj_xlink;
@@ -9161,7 +9162,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
               long i;
 
               for (i = (long)a.img_min; i <= (long)a.img_max; i++)
-                (void)fputc (a.image[i], of);
+                (void)fputc (a.image [i], of);
 
               if (pad) /* pad up to a 128-byte CP/M record boundary */
                 {

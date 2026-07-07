@@ -128,17 +128,17 @@ void sym_free (symtab *t);
 symbol *sym_lookup (const symtab *t, const char *name);
 symbol *sym_intern (symtab *t, const char *name);
 int sym_count (const symtab *t); /* number of symbols */
-void sym_collect (const symtab *t, symbol **buf); /* fill buf[0..count-1] */
+void sym_collect (const symtab *t, symbol **buf); /* fill buf [0..count-1] */
 int ci_eq (const char *a, const char *b); /* actually in src/sym.c */
 
 /******************************************************************************/
 
 /* ---- bounded, C89-only string/format helpers (src/sym.c) ----------- */
 
-/* strlcpy: copy src into dst[cap]; returns strlen(src). */
+/* strlcpy: copy src into dst [cap]; returns strlen(src). */
 size_t xstrlcpy (char *dst, const char *src, size_t cap);
 
-/* strlcat: append src to dst[cap]; returns the would-be length. */
+/* strlcat: append src to dst [cap]; returns the would-be length. */
 size_t xstrlcat (char *dst, const char *src, size_t cap);
 
 int xsnprintf (char *dst, size_t cap, const char *fmt, ...);
@@ -165,9 +165,9 @@ typedef struct
   unsigned scope;     /* local-symbol scope ('..' labels)                     */
   int *ext_next;      /* &next external base# for the SYM# modifier (or NULL) */
   int *ext_decl;      /* &next declaration sequence for SYM# (or NULL)        */
-  value_t *temps;     /* .TEMPS local array for `![sub]' (or NULL)            */
+  value_t *temps;     /* .TEMPS local array for `! [sub]' (or NULL)           */
   int ntemps;         /* number of allocated .TEMPS elements                  */
-  int tmp_ok;         /* 1 if `![sub]'/`&' are legal here (PASM, in a macro)  */
+  int tmp_ok;         /* 1 if `! [sub]'/`&' are legal here (PASM, in a macro) */
   int mac_argc;       /* `&': arg count of the current macro invocation       */
 } eval_env;
 
@@ -200,8 +200,8 @@ int expr_eval2 (const char *s, const eval_env *env, value_t *out,
 
 typedef struct
 {
-  char label[NAMEBUF];  /* label/symbol to define, or ""                  */
-  char op[NAMEBUF];     /* mnemonic / pseudo-op, or ""                    */
+  char label [NAMEBUF]; /* label/symbol to define, or ""                  */
+  char op [NAMEBUF];    /* mnemonic / pseudo-op, or ""                    */
   const char *operands; /* operand text (into the line), or " "           */
   int assign;           /* 1: `label` = operands (= / EQU)                */
   int internal;         /* 1: defined with a ::/=:/==: internal delimiter */
@@ -249,9 +249,9 @@ int asm_source (const char *path, dialect_t dialect, const char *outpath,
 /* one internal/external symbol entry for the `#'/`&'/`\\' object records */
 typedef struct
 {
-  char name[8]; /* up to 6 significant characters */
-  int base;     /* relocation base number         */
-  u16 value;    /* symbol value / segment size    */
+  char name [8]; /* up to 6 significant characters */
+  int base;      /* relocation base number         */
+  u16 value;     /* symbol value / segment size    */
 } objsym;
 
 /******************************************************************************/

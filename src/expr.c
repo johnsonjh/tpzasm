@@ -107,7 +107,7 @@ static u16
 scan_number (ectx *e)
 {
   const char *p = e->p;
-  char buf[80];
+  char buf [80];
   int n = 0, radix = e->env->radix, ndig, i;
   int had_end_suffix;
   unsigned long val = 0;
@@ -115,22 +115,22 @@ scan_number (ectx *e)
   while (isalnum ((unsigned char)*p) || '.' == *p)
     {
       if (n < (int)sizeof (buf) - 1)
-        buf[n++] = *p;
+        buf [n++] = *p;
 
       p++;
     }
 
-  buf[n] = '\0';
+  buf [n] = '\0';
   ndig = n;
 
-  if (n > 0 && '.' == buf[(long)n - 1])
+  if (n > 0 && '.' == buf [(long)n - 1])
     {
       radix = 10;
       ndig = n - 1;
     }
   else if (n > 0)
     {
-      switch (buf[(long)n - 1])
+      switch (buf [(long)n - 1])
         {
         case 'H': case 'h':
           radix = 16;
@@ -187,7 +187,7 @@ scan_number (ectx *e)
 
       for (i = 0; i < ndig; i++)
         {
-          int d = digit_val ((unsigned char)buf[i]);
+          int d = digit_val ((unsigned char)buf [i]);
 
           if (d < 0 || d >= radix)
             {
@@ -212,7 +212,7 @@ scan_number (ectx *e)
 
           for (ii = 0; ii < ndig; ii++)
             {
-              int d = digit_val ((unsigned char)buf[ii]);
+              int d = digit_val ((unsigned char)buf [ii]);
 
               if (d < 0 || d >= radix)
                 {
@@ -235,13 +235,13 @@ scan_number (ectx *e)
 
   for (i = 0; i < ndig; i++)
     {
-      int d = digit_val ((unsigned char)buf[i]);
+      int d = digit_val ((unsigned char)buf [i]);
 
       if (d < 0 || d >= radix)
         {
           if (! had_end_suffix)
             {
-              unsigned char bc = (unsigned char)buf[i];
+              unsigned char bc = (unsigned char)buf [i];
 
               if (toupper (bc) != 'D')
                 efail (e, "questionable number");
@@ -296,22 +296,22 @@ idchar (int c)
 static int
 reg_sym_val (const char *name)
 {
-  char u[4];
+  char u [4];
   int n = 0;
 
-  while (n < 3 && '\0' != name[n])
+  while (n < 3 && '\0' != name [n])
     {
-      u[n] = (char)toupper ((unsigned char)name[n]);
+      u [n] = (char)toupper ((unsigned char)name [n]);
       n++;
     }
 
-  if ('\0' != name[n])
+  if ('\0' != name [n])
     return -1; /* longer than three characters: an ordinary symbol */
 
-  u[n] = '\0';
+  u [n] = '\0';
 
   if (1 == n)
-    switch (u[0])
+    switch (u [0])
       {
       case 'B':
         return 0;
@@ -342,9 +342,9 @@ reg_sym_val (const char *name)
       default:
         break;
       }
-  else if (2 == n && 'S' == u[0] && 'P' == u[1])
+  else if (2 == n && 'S' == u [0] && 'P' == u [1])
     return 6; /* SP */
-  else if (3 == n && 'P' == u[0] && 'S' == u[1] && 'W' == u[2])
+  else if (3 == n && 'P' == u [0] && 'S' == u [1] && 'W' == u [2])
     return 6; /* PSW */
 
   return -1;
@@ -362,7 +362,7 @@ ev_primary (ectx *e)
   skipws (e);
   if ('^' == *e->p)
     { /* TDL ^H/^D/^O/^B radix prefix */
-      int c = toupper ((unsigned char)e->p[1]), rdx = 0;
+      int c = toupper ((unsigned char)e->p [1]), rdx = 0;
 
       if ('H' == c)
         rdx = 16;
@@ -373,7 +373,7 @@ ev_primary (ectx *e)
       else if ('B' == c)
         rdx = 2;
 
-      if (rdx && isdigit ((unsigned char)e->p[2]))
+      if (rdx && isdigit ((unsigned char)e->p [2]))
         { /* a number in the prefixed radix -- must begin with a numeral */
           unsigned long v = 0;
           e->p += 2;
@@ -418,7 +418,7 @@ ev_primary (ectx *e)
       return mkabs ((u16)e->env->mac_argc);
     }
 
-  if ('!' == *e->p && '[' == e->p[1] && NULL != e->env->temps)
+  if ('!' == *e->p && '[' == e->p [1] && NULL != e->env->temps)
     { /*
        * `![sub]' -- a PSA .TEMPS local temporary.  Legal only inside a macro
        * (tmp_ok); the subscript must be an absolute value in [0, ntemps).  An
@@ -446,7 +446,7 @@ ev_primary (ectx *e)
           return mkabs (0);
         }
 
-      return e->env->temps[sub];
+      return e->env->temps [sub];
     }
 
   if ('\'' == *e->p || '"' == *e->p)
@@ -493,7 +493,7 @@ ev_primary (ectx *e)
 
   if (idstart ((unsigned char)*e->p))
     {
-      char name[IDBUF];
+      char name [IDBUF];
       int n = 0;
       int fwd;
       symbol *s;
@@ -501,14 +501,14 @@ ev_primary (ectx *e)
       while (idchar ((unsigned char)*e->p))
         {
           if (n < IDBUF - 1)
-            name[n++] = *e->p;
+            name [n++] = *e->p;
 
           e->p++;
         }
 
-      name[n] = '\0';
+      name [n] = '\0';
 
-      if ('.' == name[0] && '\0' == name[1])
+      if ('.' == name [0] && '\0' == name [1])
         { /* location counter */
           value_t r;
           r.value = e->env->lc;
@@ -525,7 +525,7 @@ ev_primary (ectx *e)
           value_t r;
           int b = (ci_eq (name, ".PROG.") ? 1 : (ci_eq (name, ".DATA.") ? 2
                                                                         : 3));
-          r.value = (e->env->seg_hw ? e->env->seg_hw[b] : 0);
+          r.value = (e->env->seg_hw ? e->env->seg_hw [b] : 0);
           r.reloc = 1;
           r.base = b;
           r.ext = NULL;
@@ -540,16 +540,16 @@ ev_primary (ectx *e)
           return mkabs ((u16)rv);
       }
 
-      if ('.' == name[0] && '.' == name[1])
+      if ('.' == name [0] && '.' == name [1])
         { /* local: scope-qualify */
-          char qn[IDBUF + 16];
+          char qn [IDBUF + 16];
           (void)xsnprintf (qn, sizeof (qn), "%u:%s", e->env->scope, name);
           s = (e->env->syms ? sym_lookup (e->env->syms, qn) : NULL);
         }
       else
         s = (e->env->syms ? sym_lookup (e->env->syms, name) : NULL);
 
-      if ('#' == *e->p && '.' != name[0] && NULL != e->env->syms)
+      if ('#' == *e->p && '.' != name [0] && NULL != e->env->syms)
         { /*
            * the `SYM#' symbol modifier: declare SYM external, exactly as a
            * preceding `.EXTERN SYM' would (the originals assign an external
@@ -609,16 +609,16 @@ ev_primary (ectx *e)
            * this is reached only for a non-symbol name; resolve it in both
            * passes (the value is fixed, like any constant).
            */
-          if ('.' != name[0] && !fwd)
+          if ('.' != name [0] && !fwd)
             {
-              char up[IDBUF];
+              char up [IDBUF];
               const insn *in;
               int i;
 
-              for (i = 0; i < IDBUF - 1 && '\0' != name[i]; i++)
-                up[i] = (char)toupper ((unsigned char)name[i]);
+              for (i = 0; i < IDBUF - 1 && '\0' != name [i]; i++)
+                up [i] = (char)toupper ((unsigned char)name [i]);
 
-              up[i] = '\0';
+              up [i] = '\0';
               in = insn_find (up);
 
               if (NULL != in)
@@ -638,9 +638,9 @@ ev_primary (ectx *e)
             {
               symbol *u;
 
-              if ('.' == name[0] && '.' == name[1])
+              if ('.' == name [0] && '.' == name [1])
                 {
-                  char qn[IDBUF + 16];
+                  char qn [IDBUF + 16];
                   (void)xsnprintf (qn, sizeof (qn), "%u:%s", e->env->scope,
                                    name);
                   u = sym_intern (e->env->syms, qn);

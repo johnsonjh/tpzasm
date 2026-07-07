@@ -213,7 +213,7 @@ const char *sysarch(void)
   /*******************************************************************/
 
 #  else
-  static char buf[1024];
+  static char buf [1024];
   struct utsname u;
 
   if (0 != uname (&u))
@@ -222,7 +222,7 @@ const char *sysarch(void)
   /*******************************************************************/
 
   strncpy (buf, u.machine, sizeof(buf) - 1);
-  buf[sizeof(buf) - 1] = '\0';
+  buf [sizeof(buf) - 1] = '\0';
 
   return buf;
 

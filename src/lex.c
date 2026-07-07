@@ -80,12 +80,12 @@ parse_id (const char *p, char *out)
   while (idchar ((unsigned char)*p))
     {
       if (n < NAMEBUF - 1)
-        out[n++] = *p;
+        out [n++] = *p;
 
       p++;
     }
 
-  out[n] = '\0';
+  out [n] = '\0';
 
   return p;
 }
@@ -97,8 +97,8 @@ lex_line (const char *line, line_t *out)
 {
   const char *p = skipws (line);
 
-  out->label[0] = '\0';
-  out->op[0] = '\0';
+  out->label [0] = '\0';
+  out->op [0] = '\0';
   out->operands = p;
   out->assign = 0;
   out->internal = 0;
@@ -108,7 +108,7 @@ lex_line (const char *line, line_t *out)
 
   if (idstart ((unsigned char)*p))
     {
-      char tok1[NAMEBUF];
+      char tok1 [NAMEBUF];
       const char *q = parse_id (p, tok1);
       const char *r = skipws (q);
 
@@ -154,14 +154,14 @@ lex_line (const char *line, line_t *out)
           return;
         }
 
-      if (idstart ((unsigned char)*r) && '.' != tok1[0])
+      if (idstart ((unsigned char)*r) && '.' != tok1 [0])
         { /*
            * symbol EQU/SET expr ?  Only when the first token is a plain symbol:
            * a dot-prefixed directive is never an assignment target, so
            * `.WORD SET' is the data directive with the mnemonic `SET' as its
            * operand (value 0C0CBH), not an assignment to a symbol `.WORD'.
            */
-          char tok2[NAMEBUF];
+          char tok2 [NAMEBUF];
           const char *s = parse_id (r, tok2);
 
           if (0 == strcmp (tok2, "EQU") || 0 == strcmp (tok2, "SET")

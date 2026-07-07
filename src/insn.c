@@ -21,7 +21,7 @@
 
 /******************************************************************************/
 
-static const insn TAB[] = {
+static const insn TAB [] = {
   /* no operand */
   { "NOP",  0x00, FMT_NONE },
   { "RLC",  0x07, FMT_NONE },

@@ -103,7 +103,7 @@ static const char *
 trimstr (const char *s)
 {
   /* cppcheck-suppress constVariable */
-  static char buf[TRIMSTR_SLOTS][1024];
+  static char buf [TRIMSTR_SLOTS] [1024];
   static int slot = 0;
 
   char *d;
@@ -113,7 +113,7 @@ trimstr (const char *s)
     return "";
 
   slot = (slot + 1) % TRIMSTR_SLOTS;
-  d = buf[slot];
+  d = buf [slot];
 
   while (' ' == *s || '\t' == *s || '\n' == *s || '\r' == *s)
     s++;
@@ -136,12 +136,12 @@ trimstr (const char *s)
       *d++ = *s;
     }
 
-  if (d > buf[slot] && ' ' == d[-1])
+  if (d > buf [slot] && ' ' == d [-1])
     d--;
 
   *d = '\0';
 
-  return buf[slot];
+  return buf [slot];
 }
 
 #endif
@@ -150,7 +150,7 @@ trimstr (const char *s)
 
 static const char *osinfo(void)
 {
-  static char buf[1024];
+  static char buf [1024];
   const char *name;
 #ifdef HAVE_SYSARCH
   const char *arch;
@@ -168,8 +168,8 @@ static const char *osinfo(void)
       NULL == name)
     return NULL;
 
-  buf[0] = '(';
-  buf[1] = '\0';
+  buf [0] = '(';
+  buf [1] = '\0';
 
   /* cppcheck-suppress knownConditionTrueFalse */
   if (NULL != name)
@@ -284,7 +284,7 @@ free_preops (asm_preop *preops)
 /******************************************************************************/
 
 /*
- * Whether argv[0] selects the MACRO-80 simulation (the `m80' command name).
+ * Whether argv [0] selects the MACRO-80 simulation (the `m80' command name).
  */
 
 static int
@@ -299,14 +299,14 @@ name_is_m80 (const char *argv0)
  * Append the `.ZOP'/`.EPOP' assembly-time prefixes that put the assembler into
  * MACRO-80 mode -- the standard Zilog mnemonic set plus the Intel/M80 pseudo-
  * ops, enabled before the source as if it opened with those two directives.
- * Used by both the `--m80' option and the `m80' argv[0].  Returns 0, or -1 on
+ * Used by both the `--m80' option and the `m80' argv [0].  Returns 0, or -1 on
  * out-of-memory (the caller frees the partial list).
  */
 
 static int
 add_m80_preops (asm_preop **head, asm_preop **tail)
 {
-  static const char *const m80dir[2] = { ".ZOP", ".EPOP" };
+  static const char *const m80dir [2] = { ".ZOP", ".EPOP" };
   int mi;
 
   for (mi = 0; mi < 2; mi++)
@@ -317,7 +317,7 @@ add_m80_preops (asm_preop **head, asm_preop **tail)
         return -1;
 
       p->type = 'a';
-      p->arg = m80dir[mi];
+      p->arg = m80dir [mi];
       p->next = NULL;
 
       if (NULL == *tail)
@@ -336,8 +336,8 @@ add_m80_preops (asm_preop **head, asm_preop **tail)
 int
 main (int argc, char **argv)
 {
-  const char *prog = basename_of (argv[0]);
-  dialect_t dialect = dialect_from_name (argv[0]);
+  const char *prog = basename_of (argv [0]);
+  dialect_t dialect = dialect_from_name (argv [0]);
   const char *src = NULL;
   const char *outpath = NULL;
   const char *lstpath = NULL;
@@ -356,7 +356,7 @@ main (int argc, char **argv)
    * (dialect set above)
    */
 
-  if (name_is_m80 (argv[0]) && 0 != add_m80_preops (&preops, &pretail))
+  if (name_is_m80 (argv [0]) && 0 != add_m80_preops (&preops, &pretail))
     {
       (void)fprintf (stderr, "%s: Out of memory!\n", prog);
 
@@ -367,10 +367,10 @@ main (int argc, char **argv)
 
   for (i = 1; i < argc; ++i)
     {
-      const char *a = argv[i];
+      const char *a = argv [i];
       char opt = '\0';
 
-      if ('-' == a[0] && '-' == a[1] && '\0' != a[2])
+      if ('-' == a [0] && '-' == a [1] && '\0' != a [2])
         {
           /*
            * GNU-style long option: map to its short-option letter, then
@@ -381,7 +381,7 @@ main (int argc, char **argv)
           {
             const char *name;
             char ch;
-          } longs[]
+          } longs []
               = { {    "zasm", 'z' }, {   "pasm", 'p' }, {     "out", 'o' },
                   {     "pad", 'P' }, {   "list", 'l' }, {    "pbin", 'R' },
                   {    "phex", 'X' }, {   "long", 'L' }, {    "read", 'r' },
@@ -391,10 +391,10 @@ main (int argc, char **argv)
                 };
           int li;
 
-          for (li = 0; li < (int)(sizeof (longs) / sizeof (longs[0])); ++li)
-            if (0 == strcmp (a + 2, longs[li].name))
+          for (li = 0; li < (int)(sizeof (longs) / sizeof (longs [0])); ++li)
+            if (0 == strcmp (a + 2, longs [li].name))
               {
-                opt = longs[li].ch;
+                opt = longs [li].ch;
 
                 break;
               }
@@ -409,8 +409,8 @@ main (int argc, char **argv)
               return 2;
             }
         }
-      else if ('-' == a[0] && '\0' != a[1] && '\0' == a[2])
-        opt = a[1];
+      else if ('-' == a [0] && '\0' != a [1] && '\0' == a [2])
+        opt = a [1];
 
       if ('\0' != opt)
         {
@@ -487,7 +487,7 @@ main (int argc, char **argv)
                   return 2;
                 }
 
-              outpath = argv[++i];
+              outpath = argv [++i];
 
               break;
 
@@ -501,7 +501,7 @@ main (int argc, char **argv)
                   return 2;
                 }
 
-              lstpath = argv[++i];
+              lstpath = argv [++i];
 
               break;
 
@@ -519,7 +519,7 @@ main (int argc, char **argv)
                   return 2;
                 }
 
-              relpath = argv[++i];
+              relpath = argv [++i];
 
               break;
 
@@ -537,7 +537,7 @@ main (int argc, char **argv)
                   return 2;
                 }
 
-              hexpath = argv[++i];
+              hexpath = argv [++i];
 
               break;
 
@@ -556,9 +556,9 @@ main (int argc, char **argv)
                   return 2;
                 }
 
-              if (NULL == freopen (argv[++i], "r", stdin))
+              if (NULL == freopen (argv [++i], "r", stdin))
                 {
-                  error_msg ("cannot open response file", argv[i], errno);
+                  error_msg ("cannot open response file", argv [i], errno);
 
                   free_preops (preops);
 
@@ -593,7 +593,7 @@ main (int argc, char **argv)
                   }
 
                 p->type = opt;
-                p->arg = argv[++i];
+                p->arg = argv [++i];
                 p->next = NULL;
 
                 if (NULL == pretail)
@@ -631,7 +631,7 @@ main (int argc, char **argv)
                 env.ext_next = NULL;
                 env.ext_decl = NULL;
 
-                if (expr_eval (argv[++i], &env, &v, &eerr))
+                if (expr_eval (argv [++i], &env, &v, &eerr))
                   {
                     (void)fprintf (stderr, "%s: -e: %s\n", prog, eerr);
 

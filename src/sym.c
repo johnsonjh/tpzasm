@@ -61,16 +61,16 @@ xstrlcpy (char *dst, const char *src, size_t cap)
 
   if (0 != cap)
     {
-      while (i + 1 < cap && '\0' != src[i])
+      while (i + 1 < cap && '\0' != src [i])
         {
-          dst[i] = src[i];
+          dst [i] = src [i];
           i++;
         }
 
-      dst[i] = '\0';
+      dst [i] = '\0';
     }
 
-  while ('\0' != src[i])
+  while ('\0' != src [i])
     i++;
 
   return i;
@@ -85,12 +85,12 @@ xstrlcat (char *dst, const char *src, size_t cap)
   size_t i = 0;
   size_t w;
 
-  while (dl < cap && '\0' != dst[dl])
+  while (dl < cap && '\0' != dst [dl])
     dl++;
 
   if (dl == cap)
     {
-      while ('\0' != src[i])
+      while ('\0' != src [i])
         i++;
 
       return cap + i;
@@ -98,15 +98,15 @@ xstrlcat (char *dst, const char *src, size_t cap)
 
   w = dl;
 
-  while ('\0' != src[i])
+  while ('\0' != src [i])
     {
       if (w + 1 < cap)
-        dst[w++] = src[i];
+        dst [w++] = src [i];
 
       i++;
     }
 
-  dst[w] = '\0';
+  dst [w] = '\0';
 
   return dl + i;
 }
@@ -127,7 +127,7 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
       if ('%' != *f)
         {
           if (n + 1 < cap)
-            dst[n] = *f;
+            dst [n] = *f;
 
           n++;
           f++;
@@ -162,7 +162,7 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
               while ('\0' != *s)
                 {
                   if (n + 1 < cap)
-                    dst[n] = *s;
+                    dst [n] = *s;
 
                   n++;
                   s++;
@@ -176,7 +176,7 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
               int c = va_arg (ap, int);
 
               if (n + 1 < cap)
-                dst[n] = (char)c;
+                dst [n] = (char)c;
 
               n++;
             }
@@ -187,11 +187,11 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
             {
               unsigned v = va_arg (ap, unsigned);
               unsigned base = (('X' == *f) ? 16u : 10u);
-              char tmp[32];
+              char tmp [32];
               int t = 0;
 
               if (0 == v)
-                tmp[t++] = '0';
+                tmp [t++] = '0';
 
               /*
                * base is always 10 or 16, never 0
@@ -202,19 +202,19 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
                 {
                   unsigned d = v % base; /* cppcheck-suppress zerodivcond */
                   int dc = ((d < 10u) ? ('0' + (int)d) : ('A' + (int)d - 10));
-                  tmp[t++] = (char)dc;
+                  tmp [t++] = (char)dc;
                   v /= base;
                 }
 
               while (t < width)
-                tmp[t++] = (char)((zero) ? '0' : ' ');
+                tmp [t++] = (char)((zero) ? '0' : ' ');
 
               while (t > 0)
                 {
                   t--;
 
                   if (n + 1 < cap)
-                    dst[n] = tmp[t];
+                    dst [n] = tmp [t];
 
                   n++;
                 }
@@ -224,7 +224,7 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
 
           case '%':
             if (n + 1 < cap)
-              dst[n] = '%';
+              dst [n] = '%';
 
             n++;
 
@@ -232,14 +232,14 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
 
           default:
             if (n + 1 < cap)
-              dst[n] = '%';
+              dst [n] = '%';
 
             n++;
 
             if ('\0' != *f)
               {
                 if (n + 1 < cap)
-                  dst[n] = *f;
+                  dst [n] = *f;
 
                 n++;
               }
@@ -253,7 +253,7 @@ xsnprintf (char *dst, size_t cap, const char *fmt, ...)
     }
 
   if (0 != cap)
-    dst[((n < cap) ? n : cap - 1)] = '\0';
+    dst [((n < cap) ? n : cap - 1)] = '\0';
 
   va_end (ap);
 
@@ -304,7 +304,7 @@ sym_new (void)
     sym_oom ();
 
   for (i = 0; i < t->nbuckets; i++)
-    t->bucket[i] = NULL;
+    t->bucket [i] = NULL;
 
   return t;
 }
@@ -315,7 +315,7 @@ symbol *
 sym_lookup (const symtab *t, const char *name)
 {
   symbol *s;
-  char buf[7];
+  char buf [7];
   const char *n = name;
 
   if (NULL == t)
@@ -324,11 +324,11 @@ sym_lookup (const symtab *t, const char *name)
   if (!allow_long_symbols && NULL == strchr (name, ':'))
     {
       (void)strncpy (buf, name, 6);
-      buf[6] = '\0';
+      buf [6] = '\0';
       n = buf;
     }
 
-  for (s = t->bucket[hash (n) % (unsigned)t->nbuckets]; NULL != s;
+  for (s = t->bucket [hash (n) % (unsigned)t->nbuckets]; NULL != s;
        s = s->next)
     if (ci_eq (s->name, n))
       return s;
@@ -343,7 +343,7 @@ sym_intern (symtab *t, const char *name)
 {
   unsigned idx;
   symbol *s;
-  char buf[7];
+  char buf [7];
   const char *n = name;
 
   if (NULL == t)
@@ -352,7 +352,7 @@ sym_intern (symtab *t, const char *name)
   if (!allow_long_symbols && NULL == strchr (name, ':'))
     {
       (void)strncpy (buf, name, 6);
-      buf[6] = '\0';
+      buf [6] = '\0';
       n = buf;
     }
 
@@ -381,10 +381,10 @@ sym_intern (symtab *t, const char *name)
   {
     size_t k;
 
-    for (k = 0; '\0' != n[k]; k++)
-      s->name[k] = (char)toupper ((unsigned char)n[k]);
+    for (k = 0; '\0' != n [k]; k++)
+      s->name [k] = (char)toupper ((unsigned char)n [k]);
 
-    s->name[k] = '\0';
+    s->name [k] = '\0';
   }
 
   s->val.value = 0;
@@ -400,8 +400,8 @@ sym_intern (symtab *t, const char *name)
   s->decl = 0;
   s->defseq = 0;
   s->seen = 0;
-  s->next = t->bucket[idx];
-  t->bucket[idx] = s;
+  s->next = t->bucket [idx];
+  t->bucket [idx] = s;
   t->count++;
 
   return s;
@@ -420,7 +420,7 @@ sym_free (symtab *t)
 
   for (i = 0; i < t->nbuckets; i++)
     {
-      s = t->bucket[i];
+      s = t->bucket [i];
 
       while (NULL != s)
         {
@@ -459,8 +459,8 @@ sym_collect (const symtab *t, symbol **buf)
     return;
 
   for (i = 0; i < t->nbuckets; i++)
-    for (s = t->bucket[i]; NULL != s; s = s->next)
-      buf[n++] = s;
+    for (s = t->bucket [i]; NULL != s; s = s->next)
+      buf [n++] = s;
 }
 
 /******************************************************************************/

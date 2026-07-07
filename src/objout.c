@@ -58,8 +58,8 @@ typedef struct
   FILE *f;
   int ascii;
   char prompt;
-  u8 val[FIELDMAX];
-  u8 lit[FIELDMAX]; /* 1 = literal ASCII char, 0 = binary byte */
+  u8 val [FIELDMAX];
+  u8 lit [FIELDMAX]; /* 1 = literal ASCII char, 0 = binary byte */
   int n;
 } recbuf;
 
@@ -81,8 +81,8 @@ rb_bin (recbuf *r, unsigned b) /* a binary byte (hex-expanded in ASCII mode) */
 {
   if (r->n < FIELDMAX)
     {
-      r->val[r->n] = (u8)(b & 0xFFu);
-      r->lit[r->n] = 0;
+      r->val [r->n] = (u8)(b & 0xFFu);
+      r->lit [r->n] = 0;
       r->n++;
     }
 }
@@ -94,8 +94,8 @@ rb_lit (recbuf *r, unsigned b) /* a literal ASCII character (both modes) */
 {
   if (r->n < FIELDMAX)
     {
-      r->val[r->n] = (u8)(b & 0xFFu);
-      r->lit[r->n] = 1;
+      r->val [r->n] = (u8)(b & 0xFFu);
+      r->lit [r->n] = 1;
       r->n++;
     }
 }
@@ -118,10 +118,10 @@ rb_name (recbuf *r, const char *s) /* 6 chars, left-justified, blank-filled */
 
   for (i = 0; i < 6; i++)
     {
-      if ('\0' == s[i])
+      if ('\0' == s [i])
         break;
 
-      rb_lit (r, (unsigned)(u8)s[i]);
+      rb_lit (r, (unsigned)(u8)s [i]);
     }
 
   for (; i < 6; i++)
@@ -133,10 +133,10 @@ rb_name (recbuf *r, const char *s) /* 6 chars, left-justified, blank-filled */
 static void
 put_hex2 (FILE *f, unsigned b)
 {
-  static const char H[] = "0123456789ABCDEF";
+  static const char H [] = "0123456789ABCDEF";
 
-  (void)fputc (H[(b >> 4) & 0xFu], f);
-  (void)fputc (H[b & 0xFu], f);
+  (void)fputc (H [(b >> 4) & 0xFu], f);
+  (void)fputc (H [b & 0xFu], f);
 }
 
 /******************************************************************************/
@@ -149,7 +149,7 @@ rb_flush (recbuf *r)
   int i;
 
   for (i = 0; i < r->n; i++)
-    sum += r->val[i];
+    sum += r->val [i];
 
   ck = (0u - sum) & 0xFFu; /* two's complement of the field-byte sum */
 
@@ -161,10 +161,10 @@ rb_flush (recbuf *r)
 
       for (i = 0; i < r->n; i++)
         {
-          if (r->lit[i])
-            (void)fputc (r->val[i], r->f);
+          if (r->lit [i])
+            (void)fputc (r->val [i], r->f);
           else
-            put_hex2 (r->f, (unsigned)r->val[i]);
+            put_hex2 (r->f, (unsigned)r->val [i]);
         }
 
       put_hex2 (r->f, ck);
@@ -174,7 +174,7 @@ rb_flush (recbuf *r)
       (void)fputc (r->prompt, r->f);
 
       for (i = 0; i < r->n; i++)
-        (void)fputc (r->val[i], r->f);
+        (void)fputc (r->val [i], r->f);
 
       (void)fputc ((int)ck, r->f);
     }
@@ -204,10 +204,10 @@ static int
 emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
                   const u8 *etb, long addr, int avail, int base)
 {
-  u8 bit[REC_CAP * 8 + 16] = { 0 }; /* control-bit stream */
-  u8 data[REC_CAP + 8] = { 0 };     /* data-byte stream   */
-  int istart[REC_CAP + 8] = { 0 };  /* start bit of each item */
-  int dbit[REC_CAP + 8] = { 0 };    /* control bit that owns each data byte */
+  u8 bit [REC_CAP * 8 + 16] = { 0 }; /* control-bit stream */
+  u8 data [REC_CAP + 8] = { 0 };     /* data-byte stream   */
+  int istart [REC_CAP + 8] = { 0 };  /* start bit of each item */
+  int dbit [REC_CAP + 8] = { 0 };    /* control bit that owns each data byte */
   int nbits = 0, ndata = 0, nitem = 0;
   int i = 0; /* emission-log bytes consumed by this record */
   int nctrl, c, doff;
@@ -220,9 +220,9 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
    */
   while (i < avail)
     {
-      int reloc = (REL_LO == er[i]);
-      int ext8 = (REL_EXT8 == er[i]);
-      int cross = (reloc && (int)etb[i] != base); /* different-base 16-bit */
+      int reloc = (REL_LO == er [i]);
+      int ext8 = (REL_EXT8 == er [i]);
+      int cross = (reloc && (int)etb [i] != base); /* different-base 16-bit */
       int id = (reloc ? 2 : 1);          /* emission-log bytes consumed */
       int cnt = (nbits + 7) / 8 + ndata; /* record bytes if we stop here */
 
@@ -232,8 +232,8 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
       /*
        * the REC_CAP acceptance test above keeps the buffers well under their
        * sizes; pin those bounds explicitly (these never trigger) so static
-       * analyzers can prove the bit[]/data[]/istart[]/dbit[] indexing below
-       * stays in range.
+       * analyzers can prove the bit []/data []/istart []/dbit [] indexing
+       * below stays in range.
        */
       if (ndata + 3 > REC_CAP + 8)
         break;
@@ -244,47 +244,47 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
       if (nitem + 1 > REC_CAP + 8)
         break;
 
-      istart[nitem] = nbits;
+      istart [nitem] = nbits;
 
       if (ext8)
         { /* '111': base#, 8-bit value */
-          bit[nbits++] = 1;
-          bit[nbits++] = 1;
-          bit[nbits++] = 1;
-          data[ndata] = etb[i];
-          dbit[ndata] = istart[nitem];
-          data[(long)ndata + 1] = eb[i];
-          dbit[(long)ndata + 1] = istart[nitem] + 1;
+          bit [nbits++] = 1;
+          bit [nbits++] = 1;
+          bit [nbits++] = 1;
+          data [ndata] = etb [i];
+          dbit [ndata] = istart [nitem];
+          data [(long)ndata + 1] = eb [i];
+          dbit [(long)ndata + 1] = istart [nitem] + 1;
           ndata += 2;
         }
       else if (cross)
         { /* '110': base#, LSB, MSB */
-          bit[nbits++] = 1;
-          bit[nbits++] = 1;
-          bit[nbits++] = 0;
-          data[ndata] = etb[i];
-          dbit[ndata] = istart[nitem];
-          data[(long)ndata + 1] = eb[i];
-          dbit[(long)ndata + 1] = istart[nitem] + 1;
-          data[(long)ndata + 2] = eb[(long)i + 1];
-          dbit[(long)ndata + 2] = istart[nitem] + 2;
+          bit [nbits++] = 1;
+          bit [nbits++] = 1;
+          bit [nbits++] = 0;
+          data [ndata] = etb [i];
+          dbit [ndata] = istart [nitem];
+          data [(long)ndata + 1] = eb [i];
+          dbit [(long)ndata + 1] = istart [nitem] + 1;
+          data [(long)ndata + 2] = eb [(long)i + 1];
+          dbit [(long)ndata + 2] = istart [nitem] + 2;
           ndata += 3;
         }
       else if (reloc)
         { /* '10': LSB, MSB */
-          bit[nbits++] = 1;
-          bit[nbits++] = 0;
-          data[ndata] = eb[i];
-          dbit[ndata] = istart[nitem];
-          data[(long)ndata + 1] = eb[(long)i + 1];
-          dbit[(long)ndata + 1] = istart[nitem] + 1;
+          bit [nbits++] = 1;
+          bit [nbits++] = 0;
+          data [ndata] = eb [i];
+          dbit [ndata] = istart [nitem];
+          data [(long)ndata + 1] = eb [(long)i + 1];
+          dbit [(long)ndata + 1] = istart [nitem] + 1;
           ndata += 2;
         }
       else
         { /* '0': absolute */
-          bit[nbits++] = 0;
-          data[ndata] = eb[i];
-          dbit[ndata] = istart[nitem];
+          bit [nbits++] = 0;
+          data [ndata] = eb [i];
+          dbit [ndata] = istart [nitem];
           ndata += 1;
         }
 
@@ -306,23 +306,23 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
       int k;
 
       for (k = 0; k < 8; k++)
-        if ((c * 8 + k) < nbits && bit[(long)c * 8 + k])
+        if ((c * 8 + k) < nbits && bit [(long)c * 8 + k])
           ctrl |= (0x80u >> k);
 
       rb_bin (&r, ctrl);
 
       /*
        * Each data byte is written after the control byte whose 8-bit window
-       * holds the control bit that owns it (dbit[]).  A code whose bits
+       * holds the control bit that owns it (dbit []).  A code whose bits
        * straddle a control-byte boundary therefore has its data split across
        * the two control bytes -- e.g. a relocatable word whose `10' in bits
        * 7/8 lays its LSB after this control byte and its MSB after the next.
        * (doff < REC_CAP + 8 by construction; the explicit bound lets static
-       * analyzers prove the data[] read stays in range.)
+       * analyzers prove the data [] read stays in range.)
        */
-      while (doff < ndata && doff < REC_CAP + 8 && dbit[doff] < (c + 1) * 8)
+      while (doff < ndata && doff < REC_CAP + 8 && dbit [doff] < (c + 1) * 8)
         {
-          rb_bin (&r, (unsigned)data[doff]);
+          rb_bin (&r, (unsigned)data [doff]);
           doff++;
         }
     }
@@ -335,7 +335,7 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
 /******************************************************************************/
 
 /*
- * Emit one absolute ':' data record (up to REC_CAP bytes) from eb[], loading
+ * Emit one absolute ':' data record (up to REC_CAP bytes) from eb [], loading
  * at `addr'; returns the number of bytes consumed.
  */
 
@@ -353,7 +353,7 @@ emit_pabs_record (FILE *f, int ascii, const u8 *eb, long addr, int avail,
   rb_bin (&r, (unsigned)base); /* base/segment byte (Intel "unused" slot) */
 
   for (k = 0; k < n; k++)
-    rb_bin (&r, (unsigned)eb[k]);
+    rb_bin (&r, (unsigned)eb [k]);
 
   rb_flush (&r);
 
@@ -441,7 +441,7 @@ obj_module (FILE *f, const objspec *s)
           rb_bin (&r, (unsigned)n);
 
           for (k = 0; k < n; k++)
-            rb_name (&r, s->ents[(long)j + k].name);
+            rb_name (&r, s->ents [(long)j + k].name);
 
           rb_flush (&r);
           j += n;
@@ -455,18 +455,18 @@ obj_module (FILE *f, const objspec *s)
    */
   if (!s->xlink)
     {
-      objsym segs[3];
+      objsym segs [3];
       int total, j;
 
-      (void)xstrlcpy (segs[0].name, ".PROG.", sizeof (segs[0].name));
-      segs[0].base = 1;
-      segs[0].value = (u16)s->prog_size;
-      (void)xstrlcpy (segs[1].name, ".DATA.", sizeof (segs[1].name));
-      segs[1].base = 2;
-      segs[1].value = (u16)s->data_size;
-      (void)xstrlcpy (segs[2].name, ".BLNK.", sizeof (segs[2].name));
-      segs[2].base = 3;
-      segs[2].value = (u16)s->blnk_size;
+      (void)xstrlcpy (segs [0].name, ".PROG.", sizeof (segs [0].name));
+      segs [0].base = 1;
+      segs [0].value = (u16)s->prog_size;
+      (void)xstrlcpy (segs [1].name, ".DATA.", sizeof (segs [1].name));
+      segs [1].base = 2;
+      segs [1].value = (u16)s->data_size;
+      (void)xstrlcpy (segs [2].name, ".BLNK.", sizeof (segs [2].name));
+      segs [2].base = 3;
+      segs [2].value = (u16)s->blnk_size;
 
       total = 3 + s->nexts;
 
@@ -480,8 +480,8 @@ obj_module (FILE *f, const objspec *s)
 
           for (k = 0; k < n; k++)
             {
-              const objsym *e = (((long)j + k < 3) ? &segs[(long)j + k]
-                                             : &s->exts[(long)j + k - 3]);
+              const objsym *e = (((long)j + k < 3) ? &segs [(long)j + k]
+                                             : &s->exts [(long)j + k - 3]);
               rb_name (&r, e->name);
               rb_bin (&r, (unsigned)e->base);
               rb_be16 (&r, (unsigned)e->value);
@@ -517,9 +517,9 @@ obj_module (FILE *f, const objspec *s)
 
               for (k = 0; k < n; k++)
                 {
-                  rb_name (&r, grp[(long)j + k].name);
-                  rb_bin (&r, (unsigned)grp[(long)j + k].base);
-                  rb_be16 (&r, (unsigned)grp[(long)j + k].value);
+                  rb_name (&r, grp [(long)j + k].name);
+                  rb_bin (&r, (unsigned)grp [(long)j + k].base);
+                  rb_be16 (&r, (unsigned)grp [(long)j + k].value);
                 }
 
               rb_flush (&r);
@@ -544,10 +544,10 @@ obj_module (FILE *f, const objspec *s)
         const u8 *eb = s->em_byte + emoff;
         const u8 *er = s->em_rel + emoff;
         const u8 *et = s->em_tbase + emoff;
-        long addr = (long)s->span_a[sp];
-        int avail = (int)s->span_n[sp];
+        long addr = (long)s->span_a [sp];
+        int avail = (int)s->span_n [sp];
         /* each ';' record loads relative to the span's active base */
-        int rbase = ((NULL != s->span_seg) ? (int)s->span_seg[sp]
+        int rbase = ((NULL != s->span_seg) ? (int)s->span_seg [sp]
                                            : s->data_base);
 
         while (avail > 0)
@@ -573,7 +573,7 @@ obj_module (FILE *f, const objspec *s)
             avail -= used;
           }
 
-        emoff += (long)s->span_n[sp];
+        emoff += (long)s->span_n [sp];
       }
   }
 
@@ -604,9 +604,9 @@ obj_module (FILE *f, const objspec *s)
 
           for (k = 0; k < n; k++)
             {
-              rb_name (&r, s->psyms[(long)j + k].name);
-              rb_bin (&r, (unsigned)s->psyms[(long)j + k].base);
-              rb_be16 (&r, (unsigned)s->psyms[(long)j + k].value);
+              rb_name (&r, s->psyms [(long)j + k].name);
+              rb_bin (&r, (unsigned)s->psyms [(long)j + k].base);
+              rb_be16 (&r, (unsigned)s->psyms [(long)j + k].value);
             }
 
           rb_flush (&r);
