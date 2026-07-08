@@ -177,7 +177,7 @@ ANSI&nbsp;C89 compiler.
 * The [SoftIntegration Ch](https://www.softintegration.com/) interpreter, and
   the GNU&nbsp;GCC, LLVM&nbsp;Clang, PCC, NVIDIA&nbsp;HPC&nbsp;SDK&nbsp;C/C++,
   Oracle&nbsp;Studio&nbsp;C/C++, DMD&nbsp;ImportC, CompCert&nbsp;C, Open64,
-  PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP, Vbcc,
+  PathScale&nbsp;EKOPath, IBM&nbsp;XL&nbsp;C/C++, DJGPP, Vbcc, Ack,
   Microsoft&nbsp;Visual&nbsp;C/C++, IBM&nbsp;Open&nbsp;XL&nbsp;C/C++,
   Open&nbsp;Watcom&nbsp;V2, and МЦСТ&nbsp;LCC compilers are regularly tested.
 
