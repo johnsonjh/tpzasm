@@ -786,9 +786,10 @@ command -v "${CLANG_CMD:-clang}" > /dev/null 2>&1 && {
     # shellcheck disable=SC2310
     if (
       set -x
-      "${MAKE:-make}" CC="${CLANG_CMD:-clang}" CFLAGS="${SAN_CFLAGS:?}" \
+      "${MAKE:-make}" CC="${CLANG_CMD:-clang}" \
+        CFLAGS="-DDEBUG ${SAN_CFLAGS:?}" \
         && "${MAKE:-make}" CC="${CLANG_CMD:-clang}" \
-          CFLAGS="${SAN_CFLAGS:?}" test_expr
+          CFLAGS="-DDEBUG ${SAN_CFLAGS:?}" test_expr
     ) && asm_cycle; then
       :
     else
@@ -815,8 +816,8 @@ command -v valgrind > /dev/null 2>&1 && {
     set -x
     # shellcheck disable=SC3045
     ulimit -n 384 > /dev/null 2>&1 || :
-    "${MAKE:-make}" CFLAGS="-O1 -g" \
-      && "${MAKE:-make}" CFLAGS="-O1 -g" test_expr \
+    "${MAKE:-make}" CFLAGS="-O1 -g -DDEBUG" \
+      && "${MAKE:-make}" CFLAGS="-O1 -g -DDEBUG" test_expr \
       && valgrind --quiet --error-exitcode=99 --leak-check=full \
         ./asm -z -o "${vg_d}/z.com" -l "${vg_d}/z.lst" \
         tests/insn8080.asm > /dev/null \

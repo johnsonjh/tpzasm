@@ -42,7 +42,7 @@ $(LINKS): $(PROG)
 
 ################################################################################
 
-$(SRCDIR)/main.o: $(SRCDIR)/main.c $(SRCDIR)/asm.h \
+$(SRCDIR)/main.o: $(SRCDIR)/bsdmalloc.h $(SRCDIR)/main.c $(SRCDIR)/asm.h \
 	$(SRCDIR)/platform.h $(SRCDIR)/version.h $(SRCDIR)/error.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
@@ -170,7 +170,7 @@ test_expr: $(SRCDIR)/test_expr.o $(SRCDIR)/expr.o $(SRCDIR)/sym.o \
 ################################################################################
 
 $(SRCDIR)/test_expr.o: $(SRCDIR)/test_expr.c $(SRCDIR)/asm.h \
-		$(SRCDIR)/platform.h
+		$(SRCDIR)/platform.h $(SRCDIR)/bsdmalloc.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/test_expr.c
@@ -204,7 +204,7 @@ hexcom: $(SRCDIR)/hexcom.o
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-o $@ $(SRCDIR)/hexcom.o "$${LDFLAGS:-$(XLDFLAGS)}"
 
-$(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c
+$(SRCDIR)/hexcom.o: $(SRCDIR)/hexcom.c $(SRCDIR)/bsdmalloc.h
 	@eval echo \
 		"$${CC:-$(XCC)}" "$${CFLAGS:-$(XCFLAGS)}" \
 		-c -o $@ $(SRCDIR)/hexcom.c
@@ -246,12 +246,12 @@ distclean: clean
 amalgamation amalgamate: src/asm.h src/assemble.c src/expr.c src/hexcom.c \
 		src/insn.c src/lex.c src/error.c src/main.c src/objout.c \
 		src/platform.c src/platform.h src/error.h src/sym.c \
-		src/test_expr.c src/version.h
+		src/test_expr.c src/version.h src/bsdmalloc.h
 	printf '%s\n' '#define AMALGAMATION' > tpzasm.c
-	cat src/asm.h src/platform.h src/version.h src/error.h src/assemble.c \
-		src/expr.c src/insn.c src/lex.c src/error.c src/main.c \
-		src/sym.c src/objout.c src/platform.c | \
-		grep -v '^#.*include ".*"' >> tpzasm.c
+	cat src/bsdmalloc.h src/asm.h src/platform.h src/version.h \
+		src/error.h src/assemble.c src/expr.c src/insn.c src/lex.c \
+		src/error.c src/main.c src/sym.c src/objout.c \
+		src/platform.c | grep -v '^#.*include ".*"' >> tpzasm.c
 
 ################################################################################
 
