@@ -80,7 +80,7 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
   object output of the reference software.
 
 The emulation of the **PSA&nbsp;PASM&nbsp;2.00G** assembler is still a
-[work‑in‑progress](#psa-pasm-20-emulation) and is approximately
+[work‑in‑progress](#psa-pasm-200g-emulation) and is approximately
 **85%** complete, with some functionality not yet implemented or not yet fully
 conforming to the behavior of the original assembler.
 
