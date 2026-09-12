@@ -49,12 +49,27 @@ trim_trailing_whitespace = true
 ################################################################################
 
 [*.asm]
-charset = utf-8
+charset = ascii
 end_of_line = lf
 indent_style = tab
 insert_final_newline = true
 max_line_length = 88
 trim_trailing_whitespace = true
+
+################################################################################
+
+[tests/ssmon.asm]
+charset = binary
+
+################################################################################
+
+[tests/spell11.asm]
+charset = binary
+
+################################################################################
+
+[tests/titles.asm]
+charset = binary
 
 ################################################################################
 
@@ -146,7 +161,7 @@ trim_trailing_whitespace = false
 # reproduces the source text exactly, so its original trailing whitespace must
 # NOT be trimmed.
 [tests/tapelib.asm]
-charset = utf-8
+charset = binary
 end_of_line = lf
 indent_style = tab
 insert_final_newline = true
@@ -163,7 +178,7 @@ trim_trailing_whitespace = false
 # byte in one comment (a transcription artifact) which the assembler drops from
 # the listing; keep it verbatim.
 [tests/ssmon.asm]
-charset = utf-8
+charset = binary
 end_of_line = lf
 indent_style = unset
 insert_final_newline = true
