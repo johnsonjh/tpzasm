@@ -59,7 +59,7 @@ typedef enum
   DIALECT_ZASM, /* TDL Z80 CP/M Disk Assembler 2.21 (TDL, 1976-1977) */
   DIALECT_PASM, /* PSA Macro Assembler 1.02 (Phoenix, 1980)          */
   DIALECT_PASM2 /* PSA Macro Assembler 2.00G (Phoenix, 1981): adds   */
-                /* the `.ZOP' Zilog mnemonic set + `.EPOP' Intel     */
+                /* the '.ZOP' Zilog mnemonic set + '.EPOP' Intel     */
                 /* pseudo-ops on top of the 1.02 engine              */
 } dialect_t;
 
@@ -99,15 +99,15 @@ typedef struct symbol
   value_t val;
   unsigned defined : 1;
   unsigned external : 1;
-  unsigned internal : 1;  /* .INTERN: emit an internal-symbol (`#') record  */
-  unsigned entry : 1;     /* .ENTRY: also an entry point (`@' record)       */
-  unsigned mdef : 1;      /* multiply-defined (listing `M' class flag)      */
-  unsigned udef : 1;      /* referenced but undefined (listing `U' flag)    */
+  unsigned internal : 1;  /* .INTERN: emit an internal-symbol ('#') record  */
+  unsigned entry : 1;     /* .ENTRY: also an entry point ('@' record)       */
+  unsigned mdef : 1;      /* multiply-defined (listing 'M' class flag)      */
+  unsigned udef : 1;      /* referenced but undefined (listing 'U' flag)    */
   unsigned seen : 3;      /* pass # in which last defined as a label: holds */
                           /* 1, 2, 3 (count-only) and 4 (mdef report page), */
                           /* so it needs 3 bits, 2 would truncate pass 4 to */
                           /* 0 and break multiply-defined detection on that */
-                          /* pass (a spurious phase error, lost `M' line)   */
+                          /* pass (a spurious phase error, lost 'M' line)   */
   unsigned short decl;    /* .INTERN/.ENTRY declaration order (for records) */
   unsigned short defseq;  /* definition order (for & .PSYM record), 0=unset */
   struct symbol *next;
@@ -165,10 +165,10 @@ typedef struct
   unsigned scope;     /* local-symbol scope ('..' labels)                     */
   int *ext_next;      /* &next external base# for the SYM# modifier (or NULL) */
   int *ext_decl;      /* &next declaration sequence for SYM# (or NULL)        */
-  value_t *temps;     /* .TEMPS local array for `! [sub]' (or NULL)           */
+  value_t *temps;     /* .TEMPS local array for '! [sub]' (or NULL)           */
   int ntemps;         /* number of allocated .TEMPS elements                  */
-  int tmp_ok;         /* 1 if `! [sub]'/`&' are legal here (PASM, in a macro) */
-  int mac_argc;       /* `&': arg count of the current macro invocation       */
+  int tmp_ok;         /* 1 if '! [sub]'/'&' are legal here (PASM, in a macro) */
+  int mac_argc;       /* '&': arg count of the current macro invocation       */
 } eval_env;
 
 /******************************************************************************/
@@ -186,7 +186,7 @@ int expr_eval (const char *s, const eval_env *env, value_t *out,
  * Evaluate ONE expression; *endp gets the stop position (does
  * not require end-of-string).  For comma-separated operand lists.
  * *mdefp (when non-NULL) gets the position just past the first reference to a
- * multiply-defined symbol, or NULL if none -- the caller flags that line `D'.
+ * multiply-defined symbol, or NULL if none -- the caller flags that line 'D'.
  */
 
 int expr_eval2 (const char *s, const eval_env *env, value_t *out,
@@ -203,7 +203,7 @@ typedef struct
   char label [NAMEBUF]; /* label/symbol to define, or ""                  */
   char op [NAMEBUF];    /* mnemonic / pseudo-op, or ""                    */
   const char *operands; /* operand text (into the line), or " "           */
-  int assign;           /* 1: `label` = operands (= / EQU)                */
+  int assign;           /* 1: 'label' = operands (= / EQU)                */
   int internal;         /* 1: defined with a ::/=:/==: internal delimiter */
 } line_t;
 
@@ -235,7 +235,7 @@ int asm_source (const char *path, dialect_t dialect, const char *outpath,
 
 /*
  * Per-byte relocation map, parallel to the assembled image.  Each emitted
- * address is classified so the object emitter can build TDL `;' data records.
+ * address is classified so the object emitter can build TDL ';' data records.
  */
 
 # define REL_GAP  0 /* address not emitted (a .BLKB/.LOC gap)     */
@@ -246,7 +246,7 @@ int asm_source (const char *path, dialect_t dialect, const char *outpath,
 
 /******************************************************************************/
 
-/* one internal/external symbol entry for the `#'/`&'/`\\' object records */
+/* one internal/external symbol entry for the '#'/'&'/'\\' object records */
 typedef struct
 {
   char name [8]; /* up to 6 significant characters */
@@ -268,25 +268,25 @@ typedef struct
   unsigned prog_size;  /* .PROG. segment size (LC high-water)              */
   unsigned data_size;  /* .DATA. segment size                              */
   unsigned blnk_size;  /* .BLNK. segment size                              */
-  int abs_mode;        /* 1 = .PABS (Intel `:' records), 0 = .PREL (`;')   */
+  int abs_mode;        /* 1 = .PABS (Intel ':' records), 0 = .PREL (';')   */
   int data_base;       /* data-record relocation base (1 .PROG., 0 pinned) */
   unsigned start;      /* program start address (EOF record)               */
   int start_reloc;     /* start-address relocation base (0 abs, 1 .PROG.)  */
   int ascii;           /* 1 = ASCII (.PHEX), 0 = binary (.PBIN)            */
-  int emit_progid;     /* 1 = emit the `+' program-id record (PASM)        */
-  int xlink;           /* 1 = .XLINK: omit the `!'/`\\' link records       */
-  const char *modname; /* `!' module name (.IDENT, default ".MAIN.")       */
-  const char *progid;  /* `+' program id (.PROGID); NULL -> 6 blanks       */
-  unsigned progid_ver; /* `+' program-id version byte (.PROGID)            */
-  unsigned progid_rev; /* `+' program-id revision byte (.PROGID)           */
-  const objsym *exts;  /* external bases for the `\\' record (size 0)      */
+  int emit_progid;     /* 1 = emit the '+' program-id record (PASM)        */
+  int xlink;           /* 1 = .XLINK: omit the '!'/'\\' link records       */
+  const char *modname; /* '!' module name (.IDENT, default ".MAIN.")       */
+  const char *progid;  /* '+' program id (.PROGID); NULL -> 6 blanks       */
+  unsigned progid_ver; /* '+' program-id version byte (.PROGID)            */
+  unsigned progid_rev; /* '+' program-id revision byte (.PROGID)           */
+  const objsym *exts;  /* external bases for the '\\' record (size 0)      */
   int nexts;
-  const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for `#'        */
+  const objsym *ints;  /* internal symbols (.INTERN/.ENTRY) for '#'        */
   int nints;
-  const objsym *ents;  /* entry points (.ENTRY) for the `@' record         */
+  const objsym *ents;  /* entry points (.ENTRY) for the '@' record         */
   int nents;
-  int psym;            /* 1 = .PSYM: append the `&' symbol-table record(s) */
-  const objsym *psyms; /* all global symbols for `&' (segs, exts, defs)    */
+  int psym;            /* 1 = .PSYM: append the '&' symbol-table record(s) */
+  const objsym *psyms; /* all global symbols for '&' (segs, exts, defs)    */
   int npsyms;
 } objspec;
 

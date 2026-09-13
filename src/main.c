@@ -83,8 +83,8 @@ dialect_from_name (const char *argv0)
   const char *b = basename_of (argv0);
 
   /*
-   * `m80' (the MACRO-80 simulation) is upcoming, uses the PASM 2.00G engine;
-   * main() adds its `.ZOP'/`.EPOP' prefixes on top of the dialect
+   * 'm80' (the MACRO-80 simulation) is upcoming, uses the PASM 2.00G engine;
+   * main() adds its '.ZOP'/'.EPOP' prefixes on top of the dialect
    * (see add_m80_preops).
    */
 
@@ -288,7 +288,7 @@ free_preops (asm_preop *preops)
 /******************************************************************************/
 
 /*
- * Whether argv [0] selects the MACRO-80 simulation (the `m80' command name).
+ * Whether argv [0] selects the MACRO-80 simulation (the 'm80' command name).
  */
 
 static int
@@ -300,10 +300,10 @@ name_is_m80 (const char *argv0)
 /******************************************************************************/
 
 /*
- * Append the `.ZOP'/`.EPOP' assembly-time prefixes that put the assembler into
+ * Append the '.ZOP'/'.EPOP' assembly-time prefixes that put the assembler into
  * MACRO-80 mode -- the standard Zilog mnemonic set plus the Intel/M80 pseudo-
  * ops, enabled before the source as if it opened with those two directives.
- * Used by both the `--m80' option and the `m80' argv [0].  Returns 0, or -1 on
+ * Used by both the '--m80' option and the 'm80' argv [0].  Returns 0, or -1 on
  * out-of-memory (the caller frees the partial list).
  */
 
@@ -355,8 +355,8 @@ main (int argc, char **argv)
   allow_long_symbols = 0;
 
   /*
-   * the `m80' command name selects MACRO-80 mode (PASM 2.00G with the
-   * `.ZOP'/`.EPOP' prefixing for now, just like the `--m80' option
+   * the 'm80' command name selects MACRO-80 mode (PASM 2.00G with the
+   * '.ZOP'/'.EPOP' prefixing for now, just like the '--m80' option
    * (dialect set above)
    */
 
@@ -435,8 +435,8 @@ main (int argc, char **argv)
                * --m80: simulate MACRO-80.  Currently just PASM 2.00G with
                * the Zilog mnemonic set (.ZOP) and the Intel/M80 pseudo-ops
                * (.EPOP) enabled from the start, as if the source opened
-               * with `.ZOP' and `.EPOP'.  Equivalent to:
-               * `--pasm2 --prefix ".ZOP" --prefix ".EPOP"'.
+               * with '.ZOP' and '.EPOP'.  Equivalent to:
+               * '--pasm2 --prefix ".ZOP" --prefix ".EPOP"'.
                */
 
               dialect = DIALECT_PASM2;

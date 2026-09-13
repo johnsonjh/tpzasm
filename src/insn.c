@@ -231,7 +231,7 @@ insn_find (const char *upname)
 
 /*
  * Whether a mnemonic is a Z80 extension (not part of the 8080 set), so the
- * assembler can flag the `Z' warning when it is used under .I8080.  Every Z80
+ * assembler can flag the 'Z' warning when it is used under .I8080.  Every Z80
  * opcode here uses one of the Z80-only encoding formats, except EXX and EXAF
  * which share the 8080's no-operand form but are Z80 instructions.  (Index-
  * register OPERANDS on an otherwise-8080 mnemonic -- e.g. PUSH X -- are Z80
@@ -263,9 +263,9 @@ insn_is_z80 (const insn *in)
 /*
  * The numeric value of a mnemonic used as an expression operand: the TDL/PSA
  * assemblers let an instruction name stand for its opcode template bytes (all
- * operand fields zero), read as a little-endian integer.  So `MVI A,JMP' is
- * `MVI A,0C3H', `.WORD LDIR' is 0B0EDH (ED B0 in memory order), `.WORD BIT' is
- * 040CBH (CB 40), and `.WORD PCIX' is 0E9DDH (DD E9).  A defined symbol of the
+ * operand fields zero), read as a little-endian integer.  So 'MVI A,JMP' is
+ * 'MVI A,0C3H', '.WORD LDIR' is 0B0EDH (ED B0 in memory order), '.WORD BIT' is
+ * 040CBH (CB 40), and '.WORD PCIX' is 0E9DDH (DD E9).  A defined symbol of the
  * same name takes precedence; this is only consulted when the name is not a
  * symbol (see ev_primary in expr.c).
  */

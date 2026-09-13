@@ -104,8 +104,8 @@ check_interrupt (void)
 #define MAXCOND 1024 /*
                       * nested conditional-block (.IFx) depth.  A recursive
                       * memory-fill macro nests one conditional per byte (e.g.
-                      * Turbo-ROM's PADBYT: `.ifg (addr-.),[ nop  PADBYT addr ]'
-                      * recurses ~addr-. deep, opening a `.ifg' each level), so
+                      * Turbo-ROM's PADBYT: '.ifg (addr-.),[ nop  PADBYT addr ]'
+                      * recurses ~addr-. deep, opening a '.ifg' each level), so
                       * this must comfortably exceed any such span (the
                       * originals were bounded only by available RAM)
                       */
@@ -161,7 +161,7 @@ typedef struct macrodef
 {
   char *name;
   char *params [8];
-  char *defval [8]; /* per-param `PARAM(def)' default (NULL = none) */
+  char *defval [8]; /* per-param 'PARAM(def)' default (NULL = none) */
   int nparams;
   char *body [64];
   int nbody;
@@ -189,25 +189,25 @@ typedef struct
   int loc_sp;
   int next_ebase;   /* next external relocation-base number to assign (>=4)   */
   int next_decl;    /* next .INTERN/.ENTRY declaration sequence number        */
-  int next_defseq;  /* next symbol definition-order number (for `&' .PSYM)    */
-  char modname [8]; /* `!' module name (.IDENT), default ".MAIN."             */
-  char progid [8];  /* `+' program id (.PROGID); empty -> 6 blanks            */
-  unsigned progid_ver; /* `+' record version byte (.PROGID)                   */
-  unsigned progid_rev; /* `+' record revision byte (.PROGID)                  */
+  int next_defseq;  /* next symbol definition-order number (for '&' .PSYM)    */
+  char modname [8]; /* '!' module name (.IDENT), default ".MAIN."             */
+  char progid [8];  /* '+' program id (.PROGID); empty -> 6 blanks            */
+  unsigned progid_ver; /* '+' record version byte (.PROGID)                   */
+  unsigned progid_rev; /* '+' record revision byte (.PROGID)                  */
   int errors;       /* error count of the CURRENT pass (pass-2 = the total)   */
   int errs_hdr;     /* prior-pass error total, shown in the PASM page header  */
-  int errs_mdef;    /* multiply-defined (`M') count: drives the leading page  */
-  int errs_finsert; /* nested-.INSERT (`F') count: also drives the leading pg */
+  int errs_mdef;    /* multiply-defined ('M') count: drives the leading page  */
+  int errs_finsert; /* nested-.INSERT ('F') count: also drives the leading pg */
   int count_only;   /* error-counting pre-pass: tally errs_hdr, list nothing  */
-  int mdef_page;    /* leading-page pass: list only `M'/`F' (report) lines    */
+  int mdef_page;    /* leading-page pass: list only 'M'/'F' (report) lines    */
   int cur_mdef;     /* this line redefines a multiply-defined label: on the   */
                     /* report page its operand forward refs render undefined  */
   char lst_ec [2];  /* up to two error-code letters for this line's column 1  */
   int lst_nec;      /* number of error codes recorded for this line           */
-  int lst_qoff [2]; /* per-error `?' marker offsets into the line (one each)  */
+  int lst_qoff [2]; /* per-error '?' marker offsets into the line (one each)  */
   const char *cur_line; /* the source line currently being assembled          */
-  int ppos;         /* current parse offset into cur_line, for the `?' marker */
-  int eval_undef;   /* the last eval failed on an undefined symbol (-> `U')   */
+  int ppos;         /* current parse offset into cur_line, for the '?' marker */
+  int eval_undef;   /* the last eval failed on an undefined symbol (-> 'U')   */
   int ended;
   u8 bytes [64];
   int nbytes;
@@ -222,20 +222,20 @@ typedef struct
   cframe cstack [MAXCOND];
   int cdepth;
   /*
-   * A conditional whose block just closed with a dangling `]' may still take an
-   * else `[' that follows across only comment/blank lines (the multi-line
-   * `] ... [' else form).  pend_else marks that window open; pend_else_wt is
+   * A conditional whose block just closed with a dangling ']' may still take an
+   * else '[' that follows across only comment/blank lines (the multi-line
+   * '] ... [' else form).  pend_else marks that window open; pend_else_wt is
    * the closed block's if_true (the else takes its inverse) and pend_else_outer
    * the enclosing assemble state at the close.  Any non-comment line that is
-   * not the else `[' closes the window.
+   * not the else '[' closes the window.
    */
   int pend_else;
   int pend_else_wt;
   int pend_else_outer;
 
   /*
-   * Conditional block(s) closed by a trailing `]' on the PREVIOUS line -- a
-   * multi-line `.ife COND,[' whose body ends `stmt]' on a later line.  The
+   * Conditional block(s) closed by a trailing ']' on the PREVIOUS line -- a
+   * multi-line '.ife COND,[' whose body ends 'stmt]' on a later line.  The
    * close must take effect AFTER that body line (its statement still belongs
    * to the block), so it is recorded here and applied at the next line.
    */
@@ -275,18 +275,18 @@ typedef struct
 
   int obj_abs;       /* module output mode: 1 = .PABS, 0 = .PREL (default)    */
   int obj_org_used;  /* an explicit .LOC/ORG pins the code (.PROG. size 0)    */
-  int obj_xlink;     /* .XLINK: suppress the !/\\ link records (`;' only)     */
-  int obj_psym;      /* .PSYM: append the `&' symbol-table record(s)          */
-  int i8080_mode;    /* .I8080: flag a Z80 instruction with the `Z' warning   */
+  int obj_xlink;     /* .XLINK: suppress the !/\\ link records (';' only)     */
+  int obj_psym;      /* .PSYM: append the '&' symbol-table record(s)          */
+  int i8080_mode;    /* .I8080: flag a Z80 instruction with the 'Z' warning   */
   int zop_mode;      /* PASM2 .ZOP: standard Zilog mnemonic set active        */
                      /* (.IOP/.I8080/.Z80 switch back to 8080/TDL); default 0 */
   int epop_mode;     /* PASM2 .EPOP: the Intel/M80 pseudo-op spellings        */
                      /* (DB/DW/DS/ORG/END/ASEG/...) on; .XEPOP turns off      */
   int idx_pfx;       /* an index (IX/IY) prefix was emitted this insn         */
-  value_t temps [MAXTEMPS]; /* .TEMPS local array, referenced as `! [sub]'    */
+  value_t temps [MAXTEMPS]; /* .TEMPS local array, referenced as '! [sub]'    */
   int ntemps;        /* number of .TEMPS elements currently allocated         */
-  int mac_argc;      /* `&': arg count of the macro invocation being expanded */
-  u16 obj_start;     /* start address from `.END expr' (0 if none)            */
+  int mac_argc;      /* '&': arg count of the macro invocation being expanded */
+  u16 obj_start;     /* start address from '.END expr' (0 if none)            */
   int obj_start_rel; /* relocation base of the start address                  */
 
   /*
@@ -364,7 +364,7 @@ typedef struct
   int lst_pending; /* the first body pages heading is owed: emit it without a */
                    /* form-feed before the first listed line, so a .TITLE or  */
                    /* .SBTTL ahead of that line already shows in it           */
-  int lst_pagelen; /* lines per page (PASM `.PAGE width,length' 2nd arg) the  */
+  int lst_pagelen; /* lines per page (PASM '.PAGE width,length' 2nd arg) the  */
                    /* width->wrap (1st arg) is not yet implemented            */
   int lst_lbase;   /* LC relocation base: -1 derive from lc_reloc/base else # */
   int lst_obase;   /* 16-bit insn operand relocation base (0 abs, 1/2/3/ext)  */
@@ -602,7 +602,7 @@ emit (astate *a, u16 v)
 /******************************************************************************/
 
 /*
- * Emit a 16-bit value; when `reloc' is set, flag its two bytes in the
+ * Emit a 16-bit value; when 'reloc' is set, flag its two bytes in the
  * emission log so the object emitter encodes a .PROG.-relative 16-bit
  * datum.  The bytes are stored little-endian (Z80 order), as the listing
  * already shows.
@@ -626,7 +626,7 @@ emit_word (astate *a, u16 v, int reloc, int base)
 static void aerr (astate *a, const char *line, const char *msg); /* forward */
 
 /*
- * Emit one 8-bit operand byte.  An external reference produces a `111' control
+ * Emit one 8-bit operand byte.  An external reference produces a '111' control
  * code (base# + 8-bit value, range -128..255); 8-bit relocation relative to a
  * program segment (1/2/3) is illegal in the dialect and is rejected.
  */
@@ -642,7 +642,7 @@ emit_imm8 (astate *a, const char *line, const value_t *v)
         { /*
            * TDL/ZASM has no 8-bit external relocation (Relocation error); the
            * originals emit the value as an absolute placeholder byte.  PASM
-           * does support it (the `111' control code below).
+           * does support it (the '111' control code below).
            */
           aerr (a, line, "8-bit external illegal");
 
@@ -731,7 +731,7 @@ aerr (astate *a, const char *line, const char *msg)
       a->errs_hdr++;
 
       /*
-       * `M' (multiply-defined) and `F' (nested .INSERT) both get reproduced
+       * 'M' (multiply-defined) and 'F' (nested .INSERT) both get reproduced
        * on the leading report page; tally each so its pass runs only when
        * such an error exists
        */
@@ -759,8 +759,8 @@ aerr (astate *a, const char *line, const char *msg)
 
       if (a->lst_nec < 2) /* the listing shows the first two codes per line */
         { /*
-           * each error places a `?' at its own parse position (two errors at
-           * the same spot therefore render as `??')
+           * each error places a '?' at its own parse position (two errors at
+           * the same spot therefore render as '??')
            */
           a->lst_qoff [a->lst_nec] = a->ppos;
           a->lst_ec [a->lst_nec] = code;
@@ -773,9 +773,9 @@ aerr (astate *a, const char *line, const char *msg)
 /******************************************************************************/
 
 /*
- * Offset of `p' within the line starting at `base', counted (not subtracted)
+ * Offset of 'p' within the line starting at 'base', counted (not subtracted)
  * and clamped so the result provably fits an int -- the originals' lint
- * rejects a ptrdiff_t-to-int conversion.  Used for the `?' error-marker column.
+ * rejects a ptrdiff_t-to-int conversion.  Used for the '?' error-marker column.
  */
 
 static int
@@ -819,11 +819,11 @@ eval1 (astate *a, const char **pp, value_t *v)
    */
   env.fwd_pass = ((a->mdef_page && a->cur_mdef) ? a->pass : 0);
   env.scope = a->scope;
-  env.ext_next = &a->next_ebase; /* the `SYM#' modifier auto-declares externs */
+  env.ext_next = &a->next_ebase; /* the 'SYM#' modifier auto-declares externs */
   env.ext_decl = &a->next_decl;
   /*
-   * `! [sub]' .TEMPS locals are a PASM feature (temps non-NULL => PASM), legal
-   * only inside a macro expansion (tmp_ok); ZASM leaves temps NULL so a `!['
+   * '! [sub]' .TEMPS locals are a PASM feature (temps non-NULL => PASM), legal
+   * only inside a macro expansion (tmp_ok); ZASM leaves temps NULL so a '!['
    * there is just the OR operator hitting a bad primary
    */
   env.temps = ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
@@ -831,13 +831,13 @@ eval1 (astate *a, const char **pp, value_t *v)
                    : NULL);
   env.ntemps = a->ntemps;
   env.tmp_ok = (a->macro_depth > 0);
-  env.mac_argc = a->mac_argc; /* `&' = current macro's argument count */
+  env.mac_argc = a->mac_argc; /* '&' = current macro's argument count */
   rc = expr_eval2 (*pp, &env, v, &endp, &err, &mdefp);
 
   if (rc)
     { /*
        * keep the partial value expr_eval2 computed (the originals emit it on a
-       * bad expression, e.g. `1+' lists as 0001), but drop any relocation so a
+       * bad expression, e.g. '1+' lists as 0001), but drop any relocation so a
        * faulted expression contributes an absolute datum.
        */
       v->reloc = 0;
@@ -851,18 +851,18 @@ eval1 (astate *a, const char **pp, value_t *v)
 
   *pp = endp;
 
-  /* track the parse position for the `?' error marker (offset into the line) */
+  /* track the parse position for the '?' error marker (offset into the line) */
   a->ppos = line_off (a->cur_line, endp);
 
   /* an undefined-symbol fault is the 'U' code, not the generic 'A' */
   a->eval_undef = (rc && NULL != err && NULL != strstr (err, "undefined"));
 
   /*
-   * a reference to a multiply-defined symbol is the `D' code, with a `?' just
-   * past the symbol (`JMP FOO?', `.WORD FOO?+1').  The first definition's value
+   * a reference to a multiply-defined symbol is the 'D' code, with a '?' just
+   * past the symbol ('JMP FOO?', '.WORD FOO?+1').  The first definition's value
    * is still emitted, so this rides alongside the value rather than failing the
-   * evaluation -- and may stack with another code (e.g. an 8-bit-reloc `R' on
-   * `MVI A,FOO' -> `DR' / `FOO??').  Raise it BEFORE returning so it precedes
+   * evaluation -- and may stack with another code (e.g. an 8-bit-reloc 'R' on
+   * 'MVI A,FOO' -> 'DR' / 'FOO??').  Raise it BEFORE returning so it precedes
    * any code the caller adds, then restore the parse position for that caller.
    */
   if (NULL != mdefp)
@@ -886,8 +886,8 @@ eval1 (astate *a, const char **pp, value_t *v)
 /*
  * A simple 8-bit register field (INP/OUTP, the CB-prefixed rotates): an
  * expression whose low three bits are the register code, exactly as for the
- * `MOV'-class fields (`RLCR 1' == `RLCR C', a register may be written as a
- * number).  A value outside 0..7 is flagged `Q'.  Returns the code, or -1 on a
+ * 'MOV'-class fields ('RLCR 1' == 'RLCR C', a register may be written as a
+ * number).  A value outside 0..7 is flagged 'Q'.  Returns the code, or -1 on a
  * malformed (unevaluable) operand.
  */
 static int
@@ -899,7 +899,7 @@ parse_reg8 (astate *a, const char **pp)
   if (eval1 (a, &p, &v))
     return -1;
 
-  if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> `Q' */
+  if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> 'Q' */
     {
       a->ppos = line_off (a->cur_line, skipws (p));
 
@@ -987,17 +987,17 @@ comma (const char **pp)
  * register / memory / index operand.  The register field is an ordinary
  * expression -- the register letters are predefined values (B=0 ... A=7), so a
  * bare register, a number, or any expression all reduce to a 3-bit register
- * code (`MOV 1,2' == `MOV C,D').  An optional `(idxreg)' suffix makes it an
+ * code ('MOV 1,2' == 'MOV C,D').  An optional '(idxreg)' suffix makes it an
  * indexed operand whose expression value is the displacement:
- *   expr             -> reg = expr&7 (`Q' if expr > 7), no index
+ *   expr             -> reg = expr&7 ('Q' if expr > 7), no index
  *   d(X)             -> reg 6, pfx DD, disp d, *idx = 1
  *   d(Y)             -> reg 6, pfx FD, disp d, *idx = 1
- *   d(H)             -> reg 6, pfx 00, disp d, *idx = 1  (the TDL `0(H)' == M
+ *   d(H)             -> reg 6, pfx 00, disp d, *idx = 1  (the TDL '0(H)' == M
  *                       bug: a 0 prefix + displacement byte are emitted)
- *   d(other)         -> reg 6, pfx 00, disp d, *idx = 1, flags `X'+`Q' (`??')
- * `(X)' alone is NOT an index -- it is the expression X (== 4), so `INR (X)'
- * is `INR H' (0x24); a displacement (even `0') must precede the index paren.
- * `*idx' (set for any `(idxreg)' form) tells the caller to emit the prefix and
+ *   d(other)         -> reg 6, pfx 00, disp d, *idx = 1, flags 'X'+'Q' ('??')
+ * '(X)' alone is NOT an index -- it is the expression X (== 4), so 'INR (X)'
+ * is 'INR H' (0x24); a displacement (even '0') must precede the index paren.
+ * '*idx' (set for any '(idxreg)' form) tells the caller to emit the prefix and
  * displacement bytes even when the prefix value is 0.  Returns 0 on success,
  * -1 on a malformed operand (the caller then emits a default + diagnostic).
  */
@@ -1025,7 +1025,7 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
     {
       *reg = (int)(v.value & 7U);
 
-      if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> `Q' */
+      if (0 != (v.value & ~(u16)7U)) /* a value outside 0..7 -> 'Q' */
         {
           a->ppos = line_off (a->cur_line, p);
 
@@ -1037,7 +1037,7 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
       return 0;
     }
 
-  /* an indexed operand: `(idxreg)' selects the prefix, the value is the disp */
+  /* an indexed operand: '(idxreg)' selects the prefix, the value is the disp */
   ip = skipws (p + 1);
   n = 0;
 
@@ -1062,15 +1062,15 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
     } /*LINTED E_NOP_IF_STMT*/
   else if (')' == *cp && 1 == n && 'H' == t [0])
     {
-      /* the `d(H)' == M bug: a 0 prefix, no diagnostic */
+      /* the 'd(H)' == M bug: a 0 prefix, no diagnostic */
     }
   else
-    { /* any other register inside the index paren: `X'+`Q' (`??'), prefix 0 */
+    { /* any other register inside the index paren: 'X'+'Q' ('??'), prefix 0 */
       a->ppos = line_off (a->cur_line, ip);
 
       aerr (a, a->cur_line, "bad index register"); /* X */
 
-      aerr (a, a->cur_line, "extra operand");      /* Q (same spot -> `??') */
+      aerr (a, a->cur_line, "extra operand");      /* Q (same spot -> '??') */
 
       cp = ip; /* find the closing paren past the unrecognized index text */
 
@@ -1092,7 +1092,7 @@ parse_regop (astate *a, const char **pp, int *reg, int *pfx, u16 *disp,
 /******************************************************************************/
 
 /*
- * Encode one machine instruction.  Returns 1 if `mnem`
+ * Encode one machine instruction.  Returns 1 if 'mnem'
  * (uppercase) is an instruction, 0 otherwise.  Always emits
  * the instruction's full size so the location counter stays
  * consistent across passes even on operand errors.
@@ -1119,7 +1119,7 @@ fmt_opw (insn_fmt_t fmt)
 /******************************************************************************/
 
 /*
- * A bare register-name token (for the extra-operand `A' vs `AQ' distinction):
+ * A bare register-name token (for the extra-operand 'A' vs 'AQ' distinction):
  * the token is exactly a register mnemonic, not the start of a longer name.
  */
 
@@ -1151,11 +1151,11 @@ is_reg_token (const char *t)
 /*
  * Flag a trailing (extra) operand the originals reject (manual Appendix C),
  * after an instruction's expected operands have parsed cleanly:
- *   - a no-operand instruction with any operand     -> `Q' at the operand
- *   - an extra `,operand' after the operand list    -> `Q' before the comma
- *   - a space-separated trailing register            -> `A' after the token
- *   - a space-separated trailing number/expression   -> `A'+`Q' (`??') at it
- * Each error places its own `?', so the two-error cases render `??'.
+ *   - a no-operand instruction with any operand     -> 'Q' at the operand
+ *   - an extra ',operand' after the operand list    -> 'Q' before the comma
+ *   - a space-separated trailing register            -> 'A' after the token
+ *   - a space-separated trailing number/expression   -> 'A'+'Q' ('??') at it
+ * Each error places its own '?', so the two-error cases render '??'.
  */
 static void
 flag_extra_operand (astate *a, const char *line, const insn *in,
@@ -1180,7 +1180,7 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
       return;
     }
 
-  if (',' == *p) /* an extra `,operand' in the list */
+  if (',' == *p) /* an extra ',operand' in the list */
     {
       a->ppos = line_off (line, p);
 
@@ -1194,7 +1194,7 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
   if ('\0' == *t || ';' == *t || ']' == *t)
     return; /* nothing trailing (']' closes a conditional block) */
 
-  if (is_reg_token (t)) /* a trailing register: `A', marked after the token */
+  if (is_reg_token (t)) /* a trailing register: 'A', marked after the token */
     {
       const char *e = t;
 
@@ -1205,13 +1205,13 @@ flag_extra_operand (astate *a, const char *line, const insn *in,
 
       aerr (a, line, "extra argument"); /* A (default) */
     }
-  else /* a trailing number/expression: `A'+`Q', both before it (`??') */
+  else /* a trailing number/expression: 'A'+'Q', both before it ('??') */
     {
       a->ppos = line_off (line, t);
 
       aerr (a, line, "extra argument"); /* A */
 
-      aerr (a, line, "extra operand"); /* Q (same position -> `??') */
+      aerr (a, line, "extra operand"); /* Q (same position -> '??') */
     }
 }
 
@@ -1232,8 +1232,8 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
   if (a->i8080_mode && insn_is_z80 (in))
     { /*
-       * .I8080 mode: a Z80-extension mnemonic raises the `Z' warning (the
-       * instruction is still assembled).  The `?' marks the operand field --
+       * .I8080 mode: a Z80-extension mnemonic raises the 'Z' warning (the
+       * instruction is still assembled).  The '?' marks the operand field --
        * the start of the operands, or the end of the line when there are none.
        */
       a->ppos = line_off (line, ops);
@@ -1693,9 +1693,9 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
   /*
    * record the operand's relocation base for the value column.  A 16-bit
    * operand may relocate to any base.  PSA shows an 8-bit RELOCATABLE operand
-   * spaced off with its base flag too -- a segment byte `3E 00'' / `3E 00"''
-   * (an illegal truncation, also flagged `R') or an external byte `3E 00:NN''
-   * -- whereas TDL packs it (`3E00'').  A relative-jump displacement
+   * spaced off with its base flag too -- a segment byte '3E 00'' / '3E 00"''
+   * (an illegal truncation, also flagged 'R') or an external byte '3E 00:NN''
+   * -- where TDL packs it ('3E00'').  A relative-jump displacement
    * (JMPR/JRx/DJNZ, FMT_REL) is an absolute offset even when its target is
    * relocatable, so it carries no flag (except the pre-existing external edge).
    */
@@ -1713,7 +1713,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
     { /*
        * an index-register OPERAND (IX/IY) on an otherwise-8080 mnemonic --
        * e.g. PUSH X -- is a Z80 instruction too.  (When the mnemonic itself
-       * is a Z80 extension we already warned at the top.)  The `?' here marks
+       * is a Z80 extension we already warned at the top.)  The '?' here marks
        * the end of the parsed operand.
        */
       a->ppos = line_off (line, p);
@@ -1728,14 +1728,14 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
 /******************************************************************************/
 
-/* ---- PASM 2.00G `.ZOP' standard Zilog Z80 mnemonic encoder --------- */
+/* ---- PASM 2.00G '.ZOP' standard Zilog Z80 mnemonic encoder --------- */
 
 /*
- * In `.ZOP' mode the active mnemonic set is the standard documented Zilog Z80
- * set (`LD'/`JR cc,e'/`JP nn'/`CP'/`EX'/`BIT'/`SET'/`SLA'/...) rather than the
- * 8080/TDL set encode_insn parses.  The Zilog operand SYNTAX differs -- `(HL)'
- * not `M', `(IX+d)' not `d(X)', register PAIRs `BC/DE/HL/SP/AF/IX/IY', the two-
- * operand `LD'/`ADD A,r' forms, condition codes `NZ/Z/NC/C/PO/PE/P/M' -- so the
+ * In '.ZOP' mode the active mnemonic set is the standard documented Zilog Z80
+ * set ('LD'/'JR cc,e'/'JP nn'/'CP'/'EX'/'BIT'/'SET'/'SLA'/...) rather than the
+ * 8080/TDL set encode_insn parses.  The Zilog operand SYNTAX differs -- '(HL)'
+ * not 'M', '(IX+d)' not 'd(X)', register PAIRs 'BC/DE/HL/SP/AF/IX/IY', the two-
+ * operand 'LD'/'ADD A,r' forms, condition codes 'NZ/Z/NC/C/PO/PE/P/M' -- so the
  * operands are parsed here and mapped onto the SAME canonical Z80 encodings the
  * clone already emits via the TDL mnemonics.  The opcode bytes are byte-exact
  * to pasm2.com.
@@ -1743,7 +1743,7 @@ encode_insn (astate *a, const char *line, const char *mnem, const char *ops)
 
 typedef enum
 {
-  ZO_NONE, /* no operand (end of line / comment / `]')                   */
+  ZO_NONE, /* no operand (end of line / comment / ']')                   */
   ZO_R8,   /* an 8-bit register A B C D E H L (reg = 7 0 1 2 3 4 5)      */
   ZO_MEM,  /* (HL) [reg 6] or (IX+d)/(IY+d) [reg 6, pfx, idx, val=disp]  */
   ZO_RP,   /* a 16-bit pair BC DE HL SP [rp 0..3] or IX/IY [rp 2, pfx]   */
@@ -1833,7 +1833,7 @@ zreg8 (int c)
 /******************************************************************************/
 
 /*
- * Parse a Zilog condition code at *pp: NZ Z NC C PO PE P M -> 0..7; when `jr'
+ * Parse a Zilog condition code at *pp: NZ Z NC C PO PE P M -> 0..7; when 'jr'
  * is set only the four JR conditions (NZ/Z/NC/C) are legal.  Returns the code
  * and advances *pp past the token, or -1 when the next token is not a
  * condition (the caller then treats the operand as an address/register).
@@ -2134,8 +2134,8 @@ zemit_rel (astate *a, const char *line, const value_t *v)
 /******************************************************************************/
 
 /*
- * Emit an ALU/arith source operand reached via `<base>|reg' for a register /
- * (HL) / (IX+d), or `immop'+byte for an immediate.  Returns 1 if the operand
+ * Emit an ALU/arith source operand reached via '<base>|reg' for a register /
+ * (HL) / (IX+d), or 'immop'+byte for an immediate.  Returns 1 if the operand
  * was one of those forms, 0 otherwise (the caller flags the error).
  */
 static int
@@ -2205,8 +2205,8 @@ static const struct
 /******************************************************************************/
 
 /*
- * Single-operand ALU ops (implied accumulator): `rb' is the register/(HL)/
- * (IX+d) base opcode (`rb|reg'), `ib' the immediate opcode.
+ * Single-operand ALU ops (implied accumulator): 'rb' is the register/(HL)/
+ * (IX+d) base opcode ('rb|reg'), 'ib' the immediate opcode.
  */
 static const struct
 {
@@ -2220,7 +2220,7 @@ static const struct
 /******************************************************************************/
 
 /*
- * CB rotate/shift ops: the second CB opcode byte is `base|reg' (or `base|6'
+ * CB rotate/shift ops: the second CB opcode byte is 'base|reg' (or 'base|6'
  * for (HL)/(IX+d)).
  */
 static const struct
@@ -2235,9 +2235,9 @@ static const struct
 /******************************************************************************/
 
 /*
- * Encode one standard Zilog Z80 instruction (the `.ZOP' set).  Returns 1 if
- * `mnem' (uppercase) is a Zilog mnemonic, 0 otherwise (the caller then flags
- * the unknown-operator `O' error, exactly as pasm2.com rejects an 8080/TDL
+ * Encode one standard Zilog Z80 instruction (the '.ZOP' set).  Returns 1 if
+ * 'mnem' (uppercase) is a Zilog mnemonic, 0 otherwise (the caller then flags
+ * the unknown-operator 'O' error, exactly as pasm2.com rejects an 8080/TDL
  * mnemonic under .ZOP).  Best-effort byte sizes are emitted on operand errors
  * so the LC stays consistent across passes.
  */
@@ -2872,9 +2872,9 @@ encode_zilog (astate *a, const char *line, const char *mnem, const char *ops)
 
 /*
  * .LIMAGE bookkeeping: when the byte image of a data statement crosses a
- * `cap'-byte line boundary, record the source offset just past the value that
+ * 'cap'-byte line boundary, record the source offset just past the value that
  * pushed it over (so the listed source runs one value ahead of its bytes).
- * `p' is the current parse pointer into `line'; cap is 6 for bytes/strings or
+ * 'p' is the current parse pointer into 'line'; cap is 6 for bytes/strings or
  * the per-line word capacity for .WORD.
  */
 
@@ -2890,7 +2890,7 @@ limg_rec (astate *a, const char *line, const char *p, int cap)
 /******************************************************************************/
 
 /*
- * Scan a quoted string for the M80 (PASM2 .EPOP) `DB' string form: p points at
+ * Scan a quoted string for the M80 (PASM2 .EPOP) 'DB' string form: p points at
  * the opening delimiter (' or ").  A doubled delimiter ("" / '') inside the
  * string stands for one literal delimiter character.  On a terminated string,
  * *endp is set just past the closing delimiter and the function returns 1;
@@ -2984,14 +2984,14 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
       if (strmode && ('\'' == *p || '"' == *p) && db_string (p, &endq, &pure)
           && pure)
         { /*
-           * PASM2 (.EPOP) Intel `DB' string: a stand-alone quoted string emits
+           * PASM2 (.EPOP) Intel 'DB' string: a stand-alone quoted string emits
            * one byte per character, a doubled delimiter ("" / '') standing for
            * one delimiter character (M80 semantics).  A quote that is part of
-           * an arithmetic expression (followed by an operator, so `pure' is
+           * an arithmetic expression (followed by an operator, so 'pure' is
            * false) instead falls through and evaluates as a character constant.
-           * Only the Intel `DB'/`DEFB' form (strmode) does this -- the TDL
-           * `.BYTE' form keeps the character-constant value even under PASM2
-           * (where pasm2.com also flags a multi-character `.BYTE' a `Q' error).
+           * Only the Intel 'DB'/'DEFB' form (strmode) does this -- the TDL
+           * '.BYTE' form keeps the character-constant value even under PASM2
+           * (where pasm2.com also flags a multi-character '.BYTE' a 'Q' error).
            */
           char d = *p;
           const char *r = p + 1;
@@ -3050,15 +3050,15 @@ do_data (astate *a, const char *line, const char *p, int width, int strmode)
       else if ('\0' != *p && ';' != *p && ']' != *p)
         { /*
            * a space-separated trailing operand (no comma): the originals stop
-           * here and flag it `AA' (two argument errors, so a `??' marker); the
+           * here and flag it 'AA' (two argument errors, so a '??' marker); the
            * already-emitted items stand.  A ']' is a conditional block close,
            * not an operand, so it ends the list cleanly.
            */
           a->ppos = line_off (line, p);
 
-          aerr (a, line, "extra argument"); /* `AA': two argument errors at */
+          aerr (a, line, "extra argument"); /* 'AA': two argument errors at */
 
-          aerr (a, line, "extra argument"); /* the same spot -> a `??' marker */
+          aerr (a, line, "extra argument"); /* the same spot -> a '??' marker */
 
           break;
         }
@@ -3415,9 +3415,9 @@ opeq (const char *op, const char *x, const char *y)
 /******************************************************************************/
 
 /*
- * Whether the Intel/M80 pseudo-op spellings (the bare `DB'/`DW'/`DS'/`ORG'/
- * `END'/`DEFB'/`DEFW' forms, distinct from the TDL dotted `.BYTE'/`.WORD'/...)
- * are accepted on this line.  In PASM 2.00G they are `.EPOP'-gated and an `O'
+ * Whether the Intel/M80 pseudo-op spellings (the bare 'DB'/'DW'/'DS'/'ORG'/
+ * 'END'/'DEFB'/'DEFW' forms, distinct from the TDL dotted '.BYTE'/'.WORD'/...)
+ * are accepted on this line.  In PASM 2.00G they are '.EPOP'-gated and an 'O'
  * error otherwise, matching pasm2.com.  In the 1.02/2.21 dialects the clone has
  * always accepted them (byte-exact across that corpus), so this stays true and
  * their dispatch is unchanged.
@@ -3453,7 +3453,7 @@ parse_opname (const char *p, char *out)
 
 /******************************************************************************/
 
-/* resolve `op` in place through the .OPSYN alias chain */
+/* resolve 'op' in place through the .OPSYN alias chain */
 static void
 resolve_alias (const astate *a, char *op)
 {
@@ -3482,7 +3482,7 @@ resolve_alias (const astate *a, char *op)
 /*
  * The originals store pseudo-op names in a six-character-significant table,
  * so a directive whose documented spelling is longer than six characters is
- * also recognized by its first six (e.g. `.DEFIN' == `.DEFINE').  Rewrite
+ * also recognized by its first six (e.g. '.DEFIN' == '.DEFINE').  Rewrite
  * such a dot-directive in place to its canonical full name.  Only directives
  * whose canonical spelling exceeds six characters need an entry; the
  * six-character prefixes here are unambiguous, so this never over-matches
@@ -3537,18 +3537,18 @@ casm (const astate *a)
 
 /*
  * Count the conditional block(s) a statement line closes: ']' tokens with no
- * matching '[' earlier on the line.  A multi-line `.ife COND,[' opens a block
- * whose body ends `stmt]' on a later line; that trailing ']' must pop the
+ * matching '[' earlier on the line.  A multi-line '.ife COND,[' opens a block
+ * whose body ends 'stmt]' on a later line; that trailing ']' must pop the
  * frame.  The originals track the brackets lexically across the WHOLE line --
- * a ']' after a `;' comment still closes (the sources put it there) -- so the
+ * a ']' after a ';' comment still closes (the sources put it there) -- so the
  * scan does NOT stop at a comment; only a ']' inside a ' or " string (and
- * balanced `[expr]'/`[string]' brackets) does not count.
+ * balanced '[expr]'/'[string]' brackets) does not count.
  */
 
 /*
  * True when s begins with a string-emitting data directive (.ASCII / .ASCIZ /
  * .ASCIS and the .DC / DCS aliases).  Used for the zasm.com inline-string
- * `]'-absorb quirk below: only those directives parse a STRING (a `.byte 'AB''
+ * ']'-absorb quirk below: only those directives parse a STRING (a '.byte 'AB''
  * is a char CONSTANT and is not affected).
  */
 
@@ -3623,9 +3623,9 @@ is_conditional (const char *op)
 /******************************************************************************/
 
 /*
- * Given S pointing just past a block-opening `[', return the matching `]'
+ * Given S pointing just past a block-opening '[', return the matching ']'
  * (tracking nested brackets) when it lies on this line -- the single-line
- * inline conditional form `.IFx cond,[stmt][else]' -- or NULL when the `['
+ * inline conditional form '.IFx cond,[stmt][else]' -- or NULL when the '['
  * ends the line (the multi-line form, whose body is on the following lines).
  */
 
@@ -3654,10 +3654,10 @@ inline_block_end (const char *s)
 
 /*
  * Read one string argument: [bracketed], "quoted" / 'quoted', or bare (up to
- * space/comma/;).  A `[...]' argument yields its CONTENT (the brackets are the
- * delimiters), so `.IFB [END]' with END unbound -> `[]' -> empty -> blank, just
- * as `.IFB '''/`.IFB ""' are empty; the matching `]' is found depth-aware so a
- * nested `[...]' inside the argument is carried through verbatim.  Either quote
+ * space/comma/;).  A '[...]' argument yields its CONTENT (the brackets are the
+ * delimiters), so '.IFB [END]' with END unbound -> '[]' -> empty -> blank, just
+ * as '.IFB '''/'.IFB ""' are empty; the matching ']' is found depth-aware so a
+ * nested '[...]' inside the argument is carried through verbatim.  Either quote
  * also delimits the string.
  */
 
@@ -3971,21 +3971,21 @@ lst_wrap (astate *a, int col, int wrapw, int indent)
 
 /*
  * Print the source field, expanding tabs to spaces on 8-column tab stops,
- * as the originals do - they emit no tab bytes.  Long lines fold at `wrapw`
- * with the continuation re-indented to `indent` (the source column).
- * `col` is the column already printed.
+ * as the originals do - they emit no tab bytes.  Long lines fold at 'wrapw'
+ * with the continuation re-indented to 'indent' (the source column).
+ * 'col' is the column already printed.
  */
 
 static void
 lst_source (astate *a, const char *s, int col, int wrapw, int indent,
             const int *qoff, int nq)
 {
-  int si = 0; /* source character index, for the `?' error marker */
+  int si = 0; /* source character index, for the '?' error marker */
   int k;
 
   for (; '\0' != *s; s++, si++)
     {
-      for (k = 0; k < nq; k++) /* a `?' just before each error's position */
+      for (k = 0; k < nq; k++) /* a '?' just before each error's position */
         if (si == qoff [k])
           {
             col = lst_wrap (a, col, wrapw, indent);
@@ -4000,7 +4000,7 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
       if ('\t' == *s)
         { /*
            * tab stops are 8 columns apart measured FROM the source-field
-           * start (`indent'), not from absolute column 0: ZASM's source
+           * start ('indent'), not from absolute column 0: ZASM's source
            * column (24) is a multiple of 8 so the two coincide, but PASM's
            * (25) is not, and its operands sit one column further right.
            */
@@ -4041,7 +4041,7 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
            * keep); high-bit bytes (>= 0x80) are left alone.  This silently
            * absorbs a stray control byte -- e.g. a ^A transcription artifact
            * embedded in a comment -- exactly as the originals do.  si still
-           * advances (the for-update), so the `?' error offsets are unmoved.
+           * advances (the for-update), so the '?' error offsets are unmoved.
            */
           continue;
         }
@@ -4085,7 +4085,7 @@ lst_source (astate *a, const char *s, int col, int wrapw, int indent,
 /*
  * .LIMAGE multi-line byte image: list EVERY byte of a data statement, six per
  * line (one word per line for .WORD under PASM), splitting the source across
- * the lines with a `\' continuation marker.  The split offsets were recorded
+ * the lines with a '\' continuation marker.  The split offsets were recorded
  * while the data was parsed; the source runs one value ahead of its bytes.
  */
 
@@ -4176,8 +4176,8 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
         { /*
            * the un-padded word field, then pad to the source column two past
            * the normal indent: the value field overstrikes the leading two
-           * source columns (the `\t.' lead on line 0, the `\'+comma on a
-           * continuation), so no `\' marker is emitted and the source starts
+           * source columns (the '\t.' lead on line 0, the '\'+comma on a
+           * continuation), so no '\' marker is emitted and the source starts
            * two columns in.
            */
 
@@ -4195,7 +4195,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
           (void)fprintf (a->lst, "   %04X%-4s%-*s", (unsigned)loc, lfl, bw, bf);
           col = indent;
 
-          if (k > 0) /* continuation lines lead with a `\' */
+          if (k > 0) /* continuation lines lead with a '\' */
             {
               (void)fputc ('\\', a->lst);
               col++;
@@ -4225,7 +4225,7 @@ lst_limage (astate *a, u16 lc0, const char *rawline)
             }
         }
 
-      if (k < nlines - 1) /* every line but the last ends with a `\' */
+      if (k < nlines - 1) /* every line but the last ends with a '\' */
         (void)fputc ('\\', a->lst);
 
       (void)fputc ('\n', a->lst);
@@ -4255,7 +4255,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
   if (a->mdef_page)
     { /*
        * the leading report page lists ONLY the offending statements: a label
-       * redefinition (`M') or a nested .INSERT (`F').
+       * redefinition ('M') or a nested .INSERT ('F').
        */
       int k, has_lead = 0;
 
@@ -4321,7 +4321,7 @@ print_lst (astate *a, u16 lc0, const char *rawline)
     { /*
        *  .XALL (default) drops the no-code lines, .LALL lists everything,
        * but an errored statement is ALWAYS listed (the originals never hide a
-       * diagnostic), e.g. a standalone `.GOTO' with an undefined label
+       * diagnostic), e.g. a standalone '.GOTO' with an undefined label
        */
       if (0 == a->nbytes && 0 == a->lst_nec && !(a->lst_ctl & LSTC_LALL))
         return;
@@ -4533,14 +4533,14 @@ print_lst (astate *a, u16 lc0, const char *rawline)
       rq [1] = -1;
       off = line_off (rawline, src);
 
-      for (i = 0; i < a->lst_nec; i++) /* `?' offsets vs the source field */
+      for (i = 0; i < a->lst_nec; i++) /* '?' offsets vs the source field */
         {
           rq [i] = a->lst_qoff [i] - off;
 
           /*
-           * a `?' that lands on a macro body close `]' steps past it so it
+           * a '?' that lands on a macro body close ']' steps past it so it
            * sits at the END of the rendered line, as the originals place it
-           * (`STA PPLNCN]?', not `STA PPLNCN?]')
+           * ('STA PPLNCN]?', not 'STA PPLNCN?]')
            */
 
           while (rq [i] >= 0 && ']' == src [rq [i]])
@@ -4555,9 +4555,9 @@ print_lst (astate *a, u16 lc0, const char *rawline)
 /******************************************************************************/
 
 /*
- * The closing delimiter for a string value opened by `open' in this dialect.
- * A PASM `[' opens a bracket-delimited string that pairs with `]' and nests;
- * every other delimiter -- and `[' under ZASM, which has no bracket form --
+ * The closing delimiter for a string value opened by 'open' in this dialect.
+ * A PASM '[' opens a bracket-delimited string that pairs with ']' and nests;
+ * every other delimiter -- and '[' under ZASM, which has no bracket form --
  * closes on its own character.  (PSA PASM manual, "String Values".)
  */
 
@@ -4729,9 +4729,9 @@ sym_name_cmp (const void *pa, const void *pb)
 
 /*
  * qsort comparator ordering symbols by their .EXTERN declaration sequence
- * (for the `\` segment/reloc-base records).  (An external's base number is
+ * (for the '\' segment/reloc-base records).  (An external's base number is
  * assigned in the same sequence, so this orders the externals by relocation
- * base.)  The `#'/`@' records use first-definition (defseq) order.
+ * base.)  The '#'/'@' records use first-definition (defseq) order.
  */
 
 static int
@@ -4758,9 +4758,9 @@ cmp_decl (const void *pa, const void *pb)
 
 /*
  * Collect the external/internal/entry symbols into objsym arrays (each sized
- * sym_count(t)) for the `\'/`#'/`@' object records.  Externals by decl (base
- * order for `\'); internals/entries by first-definition order (defseq) to
- * match the originals' `#'/`@' record order.
+ * sym_count(t)) for the '\'/'#'/'@' object records.  Externals by decl (base
+ * order for '\'); internals/entries by first-definition order (defseq) to
+ * match the originals' '#'/'@' record order.
  */
 
 static void
@@ -4841,9 +4841,9 @@ collect_obj_syms (const symtab *t, objsym *exts, int *nexts, objsym *ints,
 /******************************************************************************/
 
 /*
- * Collect ALL global symbols for the `&' .PSYM object record: the three
+ * Collect ALL global symbols for the '&' .PSYM object record: the three
  * segment bases first, then externals in decl/base order, then locally-
- * defined symbols in first-definition (defseq) order.  `..' locals excluded.
+ * defined symbols in first-definition (defseq) order.  '..' locals excluded.
  */
 
 static void
@@ -4884,7 +4884,7 @@ collect_psyms (const symtab *t, unsigned progsz, unsigned datasz,
 
   for (i = 0; i < total; i++)
     {
-      if (NULL != strchr (all [i]->name, ':')) /* a `..' local: excluded */
+      if (NULL != strchr (all [i]->name, ':')) /* a '..' local: excluded */
         continue;
 
       if (all [i]->external)
@@ -5129,7 +5129,7 @@ lst_symtab (astate *a)
            * .PROG. (index 2) carries the program-segment size; the
            * .BLNK./.DATA. rows stay 0000 for this absolute-segment output.
            * An explicit .LOC/ORG pins the code absolutely, so .PROG. then
-           * reports size 0 here too -- matching the object `\\' record.
+           * reports size 0 here too -- matching the object '\\' record.
            */
 
           name = segname [(long)i - nuser];
@@ -5198,7 +5198,7 @@ do_insert (astate *a, const char *field)
   name [n] = '\0';
 
   /*
-   * an optional DOS/CP-M drive specifier `d:' prefixes the filename; the
+   * an optional DOS/CP-M drive specifier 'd:' prefixes the filename; the
    * originals accept it but resolve the file on the source's own disk, so we
    * strip it (a future extended-warnings mode could note the ignored drive).
    */
@@ -5212,7 +5212,7 @@ do_insert (astate *a, const char *field)
           k++;
         }
 
-      name [k] = '\0'; /* the `.'-vs-not (dot) test already excluded the `d:' */
+      name [k] = '\0'; /* the '.'-vs-not (dot) test already excluded the 'd:' */
     }
 
   if (!dot)
@@ -5479,7 +5479,7 @@ do_define (astate *a, const char *operands)
           dbuf [0] = '\0';
 
           if ('(' == *p)
-            { /* `PARAM(default)': capture the parenthesized default value */
+            { /* 'PARAM(default)': capture the parenthesized default value */
               int dd = 1, di = 0;
               p++;
 
@@ -5632,8 +5632,8 @@ macro_subst (const macrodef *m, char *args [], int nargs, const char *in,
 
           /*
            * paste-right: an apostrophe right after a substituted dummy is the
-           * concatenation operator (the mirror of `'dummy' paste-left above)
-           * and is elided, so e.g. `.ASCII 'A$'' yields the argument wrapped
+           * concatenation operator (the mirror of ''dummy' paste-left above)
+           * and is elided, so e.g. '.ASCII 'A$'' yields the argument wrapped
            * in its OWN quotes, not in an extra pair.
            */
           if (pi >= 0 && '\'' == *in)
@@ -5673,8 +5673,8 @@ paren_depth_of (const char *s)
 /******************************************************************************/
 
 /*
- * A macro-body line is a MACRO LABEL when it is `name>' -- an identifier
- * followed by `>'.  Macro labels are .GOTO targets; during expansion they
+ * A macro-body line is a MACRO LABEL when it is 'name>' -- an identifier
+ * followed by '>'.  Macro labels are .GOTO targets; during expansion they
  * emit nothing and are not listed.  Returns 1 and fills name_out (upper-
  * cased) when line is such a label.
  */
@@ -5700,7 +5700,7 @@ mac_label (const char *line, char *name_out)
 /******************************************************************************/
 
 /*
- * The macro-body index of the FIRST macro label `name>' (case-insensitive),
+ * The macro-body index of the FIRST macro label 'name>' (case-insensitive),
  * or -1.  .GOTO's search "begins at the start of the macro text", so a
  * duplicated label resolves to the first.
  */
@@ -5750,7 +5750,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
     }
 
   a->macro_depth++;
-  saved_argc = a->mac_argc; /* `&' is per-invocation; restore on exit */
+  saved_argc = a->mac_argc; /* '&' is per-invocation; restore on exit */
   saved_cur = a->cur_macro; /* .GOTO context; restored on exit (nesting) */
   a->cur_macro = m;
   a->macro_goto = -1;
@@ -5860,18 +5860,18 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
     }
 
   /*
-   * `&' = the macro's argument count: the larger of the declared
+   * '&' = the macro's argument count: the larger of the declared
    * dummy-param count and the number of arguments actually passed
    */
 
   a->mac_argc = ((nargs > m->nparams) ? nargs : m->nparams);
 
   /*
-   * Bind any dummy parameter that received no argument.  A `%'-prefixed dummy
-   * gets a fresh per-expansion local label (`..NNNN', the form the original
+   * Bind any dummy parameter that received no argument.  A '%'-prefixed dummy
+   * gets a fresh per-expansion local label ('..NNNN', the form the original
    * assemblers generate for macro-created symbols); any other unbound dummy
-   * takes its declared default value (`PARAM(def)'), or the empty string when
-   * it has none -- so a blank-argument test such as `.IFB [END]' sees a truly
+   * takes its declared default value ('PARAM(def)'), or the empty string when
+   * it has none -- so a blank-argument test such as '.IFB [END]' sees a truly
    * blank operand.  The synthetic arguments are appended to argbuf and indexed
    * just past the supplied ones, after which substitution treats every dummy as
    * bound.  genctr resets each pass (init_pass), so both passes generate the
@@ -5955,7 +5955,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
           macro_subst (m, args, nargs, m->body [bi], lnb);
 
           if (mac_label (skipws (lnb), labbuf))
-            continue; /* macro label `name>': emits nothing, not listed */
+            continue; /* macro label 'name>': emits nothing, not listed */
 
           if (bi == m->nbody - 1)
             { /*
@@ -6062,10 +6062,10 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         }
 
       /*
-       * body [0]'s error `?' offsets were recorded against ln0, but the fold
+       * body [0]'s error '?' offsets were recorded against ln0, but the fold
        * renders it after "callline[" -- shift them into the call line's
        * coordinate space (as the inline-conditional path does with boff) so a
-       * `?' on the folded body lands correctly: e.g. past the closing ']' at
+       * :?' on the folded body lands correctly: e.g. past the closing ']' at
        * the line end ("BEQ X[JZ X]?"), as the originals place it.
        */
       if (2 == a->pass && a->nbytes > 0 && a->lst_nec > 0)
@@ -6101,7 +6101,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       t = skipws (ln);
 
       if (mac_label (t, labbuf))
-        continue; /* a macro label `name>' emits nothing and is not listed */
+        continue; /* a macro label 'name>' emits nothing and is not listed */
 
       if (outer && i == m->nbody - 1
           && !((a->lst_ctl & LSTC_SALL) && (a->lst_ctl & LSTC_LIST)))
@@ -6134,7 +6134,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
         do_line (a, ln);
 
       if (a->macro_goto >= 0)
-        { /* .GOTO branched: resume just after the target label `name>' */
+        { /* .GOTO branched: resume just after the target label 'name>' */
           i = a->macro_goto;
           a->macro_goto = -1;
 
@@ -6166,7 +6166,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
       a->lst_loc = -1; /* the lone ']' has no location */
       a->lst_lbase = -1;
       a->lst_obase = 0;
-      a->lst_nec = 0; /* clears the per-line error codes + `?' offsets */
+      a->lst_nec = 0; /* clears the per-line error codes + '?' offsets */
       a->mac_src = "]";
       a->mac_plus = 1;
       print_lst (a, a->lc, "]");
@@ -6176,7 +6176,7 @@ expand_macro (astate *a, const macrodef *m, const char *argstr,
 
   a->macro_depth--;
   a->cur_macro = saved_cur; /* restore the enclosing macro's .GOTO context */
-  a->mac_argc = saved_argc; /* restore the enclosing invocation's `&' */
+  a->mac_argc = saved_argc; /* restore the enclosing invocation's '&' */
   a->macro_exit = 0; /* the .EXIT (if any) terminated only this expansion */
 
   if (outer)
@@ -6573,7 +6573,7 @@ do_line (astate *a, const char *line)
   a->lst_obase = 0;
   a->lst_eflag = 0; /* only set for =/EQU under PASM2 */
   a->lst_ctlstmt = 0; /* set by the listing-control directives */
-  a->lst_nec = 0;    /* per-line error codes (col 1) + their `?' offsets */
+  a->lst_nec = 0;    /* per-line error codes (col 1) + their '?' offsets */
   a->limg_ns = 0;    /* per-line .LIMAGE source splits (set by do_data) */
   a->cur_line = line; /* base for the parse-position offsets */
   a->ppos = 0;
@@ -6707,7 +6707,7 @@ do_line (astate *a, const char *line)
 
   /*
    * Apply conditional block close(s) deferred from the previous line's
-   * trailing `]' (a multi-line `.ife COND,[' ... `stmt]' body).  Done here,
+   * trailing ']' (a multi-line '.ife COND,[' ... 'stmt]' body).  Done here,
    * before this line consults the assembling state, so the close takes effect
    * after the body line that owned it.
    */
@@ -6731,8 +6731,8 @@ do_line (astate *a, const char *line)
 
     /*
      * A conditional whose true block closed on an earlier line (pend_else)
-     * takes an else `[' here when this line opens with one (the multi-line
-     * `] ... [' else form, comment/blank lines allowed between).  Any other
+     * takes an else '[' here when this line opens with one (the multi-line
+     * '] ... [' else form, comment/blank lines allowed between).  Any other
      * non-comment line closes the window without an else.
      */
 
@@ -6770,7 +6770,7 @@ do_line (astate *a, const char *line)
         dang = 0;
         bp = skipws (bp + 1);
 
-        if ('[' == *bp) /* `] [' (else): pop the IF frame, push the ELSE */
+        if ('[' == *bp) /* '] [' (else): pop the IF frame, push the ELSE */
           {
             int outer = casm (a);
 
@@ -6785,14 +6785,14 @@ do_line (astate *a, const char *line)
             bp = skipws (bp + 1);
           }
         else if (!was_else)
-          { /* a dangling true-block close: an else `[' may still follow */
+          { /* a dangling true-block close: an else '[' may still follow */
             dang = 1;
             dang_wt = wt;
           }
       }
 
     if (dang && ('\0' == *bp || ';' == *bp))
-      { /* open the else window: a later `[' (across comments) is the else */
+      { /* open the else window: a later '[' (across comments) is the else */
         a->pend_else = 1;
         a->pend_else_wt = dang_wt;
         a->pend_else_outer = casm (a);
@@ -6800,7 +6800,7 @@ do_line (astate *a, const char *line)
 
     if ('\0' == *bp || ';' == *bp)
       { /*
-         * blank or comment-only line (a `]'/`] [' bracket close, a comment, or
+         * blank or comment-only line (a ']'/'] [' bracket close, a comment, or
          * a blank): the originals list it with a blank LC column, even inside a
          * skipped conditional (tabs expand as usual); print_lst applies any
          * .XLIST / macro-body suppression.
@@ -6816,17 +6816,17 @@ do_line (astate *a, const char *line)
   }
 
   /*
-   * A statement that ends a multi-line `.ife COND,[' body carries the block's
-   * trailing `]' (`stmt]'); record the close(s) so the frame pops AFTER this
-   * line.  An inline `.ife COND,[stmt]' and a `[expr]' operand are balanced and
+   * A statement that ends a multi-line '.ife COND,[' body carries the block's
+   * trailing ']' ('stmt]'); record the close(s) so the frame pops AFTER this
+   * line.  An inline '.ife COND,[stmt]' and a '[expr]' operand are balanced and
    * count zero.
    */
   a->pend_rbracket = count_block_closes (bp);
 
   /*
-   * `![sub]=expr' : assign a .TEMPS local temporary (PASM, inside a macro).
-   * The lexer treats a leading `!' as an operator, so intercept the assignment
-   * form here -- only when a `]' is followed by `=' (otherwise fall through).
+   * '![sub]=expr' : assign a .TEMPS local temporary (PASM, inside a macro).
+   * The lexer treats a leading '!' as an operator, so intercept the assignment
+   * form here -- only when a ']' is followed by '=' (otherwise fall through).
    */
   if ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
       && a->macro_depth > 0 && '!' == *bp && '[' == bp[1])
@@ -6852,7 +6852,7 @@ do_line (astate *a, const char *line)
           if (']' == *p)
             p = skipws (p + 1);
 
-          if ('=' == *p) /* `=' or `==' */
+          if ('=' == *p) /* '=' or '==' */
             p++;
 
           if ('=' == *p)
@@ -6876,7 +6876,7 @@ do_line (astate *a, const char *line)
   lex_line (bp, &L);
 
   /*
-   * default `?' position: the operand field (after the op); eval1 advances
+   * default '?' position: the operand field (after the op); eval1 advances
    * it as it consumes the expression, so an operand error marks where it
    * stopped
    */
@@ -6918,7 +6918,7 @@ do_line (astate *a, const char *line)
       s = sym_intern (a->syms, dn);
 
       if (L.internal && !s->internal)
-        { /* `label::' -- declare it internal, like a preceding .INTERN */
+        { /* 'label::' -- declare it internal, like a preceding .INTERN */
           s->internal = 1;
           s->decl = (unsigned short)a->next_decl++;
         }
@@ -6938,7 +6938,7 @@ do_line (astate *a, const char *line)
           s->val.base = (a->lc_reloc ? a->base : 0);
           s->val.ext = NULL;
 
-          if (0 == s->defseq) /* record first-definition order for `&' .PSYM */
+          if (0 == s->defseq) /* record first-definition order for '&' .PSYM */
             s->defseq = (unsigned short)a->next_defseq++;
 
           s->defined = 1;
@@ -6947,14 +6947,14 @@ do_line (astate *a, const char *line)
       else if (s->defined)
         { /*
            * the label is already defined in this pass: a Multiply-defined
-           * symbol error (the first value is kept).  The `?' marks the label,
+           * symbol error (the first value is kept).  The '?' marks the label,
            * so point it just past the label name.
            */
           a->ppos = line_off (line, bp) + (int)strlen (L.label);
 
           aerr (a, line, "multiply-defined symbol");
 
-          s->mdef = 1; /* flagged `M' in the symbol table */
+          s->mdef = 1; /* flagged 'M' in the symbol table */
           a->cur_mdef = 1; /*
                             * operand forward refs render undefined on the
                             * report page (the originals' pass-1 view)
@@ -6995,11 +6995,11 @@ do_line (astate *a, const char *line)
         }
 
       /*
-       * single-line inline form `.IFx cond,[stmt][else]': the taken branch's
+       * single-line inline form '.IFx cond,[stmt][else]': the taken branch's
        * (single) statement is on THIS line, so assemble it inline -- its bytes
        * list on the directive's own line -- and push NO block frame.  Detect it
-       * by a `,[' at bracket depth 0 whose `[' has a matching `]' on this line;
-       * a `[' that instead ends the line opens the multi-line form handled
+       * by a ',[' at bracket depth 0 whose '[' has a matching ']' on this line;
+       * a '[' that instead ends the line opens the multi-line form handled
        * below.
        */
       {
@@ -7034,9 +7034,9 @@ do_line (astate *a, const char *line)
         b1e = ((NULL != bk) ? inline_block_end (bk + 1) : NULL);
 
         /*
-         * Bare inline action `.IFx cond,STMT' (no `[...]'): pasm.com accepts
+         * Bare inline action '.IFx cond,STMT' (no '[...]'): pasm.com accepts
          * the action without brackets too -- this is the TDL/PSA .GOTO
-         * counted-loop idiom `.IFL expr,.GOTO label'.  The single-condition
+         * counted-loop idiom '.IFL expr,.GOTO label'.  The single-condition
          * .IFx have a one-token condition, so the first depth-0 comma delimits
          * the action.  The two-argument string conditionals (.IFIDN/.IFDIF)
          * carry a comma IN the condition and are excluded (their bracketed
@@ -7070,14 +7070,14 @@ do_line (astate *a, const char *line)
           }
 
         if (NULL != bk && NULL != b1e)
-          { /* INLINE: a matching `]' for the first block lies on this line */
+          { /* INLINE: a matching ']' for the first block lies on this line */
             const char *p2 = skipws (b1e + 1);
             const char *b2e
                 = (('[' == *p2) ? inline_block_end (p2 + 1) : NULL);
             const char *body = NULL, *body_end = NULL;
             /*
              * No inline else and the line ends after the true block: a
-             * multi-line else `[' may still follow (across comment/blank
+             * multi-line else '[' may still follow (across comment/blank
              * lines), as for the multi-line conditional form.  The else window
              * is armed AFTER assembling the true-block statement below -- the
              * recursive do_line() for that statement would otherwise clear it.
@@ -7099,7 +7099,7 @@ do_line (astate *a, const char *line)
               { /*
                  * assemble the single statement, then list THIS directive's
                  * line carrying its bytes (the recursive line's own listing is
-                 * suppressed; its `?' error offsets are shifted to the block's
+                 * suppressed; its '?' error offsets are shifted to the block's
                  * position within this line)
                  */
                 char bbuf [512];
@@ -7113,11 +7113,11 @@ do_line (astate *a, const char *line)
 
                 /*
                  * zasm.com quirk: an .ascii/.ascis/.asciz STRING whose closing
-                 * quote sits immediately before the inline block's `]' loses
-                 * its last character (the `]' "absorbs" it).  Real TDL sources
+                 * quote sits immediately before the inline block's ']' loses
+                 * its last character (the ']' "absorbs" it).  Real TDL sources
                  * rely on this -- they pad such a string with an extra trailing
                  * char so the ZASM build gets the intended text (e.g. bios's
-                 * `.ascii [cr][lf]'CP/M  ']' assembles "CP/M " before the
+                 * '.ascii [cr][lf]'CP/M  ']' assembles "CP/M " before the
                  * version number).  Reproduce it in -z mode so the clone emits
                  * the same bytes the originals shipped.  (.byte/.word treat a
                  * quoted token as a char CONSTANT, not a string -- unaffected.)
@@ -7154,7 +7154,7 @@ do_line (astate *a, const char *line)
               }
 
             if (arm_else)
-              { /* a later bare `[' is this conditional's else (inverse of t) */
+              { /* a later bare '[' is this conditional's else (inverse of t) */
                 a->pend_else = 1;
                 a->pend_else_wt = t;
                 a->pend_else_outer = outer;
@@ -7164,7 +7164,7 @@ do_line (astate *a, const char *line)
           }
         else if (NULL != bare)
           { /*
-             * bare inline action `.IFx cond,STMT' (no brackets, no else):
+             * bare inline action '.IFx cond,STMT' (no brackets, no else):
              * assemble STMT inline when taken -- its bytes list on this
              * directive's line, like the bracketed form -- else just list the
              * line.  No block frame is pushed (single-line form).
@@ -7206,12 +7206,12 @@ do_line (astate *a, const char *line)
           }
         else if (NULL != bk)
           { /*
-             * MULTI-LINE open whose FIRST statement shares the `.ife' line:
-             * `.IFx cond,[stmt' with no matching `]' here (the body continues
-             * on later lines, ending `stmt]').  Push the frame, then assemble
+             * MULTI-LINE open whose FIRST statement shares the '.ife' line:
+             * '.IFx cond,[stmt' with no matching ']' here (the body continues
+             * on later lines, ending 'stmt]').  Push the frame, then assemble
              * that leading statement inside it -- it lists ON this directive
              * line, carrying its bytes when the block is taken (as for the
-             * single-line inline form); a bare `.IFx cond,[' has none.
+             * single-line inline form); a bare '.IFx cond,[' has none.
              */
             const char *lead = skipws (bk + 1);
 
@@ -7272,7 +7272,7 @@ do_line (astate *a, const char *line)
       if (2 == a->pass)
         { /*
            * the originals list the conditional directive line itself with a
-           * blank LC column -- UNLESS it carries a label (`LBL: .IFx ...'),
+           * blank LC column -- UNLESS it carries a label ('LBL: .IFx ...'),
            * in which case the label's address (= lc0) is shown, as for any
            * labeled line.
            */
@@ -7285,9 +7285,9 @@ do_line (astate *a, const char *line)
     }
 
   /*
-   * PASM2 .EPOP Intel/M80 conditionals: `IF'/`IFT'/`COND' expr (assemble if
-   * non-zero), `IFE'/`IFF' expr (assemble if zero), `ELSE', `ENDIF'/`ENDC'.
-   * Unlike the TDL bracket conditionals these carry NO `[...]' block -- the
+   * PASM2 .EPOP Intel/M80 conditionals: 'IF'/'IFT'/'COND' expr (assemble if
+   * non-zero), 'IFE'/'IFF' expr (assemble if zero), 'ELSE', 'ENDIF'/'ENDC'.
+   * Unlike the TDL bracket conditionals these carry NO '[...]' block -- the
    * frame stays open until ENDIF/ENDC.  Handled BEFORE the casm() skip-gate so
    * a nested IF inside a skipped block still pushes/pops its frame and stays
    * balanced; they emit no bytes and self-list with a blank LC.
@@ -7391,7 +7391,7 @@ do_line (astate *a, const char *line)
           int reading = (1 == a->pass || !s->defined);
 
           if (L.internal && !s->internal)
-            { /* `sym=:\'/`sym==:\' -- declare it internal, like .INTERN */
+            { /* 'sym=:\'/'sym==:\' -- declare it internal, like .INTERN */
               s->internal = 1;
               s->decl = (unsigned short)a->next_decl++;
             }
@@ -7448,7 +7448,7 @@ do_line (astate *a, const char *line)
             }
 
           /*
-           * like any `=' assignment, the line lists the value (the answer
+           * like any '=' assignment, the line lists the value (the answer
            * read, or in pass 2 the value cached from pass 1), not the LC
            */
 
@@ -7475,7 +7475,7 @@ do_line (astate *a, const char *line)
 
         {
           /*
-           * a `..local' assignment is scope-local, like a `..local:' label --
+           * a '..local' assignment is scope-local, like a '..local:' label --
            * scope-qualify the name so an expression reference (which qualifies
            * the same way) resolves it within the scope
            */
@@ -7492,12 +7492,12 @@ do_line (astate *a, const char *line)
           s = sym_intern (a->syms, dn);
 
           if (L.internal && !s->internal)
-            { /* `sym=:'/`sym==:' -- declare it internal, like .INTERN */
+            { /* 'sym=:'/'sym==:' -- declare it internal, like .INTERN */
               s->internal = 1;
               s->decl = (unsigned short)a->next_decl++;
             }
 
-          if (0 == s->defseq) /* record first-definition order for `&' .PSYM */
+          if (0 == s->defseq) /* record first-definition order for '&' .PSYM */
             s->defseq = (unsigned short)a->next_defseq++;
 
           s->val = v;
@@ -7541,17 +7541,17 @@ do_line (astate *a, const char *line)
       if (a->ins_depth > 0)
         { /*
            * only one level of .INSERT is allowed: a nested .INSERT (one is
-           * already in progress) is an `F' error, and the nested file is NOT
+           * already in progress) is an 'F' error, and the nested file is NOT
            * inserted.  Both originals also flag the now-stranded file-name
-           * operand `Q' (questionable), so the line carries two codes (`FQ')
-           * and two `?' markers (`??') over the file-name field.
+           * operand 'Q' (questionable), so the line carries two codes ('FQ')
+           * and two '?' markers ('??') over the file-name field.
            */
 
           a->ppos = line_off (line, L.operands);
 
           aerr (a, line, "nested .INSERT"); /* F */
 
-          aerr (a, line, "extra operand");  /* Q (same column -> `??') */
+          aerr (a, line, "extra operand");  /* Q (same column -> '??') */
 
           /* body, or leading report page */
           if (2 == a->pass || (a->mdef_page && DIALECT_PASM2 != a->dialect))
@@ -7581,7 +7581,7 @@ do_line (astate *a, const char *line)
   else if (opeq (op, ".OPSYN", ".SYN") || opeq (op, ".SYSYN", ".MASYN"))
     {
       /*
-       * synonym definition (.SYN/.OPSYN/.SYSYN/.MASYN: `sym1,sym2' makes sym2
+       * synonym definition (.SYN/.OPSYN/.SYSYN/.MASYN: 'sym1,sym2' makes sym2
        * a synonym for sym1).  The four differ only in which symbol class the
        * original searches; we resolve them all through one alias table.
        */
@@ -7616,7 +7616,7 @@ do_line (astate *a, const char *line)
                && opeq (op, "EXTERN", "EXT")))
     { /*
        * declare external symbols; each gets a sequential base number (>=4).
-       * PASM2 .EPOP adds the Intel `EXTERN'/`EXT' spellings (== .EXTERN).
+       * PASM2 .EPOP adds the Intel 'EXTERN'/'EXT' spellings (== .EXTERN).
        */
       const char *q = L.operands;
 
@@ -7655,8 +7655,8 @@ do_line (astate *a, const char *line)
                && opeq (op, "ENTRY", "GLOBAL")))
     { /*
        * mark internal symbols (.ENTRY symbols are also entry points).  PASM2
-       * .EPOP adds the Intel `ENTRY'/`GLOBAL' spellings (== .ENTRY: a public
-       * symbol defined here, visible to other modules).  `PUBLIC'/`COMMON'
+       * .EPOP adds the Intel 'ENTRY'/'GLOBAL' spellings (== .ENTRY: a public
+       * symbol defined here, visible to other modules).  'PUBLIC'/'COMMON'
        * stay no-ops (is_noop_dir), unchanged from the 1.02/2.21 leniency.
        */
       int is_entry = (opeq (op, ".ENTRY", NULL)
@@ -7694,7 +7694,7 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".IDENT", NULL))
-    { /* set the module name carried in the `!' object record */
+    { /* set the module name carried in the '!' object record */
       char nm [NAMEBUF];
       (void)parse_opname (L.operands, nm);
 
@@ -7705,8 +7705,8 @@ do_line (astate *a, const char *line)
     }
   else if (opeq (op, ".PROGID", NULL))
     { /*
-       * program id, version, revision -> the `+' object record (PASM).
-       * `.PROGID id,ver,rev': the id (<=6 chars) fills the record's name
+       * program id, version, revision -> the '+' object record (PASM).
+       * '.PROGID id,ver,rev': the id (<=6 chars) fills the record's name
        * field; ver/rev are 8-bit values.  No bytes emitted (blank LC).
        */
       char nm [NAMEBUF];
@@ -7771,11 +7771,11 @@ do_line (astate *a, const char *line)
   else if (opeq (op, ".GOTO", NULL))
     { /*
        * .GOTO mlabel: within a macro expansion, branch to the macro label
-       * `mlabel>' (the FIRST match, case-insensitively); the expansion then
+       * 'mlabel>' (the FIRST match, case-insensitively); the expansion then
        * continues there (the loop reposition is done by expand_macro).  With
        * a single-line conditional this forms a counted loop.  Faithful to
-       * pasm.com (probed): outside any macro -> `QQ' (two `Q', `??' at the
-       * operand); a missing operand -> `Q'; an undefined label -> `U' (`?'
+       * pasm.com (probed): outside any macro -> 'QQ' (two 'Q', '??' at the
+       * operand); a missing operand -> 'Q'; an undefined label -> 'U' ('?'
        * after the name) and the branch is abandoned, the expansion falling
        * through to the next body line.
        */
@@ -7784,7 +7784,7 @@ do_line (astate *a, const char *line)
       const char *oe = parse_opname (os, nm);
 
       if (NULL == a->cur_macro)
-        { /* not inside a macro: pasm.com flags two `Q' at the operand */
+        { /* not inside a macro: pasm.com flags two 'Q' at the operand */
           a->ppos = line_off (line, os);
 
           aerr (a, line, "extra operand");
@@ -7802,7 +7802,7 @@ do_line (astate *a, const char *line)
           int idx = find_mac_label (a->cur_macro, nm);
 
           if (idx < 0)
-            { /* undefined macro label: `U', `?' just past the name */
+            { /* undefined macro label: 'U', '?' just past the name */
               a->ppos = line_off (line, oe);
               a->eval_undef = 1;
 
@@ -7828,7 +7828,7 @@ do_line (astate *a, const char *line)
     do_data (a, line, L.operands, 1, DIALECT_PASM2 == a->dialect);
   else if (DIALECT_PASM2 == a->dialect && a->epop_mode
            && opeq (op, "DEFM", NULL))
-    /* M80 `DEFM' ("define message") -- a byte string, like the Intel `DB' */
+    /* M80 'DEFM' ("define message") -- a byte string, like the Intel 'DB' */
     do_data (a, line, L.operands, 1, 1);
   else if (opeq (op, ".WORD", ".DW"))
     do_data (a, line, L.operands, 2, 0);
@@ -7948,10 +7948,10 @@ do_line (astate *a, const char *line)
       /*
        * .PABS selects absolute OBJECT output but does NOT itself make the
        * location counter absolute: the LC stays relocatable (.PROG.) until a
-       * `.LOC <abs>' sets an absolute origin, exactly as the originals do (so a
-       * `.RELOC' before any `.LOC' lists `0000'', not `0000').
+       * '.LOC <abs>' sets an absolute origin, exactly as the originals do (so a
+       * '.RELOC' before any '.LOC' lists '0000'', not '0000').
        */
-      a->obj_abs = 1; /* absolute object output (Intel-hex `:' records) */
+      a->obj_abs = 1; /* absolute object output (Intel-hex ':' records) */
       a->lst_loc = -1; /* output-mode directive: blank LC in the listing */
     }
   else if (opeq (op, ".PREL", NULL))
@@ -7975,7 +7975,7 @@ do_line (astate *a, const char *line)
     }
   else if (opeq (op, ".I8080", NULL))
     { /*
-       * restrict to the 8080 set: a Z80 instruction now raises a `Z'
+       * restrict to the 8080 set: a Z80 instruction now raises a 'Z'
        * warning; also leave PASM2 .ZOP Zilog mode (the manual: .I8080
        * switches back to the 8080/TDL mnemonic set)
        */
@@ -8081,7 +8081,7 @@ do_line (astate *a, const char *line)
     }
   else if (opeq (op, ".PSYM", NULL))
     { /*
-       * punch the global symbol table into the OBJECT (the `&' record),
+       * punch the global symbol table into the OBJECT (the '&' record),
        * for the PSA BUG debugger -- an output directive (lists with a
        * blank LC), distinct from the .LSYM listing control
        */
@@ -8089,14 +8089,14 @@ do_line (astate *a, const char *line)
       a->lst_loc = -1;
     }
   else if (opeq (op, ".XPSYM", NULL))
-    { /* suppress the `&' symbol-table object record (the default) */
+    { /* suppress the '&' symbol-table object record (the default) */
       a->obj_psym = 0;
       a->lst_loc = -1;
     }
   else if ((DIALECT_PASM == a->dialect || DIALECT_PASM2 == a->dialect)
            && opeq (op, ".TEMPS", NULL))
     { /*
-       * allocate the local-temporary array referenced as `![sub]' (PASM only;
+       * allocate the local-temporary array referenced as '![sub]' (PASM only;
        * ZASM treats .TEMPS as an unknown op).  Each element is initialized to
        * absolute zero; re-issuing .TEMPS reallocates.
        */
@@ -8202,8 +8202,8 @@ do_line (astate *a, const char *line)
        * Capture the page title -- heading line A, after "modname - ".
        * Done in both passes so pass 2's page-1 heading already has
        * whatever was set before the first listed line.  The directive
-       * does not self-list.  The Intel `TITLE' spelling (PASM2 .EPOP)
-       * is the same as `.TITLE'.
+       * does not self-list.  The Intel 'TITLE' spelling (PASM2 .EPOP)
+       * is the same as '.TITLE'.
        */
 
       /* TITLE: simple delim, drop <space, dialect max, err Q if over. */
@@ -8236,7 +8236,7 @@ do_line (astate *a, const char *line)
                && opeq (op, "SUBTTL", NULL)))
     { /*
        * Capture the page subtitle -- heading line B, on its own; same rules.
-       * The Intel `SUBTTL' spelling (PASM2 .EPOP) is the same as `.SBTTL'.
+       * The Intel 'SUBTTL' spelling (PASM2 .EPOP) is the same as '.SBTTL'.
        */
 
       /* SBTTL: simple delim, drop <spc, dialect max, Q if over. */
@@ -8271,10 +8271,10 @@ do_line (astate *a, const char *line)
 
       if ('\0' != *pg && ';' != *pg)
         { /*
-           * `.PAGE' with an operand differs by dialect.  ZASM takes NO operand:
-           * it flags the operand `Q' (the line lists with the `Q' code + a `?'
-           * at the operand), then ejects as for a bare `.PAGE'.  PASM instead
-           * reads the operand as the page geometry, `.PAGE width[,length]':
+           * '.PAGE' with an operand differs by dialect.  ZASM takes NO operand:
+           * it flags the operand 'Q' (the line lists with the 'Q' code + a '?'
+           * at the operand), then ejects as for a bare '.PAGE'.  PASM instead
+           * reads the operand as the page geometry, '.PAGE width[,length]':
            * the SECOND operand sets the lines-per-page (pagination) and the
            * line is suppressed WITHOUT ejecting.  The first operand (page
            * WIDTH -> column wrap) is not yet honored.
@@ -8308,10 +8308,10 @@ do_line (astate *a, const char *line)
 
           a->ppos = line_off (line, pg);
 
-          aerr (a, line, "extra operand"); /* `Q': questionable operand */
+          aerr (a, line, "extra operand"); /* 'Q': questionable operand */
 
           /*
-           * a labeled `.PAGE <arg>' shows the label's address (= lc0),
+           * a labeled '.PAGE <arg>' shows the label's address (= lc0),
            * like any labeled line; an unlabeled one lists with
            * a blank LOC column
            */
@@ -8321,7 +8321,7 @@ do_line (astate *a, const char *line)
 
           if (2 == a->pass)
             {
-              print_lst (a, lc0, line); /* list the `Q'+`?' line first ... */
+              print_lst (a, lc0, line); /* list the 'Q'+'?' line first ... */
               (void)fputc ('\f', a->lst); /* ... then eject like a bare .PAGE */
               a->lst_pending = 1; /* heading deferred to the next listed line */
             }
@@ -8330,7 +8330,7 @@ do_line (astate *a, const char *line)
         }
 
       /*
-       * bare `.PAGE': skip to the top of the next listing page; the directive
+       * bare '.PAGE': skip to the top of the next listing page; the directive
        * itself is not listed (.EJECT is NOT a synonym -- the originals reject
        * it).  Eject now but defer the heading to the next listed line, so a
        * .SBTTL between this .PAGE and that line shows in the new heading (the
@@ -8341,7 +8341,7 @@ do_line (astate *a, const char *line)
         {
           /*
            * ZASM runs the page-full check for EVERY line, not only listed
-           * ones, so a `.PAGE' that lands on an already-full page is first
+           * ones, so a '.PAGE' that lands on an already-full page is first
            * preceded by the natural break that completes it -- a heading-only
            * (otherwise empty) transient page -- and only THEN ejects again.
            * PASM does not insert that page, so this is ZASM-only.
@@ -8374,7 +8374,7 @@ do_line (astate *a, const char *line)
       a->ended = 1;
       a->lst_loc = -1; /* no start address: listing blanks the LOC column */
 
-      if ('\0' != *p && ';' != *p) /* `.END expr' sets the module start addr */
+      if ('\0' != *p && ';' != *p) /* '.END expr' sets the module start addr */
         {
           value_t v;
 
@@ -8386,9 +8386,9 @@ do_line (astate *a, const char *line)
               a->obj_start_rel = (0 != v.reloc);
 
               /*
-               * the originals list `.END expr' with the start value
+               * the originals list '.END expr' with the start value
                * in the LOC column (with its relocation flag), like
-               * a `=' assignment
+               * a '=' assignment
                */
 
               a->lst_loc = (long)v.value;
@@ -8438,9 +8438,9 @@ do_line (astate *a, const char *line)
       /*
        * a machine instruction (encode_insn / encode_zilog emits it), a
        * listing/output no-op directive, or an unknown operator.  In PASM2
-       * `.ZOP' mode the standard Zilog set is active; otherwise the 8080/TDL
+       * '.ZOP' mode the standard Zilog set is active; otherwise the 8080/TDL
        * set.  The two are exclusive, so an 8080 mnemonic under .ZOP (or a
-       * Zilog one under .IOP) falls through to the unknown-operator `O' error.
+       * Zilog one under .IOP) falls through to the unknown-operator 'O' error.
        */
 
       if (!(a->zop_mode ? encode_zilog (a, line, op, L.operands)
@@ -8523,7 +8523,7 @@ process_file (astate *a, const char *path)
 
 /*
  * Extract the canonical (uppercased, six-char-prefix-resolved) operator of a
- * source line into `op' (NAMEBUF bytes), skipping an optional `label:'.  Used
+ * source line into 'op' (NAMEBUF bytes), skipping an optional 'label:'.  Used
  * to find .PRGEND / .END module boundaries without dispatching the line.  The
  * .OPSYN alias chain is intentionally not applied here: a module boundary is
  * recognized by its canonical spelling, the form library sources use.
@@ -8550,7 +8550,7 @@ line_op (const char *line, char *op)
 
 /******************************************************************************/
 
-/* True if `line' is a .PRGEND (= .PRGEN) module-boundary directive. */
+/* True if 'line' is a .PRGEND (= .PRGEN) module-boundary directive. */
 
 static int
 line_is_prgend (const char *line)
@@ -8599,9 +8599,9 @@ count_modules (const char *path)
 
 /*
  * Assemble one module of a (possibly multi-module) source: read the whole
- * file but dispatch only the lines of module `modidx', skipping earlier
+ * file but dispatch only the lines of module 'modidx', skipping earlier
  * modules by counting their .PRGEND boundaries.  do_line ends the target
- * module at its own .PRGEND/.END (setting `ended'), which also stops the read.
+ * module at its own .PRGEND/.END (setting 'ended'), which also stops the read.
  */
 
 static void
@@ -8710,7 +8710,7 @@ init_pass (astate *a, int pass)
   a->lst_nsave = 0;
   a->mdef_page = 0;
   a->obj_xlink = 0;
-  a->obj_psym = 0; /* default .XPSYM: no `&' symbol-table object record */
+  a->obj_psym = 0; /* default .XPSYM: no '&' symbol-table object record */
   a->next_defseq = 1;
   a->ntemps = 0; /* no .TEMPS local array allocated yet */
   a->mac_argc = 0;
@@ -8797,7 +8797,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
   a.lst_line = 0;
   a.lst_listed = 0;
   a.lst_eflag = 0;
-  a.lst_pagelen = LST_PAGE; /* PASM `.PAGE w,L' overrides this */
+  a.lst_pagelen = LST_PAGE; /* PASM '.PAGE w,L' overrides this */
 
   /*
    * Map the console pseudo-devices to the real streams, so an explicit
@@ -8945,7 +8945,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
         /*
          * error-counting pre-pass (a third pass, distinct number so the
-         * label-redefinition `seen' logic still treats it as a fresh pass):
+         * label-redefinition 'seen' logic still treats it as a fresh pass):
          * with the symbols all defined, this detects every error -- including
          * undefined references, which pass 1 tolerates -- so the PASM page
          * header can show the total before the body listing.  It lists nothing
@@ -8962,10 +8962,10 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
 
         /*
          * Both dialects precede the body listing with a leading report page
-         * that lists only the multiply-defined (`M') and nested-.INSERT (`F')
+         * that lists only the multiply-defined ('M') and nested-.INSERT ('F')
          * statements (pass-1 faults the body would otherwise bury).  Run it
          * only when such errors exist, as its own pass (distinct number 4 so
-         * the `seen' redefinition logic treats it as fresh and does not
+         * the 'seen' redefinition logic treats it as fresh and does not
          * collide with the body pass); it lists just those lines and emits no
          * object/image.  The body pass's own header then begins page 2.
          * (PASM's leading page omits the subtitle; ZASM keeps it -- see
@@ -9013,7 +9013,7 @@ asm_source (const char *path, dialect_t dialect, const char *outpath,
                                              * sizeof (objsym));
             objsym *ents = (objsym *)malloc ((size_t)(nsym > 0 ? nsym : 1)
                                              * sizeof (objsym));
-            /* the `&' .PSYM record also lists the 3 segment bases */
+            /* the '&' .PSYM record also lists the 3 segment bases */
             objsym *psyms = (objsym *)malloc (((size_t)nsym + 3)
                                               * sizeof (objsym));
 

@@ -44,7 +44,7 @@ typedef struct
   const char *p;
   int err;
   const char *msg;
-  const char *mdef_p; /* just past a multiply-defined ref (`D'), else NULL */
+  const char *mdef_p; /* just past a multiply-defined ref ('D'), else NULL */
   const eval_env *env;
 } ectx;
 
@@ -286,9 +286,9 @@ idchar (int c)
 /*
  * The TDL/PSA assemblers predefine the register names as ordinary symbol
  * values, so they resolve in ANY expression and a number can stand in for a
- * register everywhere a register is expected (`MOV 1,2' == `MOV C,D',
- * `.WORD B' == 0, `INR B(X)' == `INR 0(X)', and the bare `INR (X)' == `INR H'
- * because `(X)' is the expression X == 4).  The 8-bit register letters carry
+ * register everywhere a register is expected ('MOV 1,2' == 'MOV C,D',
+ * '.WORD B' == 0, 'INR B(X)' == 'INR 0(X)', and the bare 'INR (X)' == 'INR H'
+ * because '(X)' is the expression X == 4).  The 8-bit register letters carry
  * their 3-bit field codes (B=0 ... A=7); SP/PSW/X/Y carry the originals' fixed
  * values.  A user cannot redefine these, so the value always wins.  Returns the
  * value, or -1 for any other identifier.
@@ -400,8 +400,8 @@ ev_primary (ectx *e)
         { /*
            * a radix prefix not followed by a numeral: the originals require a
            * number to begin with a digit, so the prefix is consumed and what
-           * follows parses as an ordinary symbol (e.g. `^HF' -> symbol `F',
-           * `^H0FF' is the way to write hex FF).
+           * follows parses as an ordinary symbol (e.g. '^HF' -> symbol 'F',
+           * '^H0FF' is the way to write hex FF).
            */
           e->p += 2;
         }
@@ -409,9 +409,9 @@ ev_primary (ectx *e)
 
   if ('&' == *e->p && NULL != e->env->temps && e->env->tmp_ok)
     { /*
-       * `&' (at the start of a primary) is the PSA variable-argument count:
+       * '&' (at the start of a primary) is the PSA variable-argument count:
        * the number of arguments of the current macro invocation.  (As a binary
-       * operator `&' is AND -- handled at the logical level, never here.)
+       * operator '&' is AND -- handled at the logical level, never here.)
        */
       e->p++;
 
@@ -420,9 +420,9 @@ ev_primary (ectx *e)
 
   if ('!' == *e->p && '[' == e->p [1] && NULL != e->env->temps)
     { /*
-       * `![sub]' -- a PSA .TEMPS local temporary.  Legal only inside a macro
+       * '![sub]' -- a PSA .TEMPS local temporary.  Legal only inside a macro
        * (tmp_ok); the subscript must be an absolute value in [0, ntemps).  An
-       * illegal use or out-of-range subscript is a Subscript (`S') error.
+       * illegal use or out-of-range subscript is a Subscript ('S') error.
        */
       value_t idx;
       int sub;
@@ -452,8 +452,8 @@ ev_primary (ectx *e)
   if ('\'' == *e->p || '"' == *e->p)
     { /*
        * character constant: 'A'/'AB' or the equivalent double-quoted "A"/"AB"
-       * form (the TDL/PSA assemblers accept either quote, so `CPI "'"' is 027H
-       * and `.WORD "AB"' is 04142H).
+       * form (the TDL/PSA assemblers accept either quote, so 'CPI "'"' is 027H
+       * and '.WORD "AB"' is 04142H).
        */
       char q = *e->p;
       u16 val = 0;
@@ -551,10 +551,10 @@ ev_primary (ectx *e)
 
       if ('#' == *e->p && '.' != name [0] && NULL != e->env->syms)
         { /*
-           * the `SYM#' symbol modifier: declare SYM external, exactly as a
-           * preceding `.EXTERN SYM' would (the originals assign an external
+           * the 'SYM#' symbol modifier: declare SYM external, exactly as a
+           * preceding '.EXTERN SYM' would (the originals assign an external
            * base number on first encounter, in declaration order).  Consume
-           * the `#'; the existing external branch below then resolves it.
+           * the '#'; the existing external branch below then resolves it.
            */
           e->p++;
 
@@ -589,11 +589,11 @@ ev_primary (ectx *e)
 
       /*
        * On the leading multiply-defined report page a FORWARD reference -- a
-       * symbol whose definition this re-walk has not reached yet (its `seen'
+       * symbol whose definition this re-walk has not reached yet (its 'seen'
        * predates fwd_pass) -- renders undefined, capturing the originals'
-       * pass-1 view (e.g. `EOCMD: call PRRANG' with PRRANG defined lower down
-       * lists `CALL 0000' with a `U'/`?').  The symbol IS defined, so it is NOT
-       * marked `udef' (that flag would wrongly carry into the body listing) and
+       * pass-1 view (e.g. 'EOCMD: call PRRANG' with PRRANG defined lower down
+       * lists 'CALL 0000' with a 'U'/'?').  The symbol IS defined, so it is NOT
+       * marked 'udef' (that flag would wrongly carry into the body listing) and
        * it is not resolved as a mnemonic-as-value either.
        */
       fwd = (NULL != s && s->defined && 0 != e->env->fwd_pass
@@ -604,7 +604,7 @@ ev_primary (ectx *e)
           /*
            * an instruction mnemonic used as a value yields its opcode template
            * bytes (operand fields zero) as a little-endian integer -- a TDL/PSA
-           * feature (`MVI A,JMP' == `MVI A,0C3H', `.WORD LDIR' == 0B0EDH).  A
+           * feature ('MVI A,JMP' == 'MVI A,0C3H', '.WORD LDIR' == 0B0EDH).  A
            * defined symbol of the same name shadows it (handled above), so
            * this is reached only for a non-symbol name; resolve it in both
            * passes (the value is fixed, like any constant).
@@ -630,9 +630,9 @@ ev_primary (ectx *e)
 
           /*
            * a genuinely undefined reference: record it in the symbol table so
-           * the listing can show it with the `U' flag, as the originals do.  A
+           * the listing can show it with the 'U' flag, as the originals do.  A
            * forward ref on the report page (fwd) is already defined -- skip
-           * that so the body listing does not inherit a spurious `U'.
+           * that so the body listing does not inherit a spurious 'U'.
            */
           if (NULL != e->env->syms && !fwd)
             {
@@ -659,10 +659,10 @@ ev_primary (ectx *e)
 
       /*
        * a reference to a multiply-defined symbol: the originals flag the using
-       * line `D' and place a `?' just past the symbol, with any immediately
-       * following whitespace skipped -- so `.WORD FOO+1' renders `FOO?+1' (the
-       * operator follows at once) while `JMP FOO ;c' renders `FOO     ?;c' (the
-       * `?' lands where the next token would, before the comment).  The first
+       * line 'D' and place a '?' just past the symbol, with any immediately
+       * following whitespace skipped -- so '.WORD FOO+1' renders 'FOO?+1' (the
+       * operator follows at once) while 'JMP FOO ;c' renders 'FOO     ?;c' (the
+       * '?' lands where the next token would, before the comment).  The first
        * definition's value is still used, so this is not a failure; record only
        * the first such reference on the expression.
        */

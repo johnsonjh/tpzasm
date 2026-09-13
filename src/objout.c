@@ -183,7 +183,7 @@ rb_flush (recbuf *r)
 /******************************************************************************/
 
 /* Emit one relocatable ';' data record for the contiguous bytes beginning at
- * eb[0..avail-1] (with classes er[]), loading at `addr'; returns the number of
+ * eb[0..avail-1] (with classes er[]), loading at 'addr'; returns the number of
  * emission-log bytes consumed.
  *
  * The relocation control bytes form a prefix-coded BIT stream (read left to
@@ -195,7 +195,7 @@ rb_flush (recbuf *r)
  * the next control byte.  For the common 0/10/110 codes there is one data byte
  * per control bit, and a data byte is written after the control byte whose
  * eight-bit window holds its owning bit -- so a code whose bits straddle a
- * boundary has its data bytes split across the two control bytes (a `10' word
+ * boundary has its data bytes split across the two control bytes (a '10' word
  * in bits 7/8 lays its LSB after this control byte, its MSB after the next).
  * The layout is [control][data owned by this control byte's bits][control]...
  */
@@ -315,7 +315,7 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
        * Each data byte is written after the control byte whose 8-bit window
        * holds the control bit that owns it (dbit []).  A code whose bits
        * straddle a control-byte boundary therefore has its data split across
-       * the two control bytes -- e.g. a relocatable word whose `10' in bits
+       * the two control bytes -- e.g. a relocatable word whose '10' in bits
        * 7/8 lays its LSB after this control byte and its MSB after the next.
        * (doff < REC_CAP + 8 by construction; the explicit bound lets static
        * analyzers prove the data [] read stays in range.)
@@ -336,7 +336,7 @@ emit_prel_record (FILE *f, int ascii, const u8 *eb, const u8 *er,
 
 /*
  * Emit one absolute ':' data record (up to REC_CAP bytes) from eb [], loading
- * at `addr'; returns the number of bytes consumed.
+ * at 'addr'; returns the number of bytes consumed.
  */
 
 static int
@@ -388,7 +388,7 @@ obj_close (FILE *f)
 /******************************************************************************/
 
 /*
- * Append one module's complete record framing (`!' `+' `@' `\' `#', the data
+ * Append one module's complete record framing ('!' '+' '@' '\' '#', the data
  * records, and the end-of-file record) to an open object stream.  A single
  * object file holds one such module per .END, or several independent modules
  * separated by .PRGEND ("library file generation"); each module emits its own
@@ -559,7 +559,7 @@ obj_module (FILE *f, const objspec *s)
                * the ':' base/segment byte is per-span: bytes emitted while the
                * LC was still relocatable (.PROG. base 1, before any absolute
                * .LOC) carry that base even in an otherwise absolute module,
-               * e.g. an `O'-error placeholder ahead of the first .LOC
+               * e.g. an 'O'-error placeholder ahead of the first .LOC
                */
               used = emit_pabs_record (f, s->ascii, eb, addr, avail, rbase);
             else

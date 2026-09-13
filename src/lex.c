@@ -10,8 +10,8 @@
 /*
  * A statement is:  [label:] [operator [operands]] [;comment]   (free-format).
  * A label is an identifier terminated by ':'.
- * A direct assignment is `symbol = expr`,
- * or `symbol EQU/SET/DEFL expr` (no colon).
+ * A direct assignment is 'symbol = expr',
+ * or 'symbol EQU/SET/DEFL expr' (no colon).
  * Otherwise the leading identifier is the operator (mnemonic or pseudo-op).
  */
 
@@ -113,12 +113,12 @@ lex_line (const char *line, line_t *out)
       const char *r = skipws (q);
 
       if (':' == *r)
-        { /* label:  (or `label::' -- the internal-definition delimiter) */
+        { /* label:  (or 'label::' -- the internal-definition delimiter) */
           (void)xstrlcpy (out->label, tok1, sizeof (out->label));
           r++;
 
           if (':' == *r)
-            { /* `::' declares the label internal (== .INTERN label) */
+            { /* '::' declares the label internal (== .INTERN label) */
               out->internal = 1;
               r++;
             }
@@ -134,7 +134,7 @@ lex_line (const char *line, line_t *out)
         }
 
       if ('=' == *r)
-        { /* symbol = / == expr  (a trailing `:' makes the symbol internal) */
+        { /* symbol = / == expr  (a trailing ':' makes the symbol internal) */
           (void)xstrlcpy (out->label, tok1, sizeof (out->label));
           (void)xstrlcpy (out->op, "=", sizeof (out->op));
           out->assign = 1;
@@ -144,7 +144,7 @@ lex_line (const char *line, line_t *out)
             r++; /* '==' entry/global assignment */
 
           if (':' == *r)
-            { /* `=:' / `==:' declares the symbol internal (== .INTERN sym) */
+            { /* '=:' / '==:' declares the symbol internal (== .INTERN sym) */
               out->internal = 1;
               r++;
             }
@@ -158,8 +158,8 @@ lex_line (const char *line, line_t *out)
         { /*
            * symbol EQU/SET expr ?  Only when the first token is a plain symbol:
            * a dot-prefixed directive is never an assignment target, so
-           * `.WORD SET' is the data directive with the mnemonic `SET' as its
-           * operand (value 0C0CBH), not an assignment to a symbol `.WORD'.
+           * '.WORD SET' is the data directive with the mnemonic 'SET' as its
+           * operand (value 0C0CBH), not an assignment to a symbol '.WORD'.
            */
           char tok2 [NAMEBUF];
           const char *s = parse_id (r, tok2);
