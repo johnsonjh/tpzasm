@@ -16,7 +16,8 @@ An enhanced clone of **HEXCOM 3.00**, the DRI
 [Intel&nbsp;HEX](https://en.wikipedia.org/wiki/Intel_HEX) to binary conversion
 tool, is also included.
 
-[Precompiled binaries for many systems are available for download.](#downloads)
+> [!NOTE]
+> [**Precompiled binaries for many systems are available for download.**](#downloads)
 
 ---
 
@@ -134,9 +135,10 @@ symbolic link).  Invoke the assembler as `zasm` to select **TDL ZASM 2.21**,
 | [tpzasm-linux32.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux32.tar.gz)       | 64&nbsp;KiB | **Linux**&nbsp;(32‑bit&nbsp;i386)     |
 | [tpzasm-linux64.tar.gz](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/bindist/tpzasm-linux64.tar.gz)       | 124&nbsp;KiB | **Linux**&nbsp;(64‑bit&nbsp;x86‑64)  |
 
+> [!TIP]
 > If you need an Atari&nbsp;ST TOS/MINT LHA/LZH utility,
-[`LHarc`](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/.utils/lharc.ttp)
-is available.
+> [`LHarc`](https://github.com/johnsonjh/tpzasm/raw/refs/heads/master/.utils/lharc.ttp)
+> is available.
 
 ## Building from source
 
@@ -228,7 +230,8 @@ or [Megatokio](https://github.com/Megatokio)
 
 * Usage of AI (artificial intelligence) tools by contributors is permitted,
   subject to the same terms and conditions as the
-  [LLVM AI Tool Use Policy](https://llvm.org/docs/AIToolPolicy.html).
+  [LLVM AI Tool Use Policy](https://llvm.org/docs/AIToolPolicy.html), but
+  this permission may be withdrawn at any time and without notice.
 
 ### Future plans
 
@@ -288,7 +291,8 @@ development tools for several years.
   `IX` and `IY`.  These and similar extensions may be gated behind a
   command‑line option in a future release.
 
-  **Complete emulation of this assembler is currently a work‑in‑progress.**
+  > [!CAUTION]
+  > **Complete emulation of this assembler is currently a work‑in‑progress.**
 
 * An optional *extended error checking* mode may be added in a future release,
   enabling new features such as classifying errors or warnings by severity,

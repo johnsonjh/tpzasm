@@ -1,7 +1,10 @@
 # PASM 2.00G (`orig/pasm2.com`) bugs and quirks
 
-PASM 2.00G (`[C12011-0200G]`, 06/27/81) is a buggy version of the PSA Macro
-Assembler.  These are clear and obvious defects in `pasm2.com` itself.
+> [!CAUTION]
+> PASM 2.00G (`[C12011-0200G]`, 06/27/81) is a buggy version of
+> the PSA Macro Assembler.
+
+These are clear and obvious defects in `pasm2.com` itself.
 **TPZASM does NOT reproduce these bugs** and always produces the correct
 output.  Where a bug interferes with differential testing, the test
 cases are adjusted to avoid triggering it (noted per item).
