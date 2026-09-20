@@ -80,14 +80,15 @@ and **PSA&nbsp;PASM&nbsp;1.02**.
   flag, *i.e.*, `.PHEX`), all of which is *byte‑for‑byte identical* to the
   object output of the reference software.
 
-The emulation of the **PSA&nbsp;PASM&nbsp;2.00G** assembler is still a
-[work‑in‑progress](#psa-pasm-200g-emulation) and is approximately
-**85%** complete, with some functionality not yet implemented or not yet fully
-conforming to the behavior of the original assembler.
-
 **HEXCOM** is **100%** complete and produces byte‑for‑byte identical
 output to the original reference tool, with matching messages and identical
 error‑handling semantics, plus user‑configurable control of output padding.
+
+> [!WARNING]
+> The emulation of the **PSA&nbsp;PASM&nbsp;2.00G** assembler is still a
+> [work‑in‑progress](#psa-pasm-200g-emulation) and is approximately
+> **85%** complete, with some functionality not yet implemented or not yet
+> fully conforming to the behavior of the original assembler.
 
 ## Usage
 
@@ -280,10 +281,13 @@ development tools for several years.
   relocatable object output) for all our TDL‑style test inputs.  This release
   completely overhauls the listing format and adds some completely new modes,
   activated by the `.EPOP` and `.ZOP` pseudo‑ops, allowing the use of
-  **MACRO‑80‑style pseudo‑ops** and **Zilog mnemonics**.  Unfortunately, it
-  also exhibits several behaviors that are
-  [clearly bugs](docs/re/pasm2-bugs.md), such as sometimes omitting the symbol
-  table from listings when certain macros are defined.
+  **MACRO‑80‑style pseudo‑ops** and **Zilog mnemonics**.
+
+  Unfortunately, it also exhibits several behaviors that are
+  [***clearly bugs***](docs/re/pasm2-bugs.md): it will *sometimes* omit the
+  symbol table from the listing when certain macros are defined, and the
+  `.XLINK` object writer sometimes incorrectly truncates its output.
+  **TPZASM** does *not* attempt to emulate these obviously incorrect behaviors.
 
   Note that the `.ZOP` mode of **TPZASM** has been lightly extended with
   support for the undocumented Zilog `XH`/`XL`/`YH`/`YL` (and
@@ -291,8 +295,7 @@ development tools for several years.
   `IX` and `IY`.  These and similar extensions may be gated behind a
   command‑line option in a future release.
 
-  > [!CAUTION]
-  > **Complete emulation of this assembler is currently a work‑in‑progress.**
+  **Complete emulation of this assembler is currently a work‑in‑progress.**
 
 * An optional *extended error checking* mode may be added in a future release,
   enabling new features such as classifying errors or warnings by severity,
